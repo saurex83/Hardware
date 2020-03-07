@@ -1,0 +1,85 @@
+###############################################################################
+#
+# IAR C/C++ Compiler V10.10.1.4655 for 8051               16/Feb/2020  20:56:07
+# Copyright 2004-2017 IAR Systems AB.
+# PC-locked license - IAR Embedded Workbench for 8051
+#
+#    Core               =  plain
+#    Code model         =  banked
+#    Data model         =  large
+#    Calling convention =  xdata reentrant
+#    Constant location  =  data
+#    Dptr setup         =  1,16
+#                          
+#    Source file        =  E:\WMNU\IAR_new_arch\Stack_core_src\led.c
+#    Command line       =  
+#        -f C:\Users\08A4~1\AppData\Local\Temp\EWB1EA.tmp
+#        (E:\WMNU\IAR_new_arch\Stack_core_src\led.c -lc
+#        "E:\WMNU\IAR_new_arch\PRG Node\Debug\List" -o
+#        "E:\WMNU\IAR_new_arch\PRG Node\Debug\Obj" -e --debug --core=plain
+#        --dptr=16,1 --data_model=large --code_model=banked
+#        --calling_convention=xdata_reentrant --place_constants=data
+#        --nr_virtual_regs 8 --dlib_config "C:\Program Files (x86)\IAR
+#        Systems\Embedded Workbench 8.0\8051\LIB\DLIB\dl8051Normal.h"
+#        --no_path_in_file_macros -I E:\WMNU\IAR_new_arch\Stack_core_src\ -On
+#        --no_cse --no_unroll --no_inline --no_code_motion --no_tbaa
+#        --no_cross_call)
+#    Locale             =  Russian_Russia.1251
+#    List file          =  E:\WMNU\IAR_new_arch\PRG Node\Debug\List\led.lst
+#    Object file        =  E:\WMNU\IAR_new_arch\PRG Node\Debug\Obj\led.r51
+#
+###############################################################################
+
+E:\WMNU\IAR_new_arch\Stack_core_src\led.c
+      1          #include "action_manager.h"
+      2          
+      3          static void HW_Init(void);
+      4          static void SW_Init(void);
+      5          static void Cold_Start(void);
+      6          static void Hot_Start(void);
+      7          
+      8          module_s LED_MODULE = {ALIAS(SW_Init), ALIAS(Cold_Start), 
+      9            ALIAS(Hot_Start), ALIAS(HW_Init)};
+     10          
+     11          static void HW_Init(void){};
+     12          static void SW_Init(void){};
+     13          static void Cold_Start(void){};
+     14          static void Hot_Start(void){};
+
+   Maximum stack usage in bytes:
+
+   ISTACK Function
+   ------ --------
+      0   Cold_Start
+      0   HW_Init
+      0   Hot_Start
+      0   SW_Init
+
+
+   Segment part sizes:
+
+   Bytes  Function/Label
+   -----  --------------
+       8  ?<Initializer for LED_MODULE>
+       3  Cold_Start
+       6  Cold_Start::?relay
+       3  HW_Init
+       6  HW_Init::?relay
+       3  Hot_Start
+       6  Hot_Start::?relay
+       8  LED_MODULE
+       3  SW_Init
+       6  SW_Init::?relay
+
+ 
+ 12 bytes in segment BANKED_CODE
+ 24 bytes in segment BANK_RELAYS
+  8 bytes in segment XDATA_I
+  8 bytes in segment XDATA_ID
+ 
+ 32 bytes of CODE     memory
+ 12 bytes of HUGECODE memory
+  8 bytes of XDATA    memory
+
+Errors: none
+Warnings: none

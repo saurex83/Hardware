@@ -1,0 +1,175 @@
+###############################################################################
+#
+# IAR C/C++ Compiler V10.10.1.4655 for 8051               16/Feb/2020  20:56:09
+# Copyright 2004-2017 IAR Systems AB.
+# PC-locked license - IAR Embedded Workbench for 8051
+#
+#    Core               =  plain
+#    Code model         =  banked
+#    Data model         =  large
+#    Calling convention =  xdata reentrant
+#    Constant location  =  data
+#    Dptr setup         =  1,16
+#                          
+#    Source file        =  E:\WMNU\IAR_new_arch\Stack_core_src\ustimer.c
+#    Command line       =  
+#        -f C:\Users\08A4~1\AppData\Local\Temp\EWB958.tmp
+#        (E:\WMNU\IAR_new_arch\Stack_core_src\ustimer.c -lc
+#        "E:\WMNU\IAR_new_arch\PRG Node\Debug\List" -o
+#        "E:\WMNU\IAR_new_arch\PRG Node\Debug\Obj" -e --debug --core=plain
+#        --dptr=16,1 --data_model=large --code_model=banked
+#        --calling_convention=xdata_reentrant --place_constants=data
+#        --nr_virtual_regs 8 --dlib_config "C:\Program Files (x86)\IAR
+#        Systems\Embedded Workbench 8.0\8051\LIB\DLIB\dl8051Normal.h"
+#        --no_path_in_file_macros -I E:\WMNU\IAR_new_arch\Stack_core_src\ -On
+#        --no_cse --no_unroll --no_inline --no_code_motion --no_tbaa
+#        --no_cross_call)
+#    Locale             =  Russian_Russia.1251
+#    List file          =  E:\WMNU\IAR_new_arch\PRG Node\Debug\List\ustimer.lst
+#    Object file        =  E:\WMNU\IAR_new_arch\PRG Node\Debug\Obj\ustimer.r51
+#
+###############################################################################
+
+E:\WMNU\IAR_new_arch\Stack_core_src\ustimer.c
+      1          #include "ioCC2530.h"
+      2          #include "ustimer.h"
+      3          #include "stdint.h"
+      4          #include "action_manager.h"
+      5          #include "stdbool.h"
+      6          
+      7          
+      8          #define ACCURATE_VAL_US 500 
+      9          
+     10          // Максимальное кол-во тактов таймера. Константа 40 бит, 5 байт
+     11          static const uint32_t MAC_TIMER_MAX = 0xFFFFFFFFUL; 
+     12          static uint32_t DELAY_CALIBRATE_TICS; // Калибровка функции задержки
+     13          
+     14          static void DelayCalibrate(void);
+     15          static void HW_Init(void);  
+     16          module_s UST_MODULE = {ALIAS(HW_Init)};
+     17          
+     18          
+     19          void HW_Init(void){
+     20            // Запускаем таймер, LATCH MODE = 1
+     21            // Latch mode фиксирует значение таймера переполнения при чтении T2M0
+     22            // ЗАпускаем MAC таймер без синхронизации с кварцем 32.768к
+     23            T2CTRL = (1<<0) | (1<<3); 
+     24            // Калибровка функции задержки
+     25            DelayCalibrate();
+     26          }
+     27          
+     28          ustime_t UST_now(void){
+     29            ustime_t now;
+     30            ((char*)&now)[0] = T2M0;
+     31            ((char*)&now)[1] = T2M1;
+     32            ((char*)&now)[2] = T2MOVF0;
+     33            ((char*)&now)[3] = T2MOVF1;
+     34            return now;
+     35          }
+     36          
+     37          bool UST_time_over(stamp_t beg, ustime_t wait){
+     38            return (UST_now() >= (beg + US_TO_TICKS(wait))) ?  true:false;
+     39          }
+     40          
+     41          ustime_t UST_interval(stamp_t beg, stamp_t end){
+     42            return (end >= beg) ? 
+     43              TICKS_TO_US(end - beg) :
+     44              TICKS_TO_US(MAC_TIMER_MAX - beg + end);
+     45          };
+     46          
+     47          void UST_delay(ustime_t time){
+     48            stamp_t now = UST_now();
+     49            stamp_t len = US_TO_TICKS(time);
+     50            stamp_t offset = (time > DELAY_CALIBRATE_TICS) ?
+     51                              DELAY_CALIBRATE_TICS : 0;
+     52            while (UST_now() < (now + len - offset));
+     53          }
+     54          
+     55          
+     56          stamp_t _interval(stamp_t beg, stamp_t end){
+     57            return (end >= beg) ? 
+     58              (end - beg) :
+     59              (MAC_TIMER_MAX - beg + end);
+     60          };
+     61          
+     62          /**
+     63          @brief Калибровка функции задержки TIM_delay
+     64          */
+     65          static void DelayCalibrate(void){
+     66            DELAY_CALIBRATE_TICS = 0;  
+     67            stamp_t start = UST_now();
+     68            UST_delay(ACCURATE_VAL_US);
+     69            stamp_t end = UST_now();
+     70            DELAY_CALIBRATE_TICS = _interval(start, end) -
+     71                                    US_TO_TICKS(ACCURATE_VAL_US);
+     72          };
+
+   Maximum stack usage in bytes:
+
+   ISTACK XSTACK Function
+   ------ ------ --------
+      0     24   DelayCalibrate
+        0     20   -> UST_delay
+        0     20   -> UST_now
+        0     24   -> _interval
+      2      0   HW_Init
+        2      0   -> DelayCalibrate
+      0     52   UST_delay
+        0     32   -> UST_now
+      0     28   UST_interval
+      3     36   UST_now
+      2     24   UST_time_over
+        0     20   -> UST_now
+      0     48   _interval
+
+
+   Segment part sizes:
+
+   Bytes  Function/Label
+   -----  --------------
+       4  ?<Initializer for MAC_TIMER_MAX>
+       8  ?<Initializer for UST_MODULE>
+       4  ?<Initializer for __Constant_1f4>
+       4  ?<Initializer for __Constant_20>
+       4  ?<Initializer for __Constant_ffffc180>
+       4  DELAY_CALIBRATE_TICS
+     115  DelayCalibrate
+       6  DelayCalibrate::?relay
+      17  HW_Init
+       6  HW_Init::?relay
+       4  MAC_TIMER_MAX
+       1  T2CTRL
+       1  T2M0
+       1  T2M1
+       1  T2MOVF0
+       1  T2MOVF1
+       8  UST_MODULE
+     191  UST_delay
+       6  UST_delay::?relay
+     141  UST_interval
+       6  UST_interval::?relay
+      79  UST_now
+       6  UST_now::?relay
+     109  UST_time_over
+       6  UST_time_over::?relay
+       4  __Constant_1f4
+       4  __Constant_20
+       4  __Constant_ffffc180
+     127  _interval
+       6  _interval::?relay
+
+ 
+ 779 bytes in segment BANKED_CODE
+  42 bytes in segment BANK_RELAYS
+   5 bytes in segment SFR_AN
+  24 bytes in segment XDATA_I
+  24 bytes in segment XDATA_ID
+   4 bytes in segment XDATA_Z
+ 
+  54 bytes of CODE     memory (+ 12 bytes shared)
+   0 bytes of DATA     memory (+  5 bytes shared)
+ 779 bytes of HUGECODE memory
+  16 bytes of XDATA    memory (+ 12 bytes shared)
+
+Errors: none
+Warnings: none

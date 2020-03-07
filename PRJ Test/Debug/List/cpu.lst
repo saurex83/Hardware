@@ -1,0 +1,131 @@
+###############################################################################
+#
+# IAR C/C++ Compiler V10.10.1.4655 for 8051               06/Feb/2020  10:16:38
+# Copyright 2004-2017 IAR Systems AB.
+# PC-locked license - IAR Embedded Workbench for 8051
+#
+#    Core               =  plain
+#    Code model         =  banked
+#    Data model         =  large
+#    Calling convention =  xdata reentrant
+#    Constant location  =  data
+#    Dptr setup         =  1,16
+#                          
+#    Source file        =  E:\WMNU\IAR_NEW_ARCH\STACK_CORE_SRC\cpu.c
+#    Command line       =  
+#        -f C:\Users\08A4~1\AppData\Local\Temp\EW6EC5.tmp
+#        (E:\WMNU\IAR_NEW_ARCH\STACK_CORE_SRC\cpu.c -lC
+#        "E:\WMNU\IAR_new_arch\PRJ Test\Debug\List" -o
+#        "E:\WMNU\IAR_new_arch\PRJ Test\Debug\Obj" -e --debug --core=plain
+#        --dptr=16,1 --data_model=large --code_model=banked
+#        --calling_convention=xdata_reentrant --place_constants=data
+#        --nr_virtual_regs 8 --dlib_config "C:\Program Files (x86)\IAR
+#        Systems\Embedded Workbench 8.0\8051\LIB\DLIB\dl8051Normal.h" -I
+#        E:\WMNU\IAR_new_arch\Stack_core_src\ -On --no_cse --no_unroll
+#        --no_inline --no_code_motion --no_tbaa --no_cross_call)
+#    Locale             =  Russian_Russia.1251
+#    List file          =  E:\WMNU\IAR_new_arch\PRJ Test\Debug\List\cpu.lst
+#    Object file        =  E:\WMNU\IAR_new_arch\PRJ Test\Debug\Obj\cpu.r51
+#
+###############################################################################
+
+E:\WMNU\IAR_NEW_ARCH\STACK_CORE_SRC\cpu.c
+      1          #include "action_manager.h"
+      2          #include "ioCC2530.h"
+
+   \                                 In  segment SFR_AN, at 0x9e
+   \   unsigned char volatile __sfr CLKCONSTA
+   \                     CLKCONSTA:
+   \   000000                DS 1
+
+   \                                 In  segment SFR_AN, at 0xc6
+   \   unsigned char volatile __sfr CLKCONCMD
+   \                     CLKCONCMD:
+   \   000000                DS 1
+      3          
+      4          /**
+      5          @file
+      6          */
+      7          
+      8          static void HW_Init(void);   
+      9           
+
+   \                                 In  segment XDATA_I, align 1, keep-with-next
+     10          module_s CPU_MODULE = {ALIAS(HW_Init)};
+   \                     CPU_MODULE:
+   \   000000                DS 12
+   \   00000C                REQUIRE `?<Initializer for CPU_MODULE>`
+   \   00000C                REQUIRE __INIT_XDATA_I
+     11          
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+     12          static void HW_Init(void){
+   \                     HW_Init:
+   \   000000                ; Saved register size: 0
+   \   000000                ; Auto size: 0
+     13            /* Сбрасываем бит OSC32K, будет выбран 32.768 кварц */
+     14            CLKCONCMD &= ~(1<<7); 
+   \   000000   53C67F       ANL       0xc6,#0x7f
+     15            /* Ждем пока бит не станет 0 */
+     16            while (CLKCONSTA & (1<<7)); 
+   \                     ??HW_Init_0:
+   \   000003   E59E         MOV       A,0x9e
+   \   000005   A2E7         MOV       C,0xE0 /* A   */.7
+   \   000007   40FA         JC        ??HW_Init_0
+     17            /* Переходим на 32 Мгц */
+     18            CLKCONCMD = 0;// (1<<3);
+   \   000009   75C600       MOV       0xc6,#0x0
+     19            while (CLKCONSTA&(1<<6));
+   \                     ??HW_Init_1:
+   \   00000C   E59E         MOV       A,0x9e
+   \   00000E   A2E6         MOV       C,0xE0 /* A   */.6
+   \   000010   40FA         JC        ??HW_Init_1
+     20          };  
+   \   000012   02....       LJMP      ?BRET
+   \   000015                REQUIRE CLKCONCMD
+   \   000015                REQUIRE CLKCONSTA
+
+   \                                 In  segment XDATA_ID, align 1, keep-with-next
+   \                     `?<Initializer for CPU_MODULE>`:
+   \   000000   ....         DW `??HW_Init::?relay`
+   \   000002   00000000     DB 0, 0, 0, 0, 0, 0, 0, 0
+   \            00000000
+   \   00000A   0000         DB 0, 0
+
+   \                                 In  segment BANK_RELAYS, align 1
+   \                     `??HW_Init::?relay`:
+   \   000000   12....       LCALL   ?BDISPATCH
+   \   000003   ......       DC24    HW_Init
+
+   Maximum stack usage in bytes:
+
+   ISTACK Function
+   ------ --------
+      0   HW_Init
+
+
+   Segment part sizes:
+
+   Bytes  Function/Label
+   -----  --------------
+      12  ?<Initializer for CPU_MODULE>
+       1  CLKCONCMD
+       1  CLKCONSTA
+      12  CPU_MODULE
+      21  HW_Init
+       6  HW_Init::?relay
+
+ 
+ 21 bytes in segment BANKED_CODE
+  6 bytes in segment BANK_RELAYS
+  2 bytes in segment SFR_AN
+ 12 bytes in segment XDATA_I
+ 12 bytes in segment XDATA_ID
+ 
+ 18 bytes of CODE     memory
+  0 bytes of DATA     memory (+ 2 bytes shared)
+ 21 bytes of HUGECODE memory
+ 12 bytes of XDATA    memory
+
+Errors: none
+Warnings: none

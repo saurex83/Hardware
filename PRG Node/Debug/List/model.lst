@@ -1,0 +1,82 @@
+###############################################################################
+#
+# IAR C/C++ Compiler V10.10.1.4655 for 8051               16/Feb/2020  21:04:31
+# Copyright 2004-2017 IAR Systems AB.
+# PC-locked license - IAR Embedded Workbench for 8051
+#
+#    Core               =  plain
+#    Code model         =  banked
+#    Data model         =  large
+#    Calling convention =  xdata reentrant
+#    Constant location  =  data
+#    Dptr setup         =  1,16
+#                          
+#    Source file        =  E:\WMNU\IAR_new_arch\Stack_core_src\model.c
+#    Command line       =  
+#        -f C:\Users\08A4~1\AppData\Local\Temp\EW644D.tmp
+#        (E:\WMNU\IAR_new_arch\Stack_core_src\model.c -lc
+#        "E:\WMNU\IAR_new_arch\PRG Node\Debug\List" -o
+#        "E:\WMNU\IAR_new_arch\PRG Node\Debug\Obj" -e --debug --core=plain
+#        --dptr=16,1 --data_model=large --code_model=banked
+#        --calling_convention=xdata_reentrant --place_constants=data
+#        --nr_virtual_regs 8 --dlib_config "C:\Program Files (x86)\IAR
+#        Systems\Embedded Workbench 8.0\8051\LIB\DLIB\dl8051Normal.h"
+#        --no_path_in_file_macros -I E:\WMNU\IAR_new_arch\Stack_core_src\ -On
+#        --no_cse --no_unroll --no_inline --no_code_motion --no_tbaa
+#        --no_cross_call)
+#    Locale             =  Russian_Russia.1251
+#    List file          =  E:\WMNU\IAR_new_arch\PRG Node\Debug\List\model.lst
+#    Object file        =  E:\WMNU\IAR_new_arch\PRG Node\Debug\Obj\model.r51
+#
+###############################################################################
+
+E:\WMNU\IAR_new_arch\Stack_core_src\model.c
+      1          #include "model.h"
+      2          #include "action_manager.h"
+      3          
+      4          /**
+      5          @file
+      6          */
+      7          
+      8          MODEL_s MODEL;
+      9          
+     10            
+     11          static void SW_Init(void); 
+     12          
+     13          module_s MD_MODULE = {ALIAS(SW_Init)};
+     14          
+     15           
+     16          static void SW_Init(void){}; 
+     17          
+     18          
+
+   Maximum stack usage in bytes:
+
+   ISTACK Function
+   ------ --------
+      0   SW_Init
+
+
+   Segment part sizes:
+
+   Bytes  Function/Label
+   -----  --------------
+       8  ?<Initializer for MD_MODULE>
+       8  MD_MODULE
+     143  MODEL
+       3  SW_Init
+       6  SW_Init::?relay
+
+ 
+   3 bytes in segment BANKED_CODE
+   6 bytes in segment BANK_RELAYS
+   8 bytes in segment XDATA_I
+   8 bytes in segment XDATA_ID
+ 143 bytes in segment XDATA_Z
+ 
+  14 bytes of CODE     memory
+   3 bytes of HUGECODE memory
+ 151 bytes of XDATA    memory
+
+Errors: none
+Warnings: none

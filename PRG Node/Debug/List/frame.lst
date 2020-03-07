@@ -1,0 +1,150 @@
+###############################################################################
+#
+# IAR C/C++ Compiler V10.10.1.4655 for 8051               16/Feb/2020  21:04:30
+# Copyright 2004-2017 IAR Systems AB.
+# PC-locked license - IAR Embedded Workbench for 8051
+#
+#    Core               =  plain
+#    Code model         =  banked
+#    Data model         =  large
+#    Calling convention =  xdata reentrant
+#    Constant location  =  data
+#    Dptr setup         =  1,16
+#                          
+#    Source file        =  E:\WMNU\IAR_new_arch\Stack_core_src\frame.c
+#    Command line       =  
+#        -f C:\Users\08A4~1\AppData\Local\Temp\EW5FD3.tmp
+#        (E:\WMNU\IAR_new_arch\Stack_core_src\frame.c -lc
+#        "E:\WMNU\IAR_new_arch\PRG Node\Debug\List" -o
+#        "E:\WMNU\IAR_new_arch\PRG Node\Debug\Obj" -e --debug --core=plain
+#        --dptr=16,1 --data_model=large --code_model=banked
+#        --calling_convention=xdata_reentrant --place_constants=data
+#        --nr_virtual_regs 8 --dlib_config "C:\Program Files (x86)\IAR
+#        Systems\Embedded Workbench 8.0\8051\LIB\DLIB\dl8051Normal.h"
+#        --no_path_in_file_macros -I E:\WMNU\IAR_new_arch\Stack_core_src\ -On
+#        --no_cse --no_unroll --no_inline --no_code_motion --no_tbaa
+#        --no_cross_call)
+#    Locale             =  Russian_Russia.1251
+#    List file          =  E:\WMNU\IAR_new_arch\PRG Node\Debug\List\frame.lst
+#    Object file        =  E:\WMNU\IAR_new_arch\PRG Node\Debug\Obj\frame.r51
+#
+###############################################################################
+
+E:\WMNU\IAR_new_arch\Stack_core_src\frame.c
+      1          #include "action_manager.h"
+      2          #include "frame.h"
+      3          #include "debug.h"
+      4          #include "global.h"
+      5          #include "mem_utils.h"
+      6          #include "mem_slots.h"
+      7          
+      8          /**
+      9          @file Статическое хранение принятых пакетов
+     10          */
+     11          
+     12          static void SW_Init(void); 
+     13          
+     14          module_s FR_MODULE = {ALIAS(SW_Init)};
+     15          
+     16          static void SW_Init(void){ 
+     17          }; 
+     18          
+     19          struct frame* FR_create(){
+     20            return (struct frame*)SL_alloc();
+     21          };
+     22          
+     23          bool FR_delete(struct frame *frame){
+     24            return SL_free((char*)frame);
+     25          }
+     26          
+     27          bool FR_add_header(struct frame* frame ,void *head, char len){
+     28            int new_len = frame->len + len;
+     29            if (!(new_len < MAX_PAYLOAD_SIZE))
+     30              return false;
+     31            
+     32            // Сдвинем данные на размер вставки при необходимости
+     33            if (frame->len != 0)
+     34              MEMCPY(&frame->payload[len], frame->payload, len);
+     35            
+     36            // Скопируем новые данные
+     37            MEMCPY(frame->payload, head, len);
+     38            frame->len = new_len;
+     39            return true;
+     40          };
+     41          
+     42          bool FR_del_header(struct frame* frame, char len){
+     43            if (len == 0 || len > frame->len )
+     44              return false;
+     45            MEMCPY(frame->payload, &frame->payload[len], len);
+     46            
+     47            #ifdef FRAME_FOOTER_DEL
+     48            MEMSET(&frame->payload[len], 0, len);
+     49            #endif
+     50            
+     51            frame->len = frame->len - len;;
+     52            return true;
+     53          }
+     54          
+     55          int FR_busy(){
+     56            return SL_busy();
+     57          }
+     58          
+     59          int FR_available(){
+     60            return SL_available();
+     61          };
+
+   Maximum stack usage in bytes:
+
+   ISTACK XSTACK Function
+   ------ ------ --------
+      1     23   FR_add_header
+        0     23   -> MEM_memcpy
+      2      0   FR_available
+        2      0   -> SL_available
+      2      0   FR_busy
+        2      0   -> SL_busy
+      2      0   FR_create
+        2      0   -> SL_alloc
+      1     18   FR_del_header
+        0     18   -> MEM_memcpy
+        0     18   -> MEM_memset
+      0      9   FR_delete
+        0      9   -> SL_free
+      0      0   SW_Init
+
+
+   Segment part sizes:
+
+   Bytes  Function/Label
+   -----  --------------
+       4  ?<Constant {(char *)0, 0, 0}>
+       4  ?<Initializer for <Constant {(char *)0, 0, 0}>
+       8  ?<Initializer for FR_MODULE>
+       8  FR_MODULE
+     214  FR_add_header
+       6  FR_add_header::?relay
+      14  FR_available
+       6  FR_available::?relay
+      14  FR_busy
+       6  FR_busy::?relay
+      14  FR_create
+       6  FR_create::?relay
+     181  FR_del_header
+       6  FR_del_header::?relay
+      21  FR_delete
+       6  FR_delete::?relay
+       3  SW_Init
+       6  SW_Init::?relay
+
+ 
+ 461 bytes in segment BANKED_CODE
+  42 bytes in segment BANK_RELAYS
+  12 bytes in segment XDATA_I
+  12 bytes in segment XDATA_ID
+ 
+  54 bytes of CODE     memory
+ 461 bytes of HUGECODE memory
+  12 bytes of XDATA    memory
+
+Errors: none
+Warnings: none

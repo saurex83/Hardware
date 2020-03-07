@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workspace>
+    <project>
+        <path>$WS_DIR$\PRJ Test\tests.ewp</path>
+    </project>
+    <project>
+        <path>$WS_DIR$\PRG Node\tnode.ewp</path>
+    </project>
+    <project>
+        <path>$WS_DIR$\PRG Transmiter\transmiter.ewp</path>
+    </project>
+    <batchBuild />
+</workspace>

@@ -1,0 +1,95 @@
+###############################################################################
+#
+# IAR C/C++ Compiler V10.10.1.4655 for 8051               16/Feb/2020  20:56:06
+# Copyright 2004-2017 IAR Systems AB.
+# PC-locked license - IAR Embedded Workbench for 8051
+#
+#    Core               =  plain
+#    Code model         =  banked
+#    Data model         =  large
+#    Calling convention =  xdata reentrant
+#    Constant location  =  data
+#    Dptr setup         =  1,16
+#                          
+#    Source file        =  E:\WMNU\IAR_new_arch\Stack_core_src\dma.c
+#    Command line       =  
+#        -f C:\Users\08A4~1\AppData\Local\Temp\EWB0FE.tmp
+#        (E:\WMNU\IAR_new_arch\Stack_core_src\dma.c -lc
+#        "E:\WMNU\IAR_new_arch\PRG Node\Debug\List" -o
+#        "E:\WMNU\IAR_new_arch\PRG Node\Debug\Obj" -e --debug --core=plain
+#        --dptr=16,1 --data_model=large --code_model=banked
+#        --calling_convention=xdata_reentrant --place_constants=data
+#        --nr_virtual_regs 8 --dlib_config "C:\Program Files (x86)\IAR
+#        Systems\Embedded Workbench 8.0\8051\LIB\DLIB\dl8051Normal.h"
+#        --no_path_in_file_macros -I E:\WMNU\IAR_new_arch\Stack_core_src\ -On
+#        --no_cse --no_unroll --no_inline --no_code_motion --no_tbaa
+#        --no_cross_call)
+#    Locale             =  Russian_Russia.1251
+#    List file          =  E:\WMNU\IAR_new_arch\PRG Node\Debug\List\dma.lst
+#    Object file        =  E:\WMNU\IAR_new_arch\PRG Node\Debug\Obj\dma.r51
+#
+###############################################################################
+
+E:\WMNU\IAR_new_arch\Stack_core_src\dma.c
+      1          #include "dma.h"
+      2          #include "ioCC2530.h"
+      3          #include "action_manager.h"
+      4          
+      5          static void HW_Init(void);
+      6          module_s DMA_MODULE = {ALIAS(HW_Init)};
+      7          
+      8            
+      9          DMA_s DMA_CH[5];
+     10          
+     11          /**
+     12          @brief Настройка DMA каналов.
+     13          @detail Согласно документации каналы 1-4 идут последовательно
+     14          */
+     15          static void HW_Init(void){
+     16              // Настроим канал 0 DMA для загрузки данных в AES
+     17            uint16_t CONF_ADDR = (uint16_t)&DMA_CH[0];
+     18            DMA0CFGH = CONF_ADDR >> 8;
+     19            DMA0CFGL = CONF_ADDR & 0xFF;
+     20            
+     21            // Настроим канал 1 DMA для выгрузки данных из AES
+     22            CONF_ADDR = (uint16_t)&DMA_CH[1];
+     23            DMA1CFGH = CONF_ADDR >> 8;
+     24            DMA1CFGL = CONF_ADDR & 0xFF;
+     25          }
+
+   Maximum stack usage in bytes:
+
+   ISTACK Function
+   ------ --------
+      0   HW_Init
+
+
+   Segment part sizes:
+
+   Bytes  Function/Label
+   -----  --------------
+       8  ?<Initializer for DMA_MODULE>
+       1  DMA0CFGH
+       1  DMA0CFGL
+       1  DMA1CFGH
+       1  DMA1CFGL
+      40  DMA_CH
+       8  DMA_MODULE
+      37  HW_Init
+       6  HW_Init::?relay
+
+ 
+ 37 bytes in segment BANKED_CODE
+  6 bytes in segment BANK_RELAYS
+  4 bytes in segment SFR_AN
+  8 bytes in segment XDATA_I
+  8 bytes in segment XDATA_ID
+ 40 bytes in segment XDATA_Z
+ 
+ 14 bytes of CODE     memory
+  0 bytes of DATA     memory (+ 4 bytes shared)
+ 37 bytes of HUGECODE memory
+ 48 bytes of XDATA    memory
+
+Errors: none
+Warnings: none

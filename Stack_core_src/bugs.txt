@@ -1,0 +1,4 @@
+В модуле buffer.c
+Фун-я _remove вернет true если пакета небыло!
+и неверно будет посчитанно кол-во RX_BUFF_FRAME_COUNT
+RX_BUFF_FRAME_COUNT--; // ОШБКА TRUE верентся если и не удалил!!

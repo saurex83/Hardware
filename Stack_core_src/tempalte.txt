@@ -1,0 +1,47 @@
+#include "model.h"
+#include "action_manager.h"
+
+
+/**
+@file
+*/
+
+// Определения
+// Локальные переменные
+// Локальные функции
+
+
+static void HW_Init(void);  
+static void SW_Init(void); 
+static void Sleep(void); 
+static void Wakeup(void); 
+static void Cold_Start(void); 
+static void Hot_Start(void); 
+
+module_s TM_MODULE = {ALIAS(HW_Init),ALIAS(SW_Init),ALIAS(Sleep),
+  ALIAS(Wakeup),ALIAS(Cold_Start), ALIAS(Hot_Start)};
+
+static void HW_Init(void){};  
+static void SW_Init(void){}; 
+static void Sleep(void){}; 
+static void Wakeup(void){}; 
+static void Cold_Start(void){}; 
+static void Hot_Start(void){};
+
+
+
+
+#include "utest.h"
+static int test1(void);
+struct test_unit UT_MS_1 = {.name = "DEBUG MODUL", .fun = test1};
+
+#include "mem_slots.h"
+
+
+
+static int test1(void){
+  int test_res = 0;
+  
+  return test_res;
+}
+

@@ -1,0 +1,710 @@
+###############################################################################
+#
+# IAR C/C++ Compiler V10.10.1.4655 for 8051               16/Feb/2020  21:04:30
+# Copyright 2004-2017 IAR Systems AB.
+# PC-locked license - IAR Embedded Workbench for 8051
+#
+#    Core               =  plain
+#    Code model         =  banked
+#    Data model         =  large
+#    Calling convention =  xdata reentrant
+#    Constant location  =  data
+#    Dptr setup         =  1,16
+#                          
+#    Source file        =  E:\WMNU\IAR_NEW_ARCH\STACK_CORE_SRC\coder.c
+#    Command line       =  
+#        -f C:\Users\08A4~1\AppData\Local\Temp\EW5AFE.tmp
+#        (E:\WMNU\IAR_NEW_ARCH\STACK_CORE_SRC\coder.c -lc
+#        "E:\WMNU\IAR_new_arch\PRG Node\Debug\List" -o
+#        "E:\WMNU\IAR_new_arch\PRG Node\Debug\Obj" -e --debug --core=plain
+#        --dptr=16,1 --data_model=large --code_model=banked
+#        --calling_convention=xdata_reentrant --place_constants=data
+#        --nr_virtual_regs 8 --dlib_config "C:\Program Files (x86)\IAR
+#        Systems\Embedded Workbench 8.0\8051\LIB\DLIB\dl8051Normal.h"
+#        --no_path_in_file_macros -I E:\WMNU\IAR_new_arch\Stack_core_src\ -On
+#        --no_cse --no_unroll --no_inline --no_code_motion --no_tbaa
+#        --no_cross_call)
+#    Locale             =  Russian_Russia.1251
+#    List file          =  E:\WMNU\IAR_new_arch\PRG Node\Debug\List\coder.lst
+#    Object file        =  E:\WMNU\IAR_new_arch\PRG Node\Debug\Obj\coder.r51
+#
+###############################################################################
+
+E:\WMNU\IAR_NEW_ARCH\STACK_CORE_SRC\coder.c
+      1          #include "coder.h"
+      2          #include "ioCC2530.h"
+      3          #include "string.h"
+      4          #include "ustimer.h" // Для профилирования, Отладка
+      5          #include "dma.h"
+      6          #include "action_manager.h"
+      7          #include "model.h"
+      8          #include "mem_utils.h"
+      9          
+     10          static void HW_Init(void);
+     11          module_s CODER_MODULE = {ALIAS(HW_Init)};
+     12          
+     13          #define AES_START()  {ENCCS |= 0x01;} //!< Запуск выполнения команды  
+     14          #define AES_SET_MODE(mode) {ENCCS &= ~0x70; ENCCS |= mode;} //!< Установка режима
+     15          #define AES_SET_OPERATION(op) {ENCCS = (ENCCS & ~0x07) | op;} 
+     16          #define AES_RDY() (ENCCS & 8) //!< Состояние модуля
+     17          
+     18          #define BV(n)                   (1 << (n))
+     19          #define MIC_2_MICLEN(m)         (BV((m&3)+1) & ~3)
+     20          
+     21          // Режимы шифрования
+     22          #define AES_MODE_CBC            0x00
+     23          #define AES_MODE_CFB            0x10
+     24          #define AES_MODE_OFB            0x20
+     25          #define AES_MODE_CTR            0x30
+     26          #define AES_MODE_ECB            0x40
+     27          #define AES_MODE_CBCMAC         0x50
+     28          
+     29          // Операции 
+     30          #define AES_ENCRYPT             0x00
+     31          #define AES_DECRYPT             0x02
+     32          #define AES_LOAD_KEY            0x04
+     33          #define AES_LOAD_IV             0x06
+     34          
+     35          #define ENC_DW 29 // DMA AES тригер запрос загрузки
+     36          #define ENC_UP 30 // DMA AES тригер запрос выгрузки
+     37          
+     38          #define STREAM_ENC_MODE     AES_MODE_OFB //!< Метод шифрования потока данных
+     39          
+     40          
+     41          // Приватные функции
+     42          static inline uint8_t generateAuthData(uint8_t *src, uint8_t *nonce, uint8_t c,
+     43                                                 uint8_t f, uint8_t lm);
+     44          static void CBCMAC_buf_encrypt(uint8_t len, uint8_t *key, uint8_t *mac);
+     45          
+     46          /**
+     47          @brief Локальный буфер для работы режима CCM
+     48          @detail 128 длина сообщения. 18 длинна блока B0 и строки состояния.
+     49           16 длина дополнения нулями
+     50          */
+     51          static uint8_t buf[128+18+16]; 
+     52          
+     53          
+     54          typedef struct //!< Структура блока B0 для режима CCM
+     55          {
+     56            struct 
+     57            {
+     58              uint8_t L:3;
+     59              uint8_t M:3;
+     60              uint8_t A_Data:1;
+     61            } flag;
+     62            uint16_t nonce[9];
+     63            uint8_t L_M[6];
+     64          } __attribute__((packed)) B0_s;
+     65          
+     66          typedef struct //!< Структура блока A0 для режима CCM
+     67          {
+     68            struct 
+     69            {
+     70              uint8_t L:3;
+     71            } flag;
+     72            uint8_t nonce[11];
+     73            uint8_t ctr;
+     74          } __attribute__((packed)) A0_s;
+     75          
+     76          
+     77          
+     78          /**
+     79          @brief Иницилизация модуля
+     80          @detail Модуль использует DMA каналы 0 и 1
+     81          */
+     82          void HW_Init(void)
+     83          {
+     84            char STREAM_KEY[16] = DEFAULT_STREAM_KEY;
+     85            char STREAM_IV[16] = DEFAULT_STREAM_IV;
+     86            char CCM_KEY[16] = DEFAULT_CCM_KEY;
+     87            char CCM_IV[16] = DEFAULT_CCM_IV;
+     88            MEMCPY(MODEL.AES.STREAM_KEY, STREAM_KEY, 16);
+     89            MEMCPY(MODEL.AES.STREAM_IV, STREAM_IV, 16);
+     90            MEMCPY(MODEL.AES.CCM_KEY, CCM_KEY, 16);
+     91            MEMCPY(MODEL.AES.CCM_IV, CCM_IV, 16);
+     92            
+     93            //DMA_AES_s DMA_CH[0]; //!< DMA на запись будет DMA[0]
+     94            //DMA_AES_s DMA_CH[1]; //!< DMA на чтение DMA_CH[1]
+     95            
+     96            ST_DEF(DMA_CH[0], DSTADDRH, 0x70); // Пишем данные XENCDI = 0xB1 
+     97            ST_DEF(DMA_CH[0], DSTADDRL, 0xB1); //  
+     98            ST_DEF(DMA_CH[0], PRIORITY, 0x00); // Низкий приоритет
+     99            ST_DEF(DMA_CH[0], M8, 0x00); // Используем 8 бит для счетика длинны
+    100            ST_DEF(DMA_CH[0], IRQMASK, 0x00); // Запрещаем генерировать перывания
+    101            ST_DEF(DMA_CH[0], DESTINC, 0x00); // Не увеличиваем адресс назначения
+    102            ST_DEF(DMA_CH[0], SRCINC, 0x01); // Увеличиваем адресс источника
+    103            ST_DEF(DMA_CH[0], TRIG, ENC_DW); // Тригер по загрузке
+    104            ST_DEF(DMA_CH[0], WORDSIZE, 0x00); // Копируем по 1 байту
+    105            ST_DEF(DMA_CH[0], TMODE, 0x01); //  Блочное копирование по тригеру
+    106            ST_DEF(DMA_CH[0], VLEN, 0x00); //  Количество байт определяет поле LEN  
+    107            ST_DEF(DMA_CH[0], LENH, 0x00); 
+    108            
+    109            ST_DEF(DMA_CH[1], SRCADDRH, 0x70); // Читаем данные из X_ENCDO  
+    110            ST_DEF(DMA_CH[1], SRCADDRL, 0xB2);  
+    111            ST_DEF(DMA_CH[1], PRIORITY, 0x00); // Низкий приоритет
+    112            ST_DEF(DMA_CH[1], M8, 0x00); // Используем 8 бит для счетика длинны
+    113            ST_DEF(DMA_CH[1], IRQMASK, 0x00); // Запрещаем генерировать перывания
+    114            ST_DEF(DMA_CH[1], DESTINC, 0x01); // Увеличиваем адресс назначения
+    115            ST_DEF(DMA_CH[1], SRCINC, 0x00); // Не увеличиваем адресс источника
+    116            ST_DEF(DMA_CH[1], TRIG, ENC_UP); // Тригер по выгрузке
+    117            ST_DEF(DMA_CH[1], WORDSIZE, 0x00); // Копируем по 1 байту
+    118            ST_DEF(DMA_CH[1], TMODE, 0x01); //  Блочное копирование по тригеру
+    119            ST_DEF(DMA_CH[1], VLEN, 0x00); //  Количество байт определяет поле LEN  
+    120            ST_DEF(DMA_CH[1], LENH, 0x00); 
+    121          }
+    122          
+    123          /**
+    124          @brief Шифрует/дешифрует поток данных во время радиопередачи. Без проверки MIC
+    125          @param[in] enc_mode Режим работы процедуры. true - шифрование.
+    126          @param[in] src Указатель на данные подлежащии шифрованию
+    127          @param[in] dst Указтель куда будут помещены зашифрованные данные
+    128          @param[in] key Указатье на ключ. 16 байт
+    129          @param[in] iv  Указатель на вектор иницилизации. 16 байт 
+    130          @param[in] len Длинна данных
+    131          */
+    132          void AES_StreamCoder(bool enc_mode, char *src, char *dst, uint8_t len)
+    133          {
+    134            // Установим метод кодироваения
+    135            AES_SET_MODE(STREAM_ENC_MODE);
+    136            uint8_t *key = (uint8_t*)MODEL.AES.STREAM_KEY;  
+    137            uint8_t *iv = (uint8_t*)MODEL.AES.STREAM_IV; 
+    138            // Загружаем ключ
+    139            AES_SET_OPERATION(AES_LOAD_KEY);
+    140            ST_DEF(DMA_CH[0], SRCADDRL, LADDR(key));
+    141            ST_DEF(DMA_CH[0], SRCADDRH, HADDR(key));
+    142            ST_DEF(DMA_CH[0], LENL, 16);
+    143            DMAARM |= 0x01;
+    144            while(!AES_RDY());
+    145            AES_START();
+    146            while (DMAARM&0x01);
+    147          
+    148            // Загружаем IV
+    149            AES_SET_OPERATION(AES_LOAD_IV);
+    150            ST_DEF(DMA_CH[0], SRCADDRL, LADDR(iv));
+    151            ST_DEF(DMA_CH[0], SRCADDRH, HADDR(iv));
+    152            ST_DEF(DMA_CH[0], LENL, 16);
+    153            DMAARM |= 0x01;
+    154            while(!AES_RDY());
+    155            AES_START();
+    156            while (DMAARM&0x01);
+    157          
+    158            // Установим необходимую операцию AES
+    159            if (enc_mode) 
+    160              AES_SET_OPERATION(AES_ENCRYPT)
+    161            else 
+    162              AES_SET_OPERATION(AES_DECRYPT)
+    163            
+    164            switch(STREAM_ENC_MODE) 
+    165            {
+    166            case AES_MODE_ECB: // ECB, CBC не реализованы
+    167            case AES_MODE_CBC:
+    168              break;
+    169            case AES_MODE_CFB:
+    170            case AES_MODE_OFB:
+    171            case AES_MODE_CTR:
+    172              {
+    173                // Загрузка блоками по 128 бит с разделением на под-блоки по 32 бита
+    174                uint8_t nbrBlocks = len / 16; // Количество целых блоков по 128 бит
+    175                uint8_t ptr, sub_ptr; // Смещение
+    176                char *download, *upload;
+    177                
+    178                // Для этих типов шифрования длина блоков по 4 байта
+    179                ST_DEF(DMA_CH[0], LENL, 4);
+    180                ST_DEF(DMA_CH[1], LENL, 4);
+    181                
+    182                // Шифруем все целые блоки
+    183                for (uint8_t block = 0; block < nbrBlocks; block ++)
+    184                {
+    185                  ptr = 16 * block;
+    186                  while(!AES_RDY());
+    187                  AES_START();
+    188                  for (uint8_t j = 0; j < 4; j++)
+    189                  {
+    190                    sub_ptr = ptr + 4*j;
+    191                    download = &src[sub_ptr];
+    192                    upload = &dst[sub_ptr];
+    193                    // Указываем адресс DMA откуда читать данные
+    194                    ST_DEF(DMA_CH[0], SRCADDRL, LADDR(download));
+    195                    ST_DEF(DMA_CH[0], SRCADDRH, HADDR(download));
+    196                    // Указываем адрес DMA куда записывать данные          
+    197                    ST_DEF(DMA_CH[1], DSTADDRL, LADDR(upload));
+    198                    ST_DEF(DMA_CH[1], DSTADDRH, HADDR(upload));
+    199                    // Активируем DMA
+    200                    DMAARM |= 0x03;  
+    201                    DMAREQ |= 0x01;
+    202                    while (DMAARM&0x03);          
+    203                  }
+    204                }     
+    205                // Шифруем последний блок
+    206                uint8_t block_len = len % 16; // Размер последнего блока
+    207                
+    208                // Завершаем работу если блок пустой
+    209                if (!block_len)
+    210                  return;
+    211                
+    212                char padding_block[16]; // Блок заполненый нулями
+    213                ptr = 16*nbrBlocks; // Смещение на первый байт последнего блока в src
+    214                memset(padding_block, 0x00, sizeof(padding_block)); // Заполняем нулями
+    215                memcpy(padding_block, &src[ptr], block_len); // Копируем данные
+    216                
+    217                while(!AES_RDY());
+    218                AES_START();
+    219                for (uint8_t j = 0; j < 4; j++)
+    220                  {
+    221                    sub_ptr = 4*j;
+    222                    download = &padding_block[sub_ptr];
+    223                    // Указываем адресс DMA откуда читать данные
+    224                    ST_DEF(DMA_CH[0], SRCADDRL, LADDR(download));
+    225                    ST_DEF(DMA_CH[0], SRCADDRH, HADDR(download));
+    226                    // Указываем аддрес DMA куда записывать данные          
+    227                    ST_DEF(DMA_CH[1], DSTADDRL, LADDR(download));
+    228                    ST_DEF(DMA_CH[1], DSTADDRH, HADDR(download));
+    229                    // Активируем DMA
+    230                    DMAARM |= 0x03;  
+    231                    DMAREQ |= 0x01;
+    232                    while (DMAARM&0x03);
+    233                  }
+    234                memcpy(&dst[ptr], padding_block, block_len); // Копируем в src
+    235                
+    236              } //CASE
+    237              
+    238              break;
+    239            } 
+    240          }
+    241          
+    242          /**
+    243          @brief Шифрует/дешифрует поток данных во время радиопередачи. Без проверки MIC
+    244          @param[in] enc_mode Режим работы процедуры. true - шифрование.
+    245          @param[in] src Указатель на данные подлежащии шифрованию
+    246          @param[in] dst Указтель куда будут помещены зашифрованные данные
+    247          @param[in] key Указатье на ключ. 16 байт
+    248          @param[in] iv  Указатель на вектор иницилизации. 16 байт 
+    249          @param[in] len Длинна данных
+    250          */
+    251          static void CTR_enc_decrypt(bool enc_mode, uint8_t *src, uint8_t *dst, uint8_t *key,
+    252                                   uint8_t *iv, uint8_t len)
+    253          {
+    254            // Установим метод кодироваения
+    255            AES_SET_MODE(AES_MODE_CTR);
+    256            
+    257            // Загружаем ключ
+    258            AES_SET_OPERATION(AES_LOAD_KEY);
+    259            ST_DEF(DMA_CH[0], SRCADDRL, LADDR(key));
+    260            ST_DEF(DMA_CH[0], SRCADDRH, HADDR(key));
+    261            ST_DEF(DMA_CH[0], LENL, 16);
+    262            DMAARM |= 0x01;
+    263            while(!AES_RDY());
+    264            AES_START();
+    265            while (DMAARM&0x01);
+    266          
+    267            // Загружаем IV
+    268            AES_SET_OPERATION(AES_LOAD_IV);
+    269            ST_DEF(DMA_CH[0], SRCADDRL, LADDR(iv));
+    270            ST_DEF(DMA_CH[0], SRCADDRH, HADDR(iv));
+    271            ST_DEF(DMA_CH[0], LENL, 16);
+    272            DMAARM |= 0x01;
+    273            while(!AES_RDY());
+    274            AES_START();
+    275            while (DMAARM&0x01);
+    276          
+    277            // Установим необходимую операцию AES
+    278            if (enc_mode) 
+    279              AES_SET_OPERATION(AES_ENCRYPT)
+    280            else 
+    281              AES_SET_OPERATION(AES_DECRYPT)
+    282            
+    283            // Загрузка блоками по 128 бит с разделением на под-блоки по 32 бита
+    284            uint8_t nbrBlocks = len / 16; // Количество целых блоков по 128 бит
+    285            uint8_t ptr, sub_ptr; // Смещение
+    286            uint8_t *download, *upload;
+    287                
+    288            // Для этих типов шифрования длина блоков по 4 байта
+    289            ST_DEF(DMA_CH[0], LENL, 4);
+    290            ST_DEF(DMA_CH[1], LENL, 4);
+    291                
+    292            // Шифруем все целые блоки
+    293            for (uint8_t block = 0; block < nbrBlocks; block ++)
+    294              {
+    295                ptr = 16 * block;
+    296                while(!AES_RDY());
+    297                AES_START();
+    298                for (uint8_t j = 0; j < 4; j++)
+    299                  {
+    300                    sub_ptr = ptr + 4*j;
+    301                    download = &src[sub_ptr];
+    302                    upload = &dst[sub_ptr];
+    303                    // Указываем адресс DMA откуда читать данные
+    304                    ST_DEF(DMA_CH[0], SRCADDRL, LADDR(download));
+    305                    ST_DEF(DMA_CH[0], SRCADDRH, HADDR(download));
+    306                    // Указываем адрес DMA куда записывать данные          
+    307                    ST_DEF(DMA_CH[1], DSTADDRL, LADDR(upload));
+    308                    ST_DEF(DMA_CH[1], DSTADDRH, HADDR(upload));
+    309                    // Активируем DMA
+    310                    DMAARM |= 0x03;  
+    311                    DMAREQ |= 0x01;
+    312                    while (DMAARM&0x03);          
+    313                  }
+    314              }     
+    315              // Шифруем последний блок
+    316              uint8_t block_len = len % 16; // Размер последнего блока
+    317                
+    318              // Завершаем работу если блок пустой
+    319              if (!block_len)
+    320                return;
+    321                
+    322              uint8_t padding_block[16]; // Блок заполненый нулями
+    323              ptr = 16*nbrBlocks; // Смещение на первый байт последнего блока в src
+    324              memset(padding_block, 0x00, sizeof(padding_block)); // Заполняем нулями
+    325              memcpy(padding_block, &src[ptr], block_len); // Копируем данные
+    326              
+    327              while(!AES_RDY());
+    328              AES_START();
+    329              for (uint8_t j = 0; j < 4; j++)
+    330                {
+    331                  sub_ptr = 4*j;
+    332                  download = &padding_block[sub_ptr];
+    333                  // Указываем адресс DMA откуда читать данные
+    334                  ST_DEF(DMA_CH[0], SRCADDRL, LADDR(download));
+    335                  ST_DEF(DMA_CH[0], SRCADDRH, HADDR(download));
+    336                  // Указываем аддрес DMA куда записывать данные          
+    337                  ST_DEF(DMA_CH[1], DSTADDRL, LADDR(download));
+    338                  ST_DEF(DMA_CH[1], DSTADDRH, HADDR(download));
+    339                  // Активируем DMA
+    340                  DMAARM |= 0x03;  
+    341                  DMAREQ |= 0x01;
+    342                  while (DMAARM&0x03);
+    343                }
+    344              memcpy(&dst[ptr], padding_block, block_len); // Копируем в src
+    345          }
+    346          
+    347          /**
+    348          @brief Зашифровывает buf в режиме CBC-MAC с IV = 0
+    349          @param[in] len улинна последовательности для вычисления MAC
+    350          @param[out] mac указатель на память куда будет записан mac (до 16 байт)
+    351          */
+    352          static void CBCMAC_buf_encrypt(uint8_t len, uint8_t *key, uint8_t *mac)
+    353          {
+    354            uint8_t IV[16];
+    355            
+    356            // Заполняем вектор нулями
+    357            memset(IV, 0x00, sizeof(IV));
+    358            
+    359            // Установим метод кодироваения
+    360            AES_SET_MODE(AES_MODE_CBCMAC);  
+    361            
+    362            { // Сворачиваем код для улучшения чтения
+    363            // Загружаем ключ
+    364            AES_SET_OPERATION(AES_LOAD_KEY);
+    365            ST_DEF(DMA_CH[0], SRCADDRL, LADDR(key));
+    366            ST_DEF(DMA_CH[0], SRCADDRH, HADDR(key));
+    367            ST_DEF(DMA_CH[0], LENL, 16);
+    368            DMAARM |= 0x01;
+    369            while(!AES_RDY());
+    370            AES_START();
+    371            while (DMAARM&0x01);
+    372          
+    373            // Загружаем IV
+    374            AES_SET_OPERATION(AES_LOAD_IV);
+    375            ST_DEF(DMA_CH[0], SRCADDRL, LADDR(IV));
+    376            ST_DEF(DMA_CH[0], SRCADDRH, HADDR(IV));
+    377            ST_DEF(DMA_CH[0], LENL, 16);
+    378            DMAARM |= 0x01;
+    379            while(!AES_RDY());
+    380            AES_START();
+    381            while (DMAARM&0x01);
+    382            };
+    383            
+    384            // Устанавливаем операцию шифрования
+    385            AES_SET_OPERATION(AES_ENCRYPT);
+    386            
+    387            // Загрузка блоками по 128 бит
+    388            uint8_t nbrBlocks = len / 16; // Количество целых блоков по 128 бит
+    389            uint8_t block_len = len % 16; // Размер последнего блока
+    390            uint8_t ptr; // Смещение
+    391                
+    392            // Для этого типа шифрования длина блоков по 16 байт
+    393            ST_DEF(DMA_CH[0], LENL, 16);
+    394            // Устанавливаем куда будем выгружать вычисленный MAC
+    395            ST_DEF(DMA_CH[1], DSTADDRL, LADDR(mac));
+    396            ST_DEF(DMA_CH[1], DSTADDRH, HADDR(mac));
+    397            ST_DEF(DMA_CH[1], LENL, 16);
+    398            
+    399            // Шифруем все целые блоки
+    400            for (uint8_t block = 0; block < nbrBlocks; block ++)
+    401              {
+    402                // Последний блок шифруем в режиме CBC при условии что нет блок не 
+    403                // кратного 16 байтам.
+    404                if (!block_len && (block == nbrBlocks - 1))
+    405                  AES_SET_MODE(AES_MODE_CBC);
+    406                    
+    407                ptr = 16 * block;
+    408                while(!AES_RDY());
+    409                AES_START();
+    410                // Указываем адресс DMA откуда читать данные
+    411                ST_DEF(DMA_CH[0], SRCADDRL, LADDR(buf[ptr]));
+    412                ST_DEF(DMA_CH[0], SRCADDRH, HADDR(buf[ptr]));
+    413                // Активируем DMA
+    414                DMAARM |= 0x01;  
+    415                // Активируем выгрузку только последнего блока
+    416                if (!block_len && (block == nbrBlocks - 1))
+    417                  DMAARM |= 0x03;
+    418                
+    419                DMAREQ |= 0x01;
+    420                while (DMAARM&0x03);          
+    421               }
+    422                 
+    423            // Шифруем последний блок в режиме CBC
+    424            AES_SET_MODE(AES_MODE_CBC);
+    425                    
+    426            // Завершаем работу если блок пустой
+    427            if (!block_len)
+    428              return;
+    429                
+    430            uint8_t padding_block[16]; // Блок заполненый нулями
+    431            ptr = 16*nbrBlocks; // Смещение на первый байт последнего блока в src
+    432            memset(padding_block, 0x00, sizeof(padding_block)); // Заполняем нулями
+    433            memcpy(padding_block, &buf[ptr], block_len); // Копируем данные
+    434                
+    435            while(!AES_RDY());
+    436            AES_START();
+    437            // Указываем адресс DMA откуда читать данные
+    438            ST_DEF(DMA_CH[0], SRCADDRL, LADDR(padding_block));
+    439            ST_DEF(DMA_CH[0], SRCADDRH, HADDR(padding_block));
+    440            // Активируем DMA и выгрузку MAC
+    441            DMAARM |= 0x03;  
+    442            DMAREQ |= 0x01;
+    443            while (DMAARM&0x03);
+    444          }
+    445          
+    446          static inline uint8_t generateAuthData(uint8_t *src, uint8_t *nonce, uint8_t c,
+    447                                                 uint8_t f, uint8_t lm)
+    448          {
+    449            memcpy(buf, nonce,16);
+    450            
+    451            // Буфер от 0 до 15 байта специальный блок B0
+    452            // Настраиваем флаг. У нас длинна 2 байта. nonce 13 байт => L_M = L-1=0x01
+    453            buf[0]=  0x01;  
+    454            // Если есть данные для авторизации установим A_Data 
+    455            if (f > 0)
+    456              buf[0] |= 0x40;
+    457            
+    458            buf[0] |= ((lm - 2) / 2 ) << 3;   // см. документацию M'= (lm-2) / 2;
+    459            
+    460            // Устанавливаем длинну сообщения
+    461            buf[14] = 0x00;
+    462            buf[15] = c;
+    463            
+    464            // Добавляем строку авторизации L(a). если данных нет, то она пустая. f=0
+    465            buf[16]= 0;
+    466            buf[17]= f;
+    467            
+    468            // Копируем данные авторизации в буфер
+    469            memcpy(&buf[18], src, f);
+    470            
+    471            // Смещение на следующий байт после данных авторизации.
+    472            // Данные авторизации занимают положение в буфере [18, 18+f]
+    473            uint8_t ptr_end= 18 + f;
+    474            // Заполняем нулями до границы 16 байт  
+    475            while (ptr_end & 0x0f)
+    476              buf[ptr_end++] = 0x00;
+    477            
+    478            // Копируем данные для шифрования в буфер после нулей
+    479            memcpy(&buf[ptr_end], &src[f], c);
+    480            
+    481            // Возвращаем размер данных в буфере
+    482            return ptr_end+c;
+    483          };
+    484          
+    485          /**
+    486          @brief Шифрует/дешифрует данные с проверкой MIC
+    487          @param[in] src Указатель на данные подлежащии шифрованию
+    488          @param[in] len Размер данных
+    489          @param[in] с Количество байт для шифрования
+    490          @param[in] f Количество байт для авторизации
+    491          @param[in] m Размер MIC (m=1,2,3 l(m) = 4,8,16 байт)
+    492          @param[in] iv  Указатель на вектор иницилизации. 16 байт 
+    493          @param[in] len Длинна данных
+    494          @param[in,out] MIC Указатель на массив соответсвующий длинне (4,8,16 байт)
+    495          */
+    496          void AES_CCMEncrypt( uint8_t *src, uint8_t c, uint8_t f, uint8_t m, uint8_t *MIC)
+    497          {
+    498            uint8_t *key = (uint8_t*)MODEL.AES.CCM_KEY;  
+    499            uint8_t *nonce = (uint8_t*)MODEL.AES.CCM_IV; 
+    500            uint8_t lm = MIC_2_MICLEN(m);
+    501            
+    502            // Генерируем данные для авторизации
+    503            uint8_t dlen = generateAuthData(src, nonce, c, f, lm);
+    504            
+    505            uint8_t mac[16]; // Сюда пишем мак
+    506            CBCMAC_buf_encrypt(dlen, key, mac);
+    507            
+    508            // Шифруем MAC
+    509            uint8_t CTR_IV[16];
+    510            memcpy(CTR_IV, nonce, 16);
+    511            CTR_IV[0] = 0x01; // Флаг режима CTR
+    512            CTR_IV[15] = 0;   // Значение счетчика
+    513            CTR_enc_decrypt(true, mac, mac, key, CTR_IV, 16);
+    514            
+    515            // Шифруем текст. он имеет размер 'c' и находится в буфере начиная с
+    516            // dlen-c, dlen
+    517            uint8_t ds = dlen - c; // Начало данных для шифрования
+    518            
+    519            // 0x0F & (16 - (dlen & 0x0f)) оставляет числа от 0 до 15  
+    520            memset(buf+dlen, 0x00, 0x0F & (16 - (dlen & 0x0f)) ); // Дополняем нулями
+    521            CTR_IV[15] = 1; // Счетчик CTR
+    522            CTR_enc_decrypt(true, &buf[ds], &buf[ds], key, CTR_IV, c); // Шифруем
+    523            
+    524            // Заполняем буфер буфер src. src[0,f] это данные авторизации. 
+    525            // src[f, f+c] это шифрованные данные.
+    526            memcpy(&src[f], &buf[ds], c); 
+    527            memcpy(MIC, mac, lm);
+    528            
+    529            //https://github.com/zhaohengyi/CC2530Example/blob/
+    530            //master/source/components/radios/cc2530/hal_rf_security.c
+    531          }
+    532          
+    533          /**
+    534          @brief Дешифрует данные с проверкой MIC
+    535          @param[in] src Указатель на данные подлежащии шифрованию
+    536          @param[in] len Размер данных
+    537          @param[in] с Количество байт для шифрования
+    538          @param[in] f Количество байт для авторизации
+    539          @param[in] m Размер MIC (m=1,2,3 l(m) = 4,8,16 байт)
+    540          @param[in] iv  Указатель на вектор иницилизации. 16 байт 
+    541          @param[in] len Длинна данных
+    542          @param[in,out] MIC Указатель на массив соответсвующий длинне (4,8,16 байт)
+    543          */
+    544          bool AES_CCMDecrypt( uint8_t *src, uint8_t c, uint8_t f, uint8_t m, uint8_t *MIC)
+    545          {
+    546            uint8_t *key = (uint8_t*)MODEL.AES.CCM_KEY;  
+    547            uint8_t *nonce = (uint8_t*)MODEL.AES.CCM_IV;  
+    548            uint8_t lm = MIC_2_MICLEN(m);
+    549            
+    550            // Расшифровываем MAC
+    551            uint8_t mac[16]; // Расшифрованый мак
+    552            uint8_t CTR_IV[16];
+    553            memcpy(CTR_IV, nonce, 16);
+    554            CTR_IV[0] = 0x01; // Флаг режима CTR
+    555            CTR_IV[15] = 0;   // Значение счетчика
+    556            CTR_enc_decrypt(false, MIC, mac, key, CTR_IV, lm);  
+    557            
+    558            // Генерируем данные для авторизации
+    559            uint8_t dlen = generateAuthData(src, nonce, c, f, lm);
+    560            
+    561            // Дешифруем текст. он имеет размер 'c' и находится в буфере начиная с
+    562            // dlen-c, dlen
+    563            uint8_t ds = dlen - c; // Начало данных для дешифрования
+    564            
+    565            // 0x0F & (16 - (dlen & 0x0f)) оставляет числа от 0 до 15  
+    566            memset(buf+dlen, 0x00, 0x0F & (16 - (dlen & 0x0f)) ); // Дополняем нулями
+    567            CTR_IV[15] = 1; // Счетчик CTR
+    568            CTR_enc_decrypt(false, &buf[ds], &buf[ds], key, CTR_IV, c); // Дешифруем
+    569            
+    570            uint8_t new_mac[16]; // мак полученный в ходе рашифровки сообщения
+    571            CBCMAC_buf_encrypt(dlen, key, new_mac);
+    572            
+    573            // Проверяем что маки совпадают, значит дешифровано верно
+    574            bool mac_equal = true;
+    575            for (uint8_t i = 0 ; i < lm ; i++)
+    576            {
+    577              if (mac[i] != new_mac[i])
+    578              mac_equal = false;
+    579              break;
+    580            }
+    581            
+    582            // Выходим если MACи не совпали  
+    583            if (!mac_equal)
+    584              return false;
+    585            
+    586            // Копируем  расшифрованные данные
+    587            memcpy(&src[f], &buf[ds], c); 
+    588            return true;
+    589          }
+
+   Maximum stack usage in bytes:
+
+   ISTACK XSTACK Function
+   ------ ------ --------
+      1     74   AES_CCMDecrypt
+        0     68   -> CBCMAC_buf_encrypt
+        0     72   -> CTR_enc_decrypt
+        0     70   -> generateAuthData
+        0     70   -> memcpy
+        0     70   -> memset
+      1     58   AES_CCMEncrypt
+        0     52   -> CBCMAC_buf_encrypt
+        0     56   -> CTR_enc_decrypt
+        0     54   -> generateAuthData
+        0     54   -> memcpy
+        0     54   -> memset
+      0     43   AES_StreamCoder
+        0     43   -> memcpy
+        0     43   -> memset
+      0    118   CBCMAC_buf_encrypt
+        0     50   -> memcpy
+        0     50   -> memset
+      0    111   CTR_enc_decrypt
+        0     39   -> memcpy
+        0     39   -> memset
+      2     84   HW_Init
+        2     84   -> MEM_memcpy
+      0     88   generateAuthData
+        0     18   -> memcpy
+
+
+   Segment part sizes:
+
+   Bytes  Function/Label
+   -----  --------------
+       5  ?<Constant {(char *)MODEL.AES.CCM_IV, (char *)
+       5  ?<Constant {(char *)MODEL.AES.CCM_KEY, (char *
+       5  ?<Constant {(char *)MODEL.AES.STREAM_IV, (char
+       5  ?<Constant {(char *)MODEL.AES.STREAM_KEY, (cha
+      16  ?<Constant {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+      16  ?<Constant {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,_1
+      16  ?<Constant {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,_2
+      16  ?<Constant {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,_3
+       5  ?<Initializer for <Constant {(char *)MODEL.AES
+       5  ?<Initializer for <Constant {(char *)MODEL.AES_1
+       5  ?<Initializer for <Constant {(char *)MODEL.AES_2
+       5  ?<Initializer for <Constant {(char *)MODEL.AES_3
+      16  ?<Initializer for <Constant {1, 2, 3, 4, 5, 6,
+      16  ?<Initializer for <Constant {1, 2, 3, 4, 5, 6,_1
+      16  ?<Initializer for <Constant {1, 2, 3, 4, 5, 6,_2
+      16  ?<Initializer for <Constant {1, 2, 3, 4, 5, 6,_3
+       8  ?<Initializer for CODER_MODULE>
+     482  AES_CCMDecrypt
+       6  AES_CCMDecrypt::?relay
+     452  AES_CCMEncrypt
+       6  AES_CCMEncrypt::?relay
+     632  AES_StreamCoder
+       6  AES_StreamCoder::?relay
+     469  CBCMAC_buf_encrypt
+       6  CBCMAC_buf_encrypt::?relay
+       8  CODER_MODULE
+     608  CTR_enc_decrypt
+       6  CTR_enc_decrypt::?relay
+       1  DMAARM
+       1  DMAREQ
+       1  ENCCS
+     409  HW_Init
+       6  HW_Init::?relay
+     162  buf
+     241  generateAuthData
+       6  generateAuthData::?relay
+
+ 
+ 3 293 bytes in segment BANKED_CODE
+    42 bytes in segment BANK_RELAYS
+     3 bytes in segment SFR_AN
+    92 bytes in segment XDATA_I
+    92 bytes in segment XDATA_ID
+   162 bytes in segment XDATA_Z
+ 
+   134 bytes of CODE     memory
+     0 bytes of DATA     memory (+ 3 bytes shared)
+ 3 293 bytes of HUGECODE memory
+   254 bytes of XDATA    memory
+
+Errors: none
+Warnings: none

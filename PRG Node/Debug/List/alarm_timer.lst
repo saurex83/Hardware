@@ -1,0 +1,362 @@
+###############################################################################
+#
+# IAR C/C++ Compiler V10.10.1.4655 for 8051               16/Feb/2020  21:04:28
+# Copyright 2004-2017 IAR Systems AB.
+# PC-locked license - IAR Embedded Workbench for 8051
+#
+#    Core               =  plain
+#    Code model         =  banked
+#    Data model         =  large
+#    Calling convention =  xdata reentrant
+#    Constant location  =  data
+#    Dptr setup         =  1,16
+#                          
+#    Source file        =  E:\WMNU\IAR_new_arch\Stack_core_src\alarm_timer.c
+#    Command line       =  
+#        -f C:\Users\08A4~1\AppData\Local\Temp\EW5937.tmp
+#        (E:\WMNU\IAR_new_arch\Stack_core_src\alarm_timer.c -lc
+#        "E:\WMNU\IAR_new_arch\PRG Node\Debug\List" -o
+#        "E:\WMNU\IAR_new_arch\PRG Node\Debug\Obj" -e --debug --core=plain
+#        --dptr=16,1 --data_model=large --code_model=banked
+#        --calling_convention=xdata_reentrant --place_constants=data
+#        --nr_virtual_regs 8 --dlib_config "C:\Program Files (x86)\IAR
+#        Systems\Embedded Workbench 8.0\8051\LIB\DLIB\dl8051Normal.h"
+#        --no_path_in_file_macros -I E:\WMNU\IAR_new_arch\Stack_core_src\ -On
+#        --no_cse --no_unroll --no_inline --no_code_motion --no_tbaa
+#        --no_cross_call)
+#    Locale             =  Russian_Russia.1251
+#    List file          =  
+#        E:\WMNU\IAR_new_arch\PRG Node\Debug\List\alarm_timer.lst
+#    Object file        =  
+#        E:\WMNU\IAR_new_arch\PRG Node\Debug\Obj\alarm_timer.r51
+#
+###############################################################################
+
+E:\WMNU\IAR_new_arch\Stack_core_src\alarm_timer.c
+      1          #include "alarm_timer.h"
+      2          #include "time_manager.h"
+      3          #include "action_manager.h"
+      4          #include "ioCC2530.h"
+      5          #include "stdbool.h"
+      6          #include "stdint.h"
+      7          #include "debug.h"
+      8          #include "cpu.h"
+      9          
+     10          /**
+     11          @file
+     12          */
+     13          
+     14          #define MAX_NWTIME (nwtime_t)32767
+     15          
+     16          static void HW_Init(void);  
+     17          static inline void IRQEnable(bool state);
+     18          static uint32_t ReadTimer(void);
+     19          static inline bool isIRQEnable(void);
+     20          static inline uint32_t calcCompareTime(nwtime_t time);
+     21          static void loadTimerCompare(uint32_t ticks);
+     22          
+     23          module_s AT_MODULE = {ALIAS(HW_Init)};
+     24          static nwtime_t TOFFSET; 
+     25          static uint32_t COMPARE_TIME; //!< Значение в регистре compare
+     26          
+     27          
+     28          static void HW_Init(void){
+     29            TOFFSET = 0;
+     30            COMPARE_TIME = 0;
+     31            IRQEnable(false);
+     32          };
+     33          
+     34          static void SW_Init(void){
+                             ^
+Warning[Pe177]: function "SW_Init" was declared but never referenced
+     35            TOFFSET = 0;
+     36            COMPARE_TIME = 0;
+     37            IRQEnable(false);
+     38          }; 
+     39          
+     40          void AT_enable(bool state){
+     41            ATOMIC_BLOCK_RESTORE{
+     42              IRQEnable(state);
+     43            }
+     44          };
+     45          
+     46          nwtime_t AT_interval(nwtime_t beg, nwtime_t end){
+     47            return (beg > end) ? (beg - end) : (MAX_NWTIME - beg + end);
+     48          }
+     49          
+     50          void AT_set_time(nwtime_t time){
+     51            ASSERT(time <= MAX_NWTIME);
+     52            nwtime_t timer = ReadTimer();
+     53            TOFFSET = time - timer;
+     54            TOFFSET &= 0x7FFF;
+     55            // После установки времени нужно изменить compare time в таймере
+     56            // Но только в случаи если прерывание активно
+     57            if (isIRQEnable())
+     58              AT_set_alarm(COMPARE_TIME);
+     59          }
+     60          
+     61          nwtime_t AT_time(void){
+     62            uint32_t val = ReadTimer();
+     63            // TOFFSET = NETWORK TIME - TIMER
+     64            // NETWORK TIME = TIMER + TOFFSET
+     65            val +=TOFFSET;
+     66            val &= 0x7FFF; // Приводим значения таймера к 0-32767
+     67            return val;
+     68          }
+     69          
+     70          /**
+     71          @brief Ждем наступления определенного момента времени
+     72          */
+     73          void AT_wait(nwtime_t time){
+     74            ASSERT(time <= MAX_NWTIME);  
+     75            static union 
+     76            {
+     77              uint32_t val;
+     78              uint8_t fild[4];
+     79            } val;
+     80            val.val = 0;
+     81            // TOFFSET = NETWORK TIME - TIMER
+     82            // NETWORK TIME = TIMER + TOFFSET
+     83            // Ждем синхронизацию таймера после пробуждения
+     84            while (!(SLEEPSTA & 0x01));
+     85            do{
+     86              // Соблюдаем порядок чтения регисторов ST  
+     87              val.fild[0] = ST0;
+     88              val.fild[1] = ST1;
+     89              val.fild[2] = ST2;
+     90              val.val +=TOFFSET;
+     91              val.val &= 0x7FFF; // Приводим значения таймера к 0-32767    
+     92            } while (val.val < time);
+     93          }
+     94          
+     95          /**
+     96          @brief Разрешение прерываний таймера сна
+     97          @params[in] state = true - разрешить обработку прерываний
+     98          */
+     99          static inline void IRQEnable(bool state){
+    100            if (state)
+    101              STIE = 1;
+    102            else
+    103              STIE = 0;
+    104          }
+    105          
+    106          /**
+    107          @brief Устанавливает время прерывания
+    108          @details Время прерывания устанавливается относительно времени сети
+    109          ,к примеру, что бы проснуться в таймслот номер 0, нужно установить ticks = 0.
+    110          Процедура учитывает текущее значение таймера и перерасчитывает значение ticks. 
+    111          @params[in] ticks время сети в тиках когда нужно проснуться
+    112          */
+    113          void AT_set_alarm(nwtime_t alarm){
+    114            ASSERT(alarm <= MAX_NWTIME);
+    115            COMPARE_TIME = alarm; // Сохраняем установленное значение
+    116            uint32_t compare_time = calcCompareTime(alarm);
+    117            loadTimerCompare(compare_time);
+    118            IRQEnable(true);
+    119          }
+    120          
+    121          /**
+    122          @brief Вычисляет значение, которое нужно установить в регистр compare таймера.
+    123          @params[in] time время сети в тикак
+    124          */
+    125          static inline uint32_t calcCompareTime(nwtime_t time){   
+    126              uint32_t timer = ReadTimer(); // Текущее значение счетчика
+    127              //NETWORK TIME = TIMER + TOFFSET  
+    128              // Приводим такты к тактам таймера
+    129              uint16_t ticks_offset = (time - TOFFSET) & 0x7FFF;
+    130              uint32_t cmp_time = timer & ~0x7FFF; // Убираем младшие 15 бит
+    131              cmp_time |= ticks_offset; // Вычисляем новое время
+    132              if (cmp_time <= timer){
+    133                cmp_time += 0x8000;
+    134                cmp_time &=0xFFFFFF;
+    135              }
+    136               LOG_OFF("Timer = %lu, Ticks = %d,CMP = %lu \r\n",
+    137                    timer, ticks, cmp_time );
+    138              return cmp_time;
+    139          }
+    140          
+    141          /**
+    142          @brief Возвращает текущее значение таймера
+    143          @return Текущие ticks
+    144          */
+    145          static uint32_t ReadTimer(void){
+    146            static union 
+    147            {
+    148              uint32_t val;
+    149              uint8_t fild[4];
+    150            } ret_val;
+    151            ret_val.val = 0;
+    152            // Ждем синхронизацию таймера после пробуждения
+    153            while (!(SLEEPSTA & 0x01));
+    154            // Соблюдаем порядок чтения регисторов ST  
+    155            ret_val.fild[0] = ST0;
+    156            ret_val.fild[1] = ST1;
+    157            ret_val.fild[2] = ST2;
+    158            return ret_val.val;
+    159          }
+    160          
+    161          /**
+    162          @brief Устанавливает время пробуждения микроконтролера
+    163          @params[in] ticks 24 битное значение времени пробуждения в ticks
+    164          */
+    165          static void loadTimerCompare(uint32_t ticks){
+    166            union 
+    167            {
+    168              uint32_t val;
+    169              uint8_t fild[4];
+    170            } value;
+    171            value.val = ticks;
+    172            // Ждем разрешения на запись нового значения
+    173            while (!(STLOAD & 0x01));
+    174            // Регистр ST0 должен быть записан в последнию очередь
+    175            ST2 = value.fild[2];
+    176            ST1 = value.fild[1];
+    177            ST0 = value.fild[0];
+    178          }
+    179          
+    180          /**
+    181          @brief Проверка активности прерывания таймера
+    182          @return true если прерывание установленно
+    183          */
+    184          static inline bool isIRQEnable(void){
+    185            return STIE;
+    186          }
+    187          
+    188          /**
+    189          @brief Обработчик прерывания таймера сна
+    190          */
+    191          #pragma vector=ST_VECTOR
+    192          __interrupt void TimerCompareInterrupt(void){ 
+    193            nwtime_t time = AT_time();
+    194            // Отключаем прерывание таймера. Забота пользователя его включить
+    195            IRQEnable(false); 
+    196            TM_IRQ(time); // Передаем управление менеджеру времени
+    197            STIF = 0; // Очищаем флаг прерывания
+    198          }
+
+   Maximum stack usage in bytes:
+
+   ISTACK XSTACK Function
+   ------ ------ --------
+      0      9   AT_enable
+        0      9   -> IRQEnable
+        0      9   -> __cli
+      0      0   AT_interval
+      0     32   AT_set_alarm
+        0     12   -> DBG_CORE_HALT
+        0     12   -> IRQEnable
+        0     12   -> calcCompareTime
+        0     12   -> loadTimerCompare
+        0     12   -> printf
+        0     18   -> printf
+      0     20   AT_set_time
+        0     14   -> AT_set_alarm
+        0     14   -> DBG_CORE_HALT
+        0     14   -> ReadTimer
+        0     14   -> isIRQEnable
+        0     14   -> printf
+        0     20   -> printf
+      0     31   AT_time
+        0     16   -> ReadTimer
+      0     18   AT_wait
+        0     12   -> DBG_CORE_HALT
+        0     12   -> printf
+        0     18   -> printf
+      2      0   HW_Init
+        2      0   -> IRQEnable
+      0     15   IRQEnable
+      2     22   ReadTimer
+      0     15   TimerCompareInterrupt
+        0     15   -> AT_time
+        0     15   -> IRQEnable
+        0     15   -> TM_IRQ
+      0      9   __cli
+      2     34   calcCompareTime
+        0     22   -> ReadTimer
+      0     14   isIRQEnable
+      0     28   loadTimerCompare
+
+
+   Segment part sizes:
+
+   Bytes  Function/Label
+   -----  --------------
+      13  ?<Constant "%s:%d:%s -> ">
+      32  ?<Constant "\"alarm <= MAX_NWTIME\"...">
+      31  ?<Constant "\"time <= MAX_NWTIME\" ...">
+      14  ?<Constant "alarm_timer.c">
+      13  ?<Initializer for <Constant "%s:%d:%s -> ">>
+      32  ?<Initializer for <Constant "\"alarm <= MAX_NW
+      31  ?<Initializer for <Constant "\"time <= MAX_NWT
+      14  ?<Initializer for <Constant "alarm_timer.c">>
+       8  ?<Initializer for AT_MODULE>
+       4  ?<Initializer for __Constant_7fff>
+       4  ?<Initializer for __Constant_8000>
+       4  ?<Initializer for __Constant_ffff8000>
+       4  ?<Initializer for __Constant_ffffff>
+      12  ?<Initializer for __FUNCTION__>
+       8  ?<Initializer for __FUNCTION__>_1
+      13  ?<Initializer for __FUNCTION__>_2
+       8  AT_MODULE
+      43  AT_enable
+       6  AT_enable::?relay
+      34  AT_interval
+       6  AT_interval::?relay
+     130  AT_set_alarm
+       6  AT_set_alarm::?relay
+     144  AT_set_time
+       6  AT_set_time::?relay
+      55  AT_time
+       6  AT_time::?relay
+     178  AT_wait
+       6  AT_wait::?relay
+       4  COMPARE_TIME
+      44  HW_Init
+       6  HW_Init::?relay
+      17  IRQEnable
+       6  IRQEnable::?relay
+      59  ReadTimer
+       6  ReadTimer::?relay
+       1  SLEEPSTA
+       1  ST0
+       1  ST1
+       1  ST2
+       1  STLOAD
+       2  TOFFSET
+      37  TimerCompareInterrupt
+       3  TimerCompareInterrupt::??INTVEC 43
+       1  _A_IEN0
+       1  _A_IRCON
+       4  __Constant_7fff
+       4  __Constant_8000
+       4  __Constant_ffff8000
+       4  __Constant_ffffff
+       7  __cli
+       6  __cli::?relay
+     189  calcCompareTime
+       6  calcCompareTime::?relay
+       5  isIRQEnable
+       6  isIRQEnable::?relay
+      70  loadTimerCompare
+       6  loadTimerCompare::?relay
+       4  ret_val
+       4  val
+      33  -- Other
+
+ 
+ 975 bytes in segment BANKED_CODE
+  78 bytes in segment BANK_RELAYS
+   3 bytes in segment INTVEC
+  37 bytes in segment NEAR_CODE
+   7 bytes in segment SFR_AN
+ 147 bytes in segment XDATA_I
+ 147 bytes in segment XDATA_ID
+  14 bytes in segment XDATA_Z
+ 
+ 246 bytes of CODE     memory (+ 19 bytes shared)
+   0 bytes of DATA     memory (+  7 bytes shared)
+ 975 bytes of HUGECODE memory
+ 145 bytes of XDATA    memory (+ 16 bytes shared)
+
+Errors: none
+Warnings: 1

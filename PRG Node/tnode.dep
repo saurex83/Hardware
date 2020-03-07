@@ -1,0 +1,894 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+    <fileVersion>2</fileVersion>
+    <fileChecksum>4229474253</fileChecksum>
+    <configuration>
+        <name>Debug</name>
+        <outputs>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\buffer.c</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\buffer.h</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\coder.c</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\coder.h</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\config.c</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\config.h</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\cpu.c</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\cpu.h</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\debug.c</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\debug.h</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\dma.c</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\dma.h</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\frame.c</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\frame.h</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\global.h</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\led.c</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\list.h</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\llc.c</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\llc.h</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\mac.c</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\mac.h</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\macros.h</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\mem_slots.c</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\mem_slots.h</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\mem_utils.c</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\mem_utils.h</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\meta.h</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\model.c</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\model.h</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\model_import_struct.h</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\modules_list.h</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\radio.c</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\radio.h</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\radio_defs.h</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\rtc.c</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\rtc.h</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\sync.c</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\sync.h</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\time_manager.c</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\time_manager.h</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\ustimer.c</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\ustimer.h</file>
+            <file>$PROJ_DIR$\auth.c</file>
+            <file>$PROJ_DIR$\main.c</file>
+            <file>$PROJ_DIR$\Debug\Obj\neigh.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\rtc.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\coder.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\udp.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\balancer.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\balancer.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\udp.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\ip.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\action_manager.r51</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\string.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\sync.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\cpu.r51</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\DLib_Defaults.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\alarm_timer.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\coder.r51</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\stdlib.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\xencoding_limits.h</file>
+            <file>$TOOLKIT_DIR$\lib\dlib\dl-pli-blxd-1e16x01n.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\mem_utils.pbi</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\setjmp.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\ustimer.pbi</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\ycheck.h</file>
+            <file>$PROJ_DIR$\Debug\Exe\tnode.d51</file>
+            <file>$PROJ_DIR$\Debug\Obj\buffer.__cstat.et</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\stdbool.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\llc.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\cpu.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\ethernet.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\frame.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\coder.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\List\tnode.map</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\stdio.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\alarm_timer.__cstat.et</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\ysizet.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\main.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\mem_slots.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\action_manager.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\main.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\controller.r51</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\stddef.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\yfuns.h</file>
+            <file>$TOOLKIT_DIR$\inc\ioCC2530.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\balancer.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\udp.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\neigh.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\route.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\tnode.pbd</file>
+            <file>$PROJ_DIR$\Debug\Obj\ip.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\tcp.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\config.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\config.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\auth.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\auth.pbi</file>
+            <file>$PROJ_DIR$\balancer.c</file>
+            <file>$PROJ_DIR$\balancer.h</file>
+            <file>$PROJ_DIR$\controller.c</file>
+            <file>$PROJ_DIR$\ethernet.c</file>
+            <file>$PROJ_DIR$\ethernet.h</file>
+            <file>$PROJ_DIR$\ip.c</file>
+            <file>$PROJ_DIR$\ip.h</file>
+            <file>$PROJ_DIR$\neigh.c</file>
+            <file>$PROJ_DIR$\neigh.h</file>
+            <file>$PROJ_DIR$\protocol_defs.h</file>
+            <file>$PROJ_DIR$\route.c</file>
+            <file>$PROJ_DIR$\tcp.c</file>
+            <file>$PROJ_DIR$\udp.c</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\action_manager.c</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\action_manager.h</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\alarm_timer.c</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\alarm_timer.h</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\basic.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\debug.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\time_manager.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\llc.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\dma.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\led.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\llc.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\cpu.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\route.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\mem_slots.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\ip.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\route.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\buffer.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\sync.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\tcp.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\action_manager.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\mac.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\mem_utils.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\time_manager.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\alarm_timer.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\mem_utils.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\neigh.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\frame.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\debug.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\ustimer.__cstat.et</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\ystdio.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\led.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\frame.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\dma.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\mac.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\time_manager.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\buffer.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\tcp.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\main.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\List\action_manager.lst</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\DLib_Threads.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\mem_slots.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\radio.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\ustimer.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\model.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\radio.r51</file>
+            <file>$PROJ_DIR$\Debug\Obj\mac.__cstat.et</file>
+            <file>$TOOLKIT_DIR$\lib\dlib\dl8051Normal.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\model.__cstat.et</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\DLib_Product.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\dma.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\debug.__cstat.et</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\stdint.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\controller.pbi</file>
+            <file>$TOOLKIT_DIR$\config\devices\Texas Instruments\lnk51ew_cc2530F256_banked.xcl</file>
+            <file>$PROJ_DIR$\Debug\Obj\radio.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\ethernet.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\ethernet.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\rtc.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\sync.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\led.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\controller.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\rtc.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\model.pbi</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\yvals.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\config.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\auth.__cstat.et</file>
+        </outputs>
+        <file>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\buffer.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 126</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 67</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 85 68 113 173 65 21 7 13 111 32 56 149 139 77 16 14 75 161 41 60 156 158 26 39 83 63 9</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\coder.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 46</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 73</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 68 60 65 29 113 11 14 156 53 28 161 158 77 3 32 85 41 111 25 173 56 149 13 35 37 26 39</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Stack_core_src\config.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 94</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 174</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 77 173 65 60 158 53 156 161 68 56 149 5</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Stack_core_src\cpu.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 121</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 70</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 85 111</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\debug.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 137</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 160</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 75 77 41 65 158 68 14 161 60 156 26 39 173 111 84 85 32 13 56 149 113 9 139</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Stack_core_src\dma.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 142</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 159</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 173 161 111 56 149 85 65 60 156 158 11</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\frame.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 141</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 72</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 26 39 77 25 14 161 56 149 173 9 68 113 75 41 13 23 85 32 65 60 156 158 111 139</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Stack_core_src\led.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 140</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 169</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 111</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\llc.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 117</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 120</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 173 111 68 13 26 39 28 56 149 75 83 32 63 161 1 21 9 20 113 65 77 60 156 158 29 41 14 139 35 3 37 85</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\mac.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 143</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 155</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 65 77 68 41 14 39 3 28 26 158 173 111 13 32 9 1 161 60 156 85 56 149 75 139 29 35 37</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\mem_slots.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 150</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 79</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 75 41 65 63 111 158 68 113 21 7 14 161 60 156 26 39 173 77 25 85 32 13 56 149 139 83 9</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\mem_utils.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 62</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 134</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 158 68 75 41 65 14 161 60 156 26 39 77 9 85 32 13 173 56 149 113 25 139</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Stack_core_src\model.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 172</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 157</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 13 35 65 113 37 14 32 3 68 161 56 149 173 111 29 39 26 41 28 60 156 158</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\radio.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 164</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 151</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 65 28 156 68 41 59 13 60 26 39 14 173 77 35 32 9 53 158 75 139 37 25 33 113 111 21 161 56 149 85 3 29 83 63</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Stack_core_src\rtc.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 167</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 171</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 13 3 113 68 161 65 32 35 37 14 56 149 173 28 29 111 39 26 41 60 156 158</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\sync.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 54</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 168</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 77 59 13 56 113 32 68 3 14 173 149 111 28 9 21 161 41 65 35 37 85 60 156 158 26 39 29 75 139 83 63</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\time_manager.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 116</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 144</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 158 35 173 113 7 37 161 65 111 3 68 14 60 156 75 28 9 21 29 13 39 32 26 41 56 149 139 85 77 83 63</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\ustimer.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 64</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 138</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 161 56 41 65 149 173 85 111 68 60 156 158</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\auth.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 96</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 175</file>
+                </tool>
+            </outputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\main.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 81</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 147</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 85 32 173 28 13 56 149 37 113 68 9 18 139 35 41 39 111 1 14 75 161 65 60 156 158 26 3 77 29</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\Debug\Exe\tnode.d51</name>
+            <outputs>
+                <tool>
+                    <name>XLINK</name>
+                    <file> 74</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>XLINK</name>
+                    <file> 163 52 57 145 58 55 115 118 136 119 69 130 78 123 131 153 154 45 127 132 152 61</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\balancer.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 49</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 86</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 35 65 113 60 68 161 37 14 156 85 1 3 158 41 9 29 111 13 39 32 26 173 56 149 77 28 75 139</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\controller.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 162</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 170</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 113 158 101 3 68 161 65 41 85 1 35 37 14 60 156 9 111 29 13 39 32 26 173 56 149 77 28 75 139</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\ethernet.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 166</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 165</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 3 65 68 161 41 103 113 158 1 35 37 14 60 156 85 28 9 107 29 111 13 39 32 26 173 56 149 77 98 75 139 106 105</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\ip.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 51</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 91</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 35 65 113 60 68 161 37 14 156 85 1 3 158 41 9 29 111 13 39 32 26 173 56 149 77 28 75 139</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\neigh.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 135</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 88</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 13 113 29 32 41 173 85 65 1 111 39 68 26 56 149 9 35 3 37 161 14 60 156 158 77 28 75 139</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\route.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 125</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 89</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 68 65 13 113 85 103 29 32 41 173 1 98 111 39 26 56 149 9 106 105 35 3 37 161 14 60 156 158 77 28 75 139</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\tcp.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 146</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 92</file>
+                </tool>
+            </outputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\udp.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 47</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 87</file>
+                </tool>
+            </outputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\action_manager.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 129</file>
+                </tool>
+                <tool>
+                    <name>ICC8051</name>
+                    <file> 148</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 80</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 65 173 14 35 85 28 111 77 37 113 68 30 9 59 60 56 149 3 161 32 13 156 158 29 39 26 41 75 139</file>
+                </tool>
+                <tool>
+                    <name>ICC8051</name>
+                    <file> 111 30 59 65 173 56 156 158 60 149 77 28 29 113 68 13 26 39 35 3 161 41 14 32 37 9 85 75 139 112 7 42 97 1 0 21 83 63 16 2 53 11 25 4 114 5 99 101 6 8 84 10 100 107 106 103 105 98 12 23 102 15 17 20 19 43 18 22 24 27 104 31 33 34 36 108 38 109 40</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\alarm_timer.c</name>
+            <outputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 133</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 76</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 13 68 85 32 173 111 9 56 149 39 161 7 113 139 65 60 156 158 14 75 41 26 77</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>[ROOT_NODE]</name>
+            <outputs>
+                <tool>
+                    <name>XLINK</name>
+                    <file> 74 66</file>
+                </tool>
+            </outputs>
+        </file>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\buffer.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\coder.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\Stack_core_src\cpu.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\debug.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\Stack_core_src\dma.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\frame.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\Stack_core_src\led.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\llc.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\mac.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\mem_slots.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\mem_utils.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\Stack_core_src\model.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\radio.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\Stack_core_src\rtc.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\sync.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\time_manager.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\ustimer.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\main.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\balancer.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\controller.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\ethernet.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\ip.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\neigh.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\route.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\tcp.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\udp.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\action_manager.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\alarm_timer.c</name>
+            <tool>ICC8051</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>[MULTI_TOOL]</name>
+            <tool>XLINK</tool>
+        </forcedrebuild>
+    </configuration>
+    <configuration>
+        <name>Release</name>
+        <outputs />
+        <forcedrebuild>
+            <name>[MULTI_TOOL]</name>
+            <tool>XLINK</tool>
+        </forcedrebuild>
+    </configuration>
+</project>

@@ -1,0 +1,523 @@
+###############################################################################
+#
+# IAR C/C++ Compiler V10.10.1.4655 for 8051               16/Feb/2020  21:04:31
+# Copyright 2004-2017 IAR Systems AB.
+# PC-locked license - IAR Embedded Workbench for 8051
+#
+#    Core               =  plain
+#    Code model         =  banked
+#    Data model         =  large
+#    Calling convention =  xdata reentrant
+#    Constant location  =  data
+#    Dptr setup         =  1,16
+#                          
+#    Source file        =  E:\WMNU\IAR_new_arch\Stack_core_src\radio.c
+#    Command line       =  
+#        -f C:\Users\08A4~1\AppData\Local\Temp\EW64EB.tmp
+#        (E:\WMNU\IAR_new_arch\Stack_core_src\radio.c -lc
+#        "E:\WMNU\IAR_new_arch\PRG Node\Debug\List" -o
+#        "E:\WMNU\IAR_new_arch\PRG Node\Debug\Obj" -e --debug --core=plain
+#        --dptr=16,1 --data_model=large --code_model=banked
+#        --calling_convention=xdata_reentrant --place_constants=data
+#        --nr_virtual_regs 8 --dlib_config "C:\Program Files (x86)\IAR
+#        Systems\Embedded Workbench 8.0\8051\LIB\DLIB\dl8051Normal.h"
+#        --no_path_in_file_macros -I E:\WMNU\IAR_new_arch\Stack_core_src\ -On
+#        --no_cse --no_unroll --no_inline --no_code_motion --no_tbaa
+#        --no_cross_call)
+#    Locale             =  Russian_Russia.1251
+#    List file          =  E:\WMNU\IAR_new_arch\PRG Node\Debug\List\radio.lst
+#    Object file        =  E:\WMNU\IAR_new_arch\PRG Node\Debug\Obj\radio.r51
+#
+###############################################################################
+
+E:\WMNU\IAR_new_arch\Stack_core_src\radio.c
+      1          #include "radio.h"
+      2          #include "mem_utils.h"
+      3          #include "debug.h"
+      4          #include "radio_defs.h"
+      5          #include "ustimer.h"
+      6          #include "frame.h"
+      7          #include "string.h"
+      8          #include "alarm_timer.h"
+      9          #include "model.h"
+     10          #include "action_manager.h"
+     11          #include "frame.h"
+     12          #include "macros.h"
+     13          #include "stdlib.h"
+     14          
+     15          static void HW_Init(void);
+     16          static void SW_Init(void);
+     17          module_s RADIO_MODULE = {ALIAS(SW_Init), ALIAS(HW_Init)};
+     18          
+     19          static void random_core_init(void);
+     20          static char RXBUFF[128];
+     21          
+     22          #define IEEE_MODE 0     //!< Режимы фазы сигнала
+     23          #define NOT_IEEE_MODE 1 //!< Режимы фазы сигнала
+     24          #define RSSI_OFFSET -76 //!< Константа для вычисления реальной мощности
+     25          /*!
+     26          \details 
+     27           Расчет качества связи. Коэффициенты получаются эксперементально.
+     28           Есть предположение, что количество ошибок будет пропорционально квадрату
+     29           коеффициента корреляции сигнала.
+     30           LIQ = 255 передача 1000 пакетов без ошибок CRC
+     31           LIQ = 127 передача 1000 пакетов с 50% ошибок CRC
+     32           LIQ = 0   передача 1000 пакетов с 100% ошибок CRC
+     33          */ 
+     34          
+     35          #define CONST_A (int8_t)0 //!< Коэффициент A
+     36          #define CONST_B (int8_t)1 //!< Коэффициент B
+     37          #define LIQ_CALC(corr) ((corr-CONST_A)*CONST_B) //!< Формула вычисление LIQ 
+     38          #define FRQ_CALC(x) (11+5*(x-11)) //!< Формул вычисления частоты сигнала
+     39          
+     40          #ifdef RADIO_DEBUG
+     41            #define WRITE_TIME_DBG(where) (where) = AT_time()
+     42            #define WRITE_PARA_DBG(where,val) (where) = (val) 
+     43          #else
+     44            #define WRITE_TIME_DBG(where) {}
+     45            #define WRITE_PARA_DBG(where,val)
+     46          #endif
+     47          
+     48          static void SW_Init(void){
+     49            // Настройки поумолчанию
+     50            MODEL.RADIO.CRCError = 0;
+     51            MODEL.RADIO.CCAReject = 0;
+     52            MODEL.RADIO.channel = CH11;
+     53            MODEL.RADIO.power_tx = m0x5;
+     54            // Пост действия с радио
+     55            random_core_init();
+     56          }
+     57          
+     58          static void HW_Init(void){
+     59            FRMFILT0 = 0x00; // Отключаем фильтрацию пакетов
+     60            MDMTEST1_u MDM1; // Устанавливаем режим модуляции
+     61            MDM1.value = MDMTEST1;
+     62            MDM1.bits.MODULATION_MODE = IEEE_MODE;
+     63            MDMTEST1 = MDM1.value;   
+     64          }
+     65          
+     66          static inline void setFreq(channel_t ch)
+     67          {
+     68            ASSERT( (ch >= MIN_CH) && (ch <= MAX_CH));
+     69            // Устанавливаем частоту радиопередатчика
+     70            FREQCTRL_u FRQ;
+     71            FRQ.value = FRQ_CALC(MODEL.RADIO.channel);
+     72            FREQCTRL = FRQ.value;  
+     73          }
+     74          
+     75          static inline void pre_config(void){
+     76            setFreq(MODEL.RADIO.channel); 
+     77            TXPOWER = MODEL.RADIO.power_tx;
+     78          }
+     79          
+     80          bool RI_SetChannel(channel_t channel){
+     81            if (!(channel >= MIN_CH) && (channel <= MAX_CH))
+     82              return false;
+     83            MODEL.RADIO.channel = channel;
+     84            return false;
+     85            
+     86          }
+     87          
+     88          static void LoadTXData(char *src, size_t len){
+     89            ISFLUSHTX(); // Очищаем буфер передатчика
+     90            RFD = len + 2; // Поле LEN на два байта больше
+     91            for (size_t i = 0 ; i < len; i++)
+     92              RFD = src[i];
+     93            RFD = 0x00; // Добавляем CRC1,2
+     94            RFD = 0x00;
+     95          };
+     96          
+     97          static bool SendData(struct frame *fr){
+     98            LoadTXData(fr->payload, fr->len);
+     99            ISRXON();
+    100            WRITE_TIME_DBG(MODEL.RADIO.DEBUG_TX.isrxon);
+    101            RFIRQF1 &= ~RFIRQF1_TXDONE;
+    102            RFIRQF0 &= ~RFIRQF0_SFD; 
+    103            bool result = true;
+    104            while(!RSSISTAT);
+    105            WRITE_TIME_DBG(MODEL.RADIO.DEBUG_TX.rssistat);
+    106            TRY{
+    107              if (fr->meta.SEND_TIME != 0) // Отправка в определеное время
+    108                AT_wait(fr->meta.SEND_TIME - 13); 
+    109              ISTXONCCA();
+    110              WRITE_TIME_DBG(MODEL.RADIO.DEBUG_TX.istxoncca);
+    111              if (!(FSMSTAT1 & 1<<3)) //SAMPLED_CCA == 0
+    112                THROW(1);
+    113              // Ждем отправки SFD
+    114              while (!(RFIRQF0 & RFIRQF0_SFD));
+    115              fr->meta.TIMESTAMP = AT_time();
+    116              WRITE_TIME_DBG(MODEL.RADIO.DEBUG_TX.sfd);
+    117              // Ждем завершения отправки сообщения
+    118              while (!(RFIRQF1 & RFIRQF1_TXDONE));
+    119              WRITE_TIME_DBG(MODEL.RADIO.DEBUG_TX.txdone);
+    120            }
+    121            CATCH(1){ //SAMPLED_CCA == 0
+    122              result = false;
+    123            }
+    124            FINALLY{
+    125              ISRFOFF();
+    126            }
+    127            ETRY;  
+    128            return result;
+    129          }
+    130          
+    131          /*!
+    132          \brief Передает данные в эфир
+    133          */
+    134          bool RI_Send(struct frame *fr){
+    135            ASSERT(fr != NULL);
+    136            pre_config();
+    137            stamp_t start = UST_now();
+    138            bool send_res = SendData(fr);
+    139            stamp_t stop = UST_now();
+    140            ustime_t tx_time = UST_interval(start, stop); 
+    141            WRITE_PARA_DBG(MODEL.RADIO.DEBUG_TX.fulltime, tx_time);
+    142            MODEL.RADIO.UptimeTX += tx_time;
+    143            WRITE_PARA_DBG(MODEL.RADIO.DEBUG_TX.ccasampled, send_res);
+    144            if (!send_res)
+    145              MODEL.RADIO.CCAReject++;
+    146            return send_res;
+    147          }
+    148          
+    149          
+    150          static void UnLoadRXData(char *src, size_t len){
+    151            for (size_t i = 0 ; i < len; i++)
+    152              src[i] = RFD;
+    153          };
+    154          
+    155          
+    156          static bool RecvData(ustime_t timeout, nwtime_t *sfd_stamp){   
+    157            bool recv_result = true;
+    158            
+    159            ISFLUSHRX();
+    160            RFIRQF0 &= ~RFIRQF0_RXPKTDONE;  
+    161            RFIRQF0 &= ~RFIRQF0_SFD; 
+    162            ISRXON();
+    163            WRITE_TIME_DBG(MODEL.RADIO.DEBUG_RX.isrxon);
+    164            stamp_t start = UST_now();
+    165            TRY{
+    166              while(true){
+    167                if (UST_time_over(start, timeout))
+    168                  THROW(1);
+    169                
+    170                if ((RFIRQF0 & RFIRQF0_SFD)){ // Принят сигнал SFD
+    171                  *sfd_stamp = AT_time(); 
+    172                  WRITE_TIME_DBG(MODEL.RADIO.DEBUG_RX.sfd);
+    173                  break;
+    174                }
+    175              }
+    176              // Ждем окончания приема пакета
+    177              while (!(RFIRQF0 & RFIRQF0_RXPKTDONE));
+    178              WRITE_TIME_DBG(MODEL.RADIO.DEBUG_RX.rxdone);
+    179            }
+    180            CATCH(1){ // Вышло время ожидания
+    181              recv_result = false;
+    182            }
+    183            FINALLY{
+    184              ISRFOFF();
+    185            }
+    186            ETRY;
+    187            return recv_result;
+    188          }
+    189          
+    190          /*!
+    191          \brief Принимает данные из эфира
+    192          \details Функция принимает данные из эфира. Проводит проверку CRC, увеличивает
+    193          RI_CRC_ERROR. Отмечает время прихода SFD в тактах сетевого времени .
+    194          \param[in] timeout Время ожидания данных в микросекундах
+    195          \return Возвращает NULL если данных нет
+    196          */
+    197          struct frame* RI_Receive(ustime_t timeout){
+    198            // Устанавливаем частоту передачи пакета
+    199            pre_config();
+    200            nwtime_t sfd_stamp;
+    201               
+    202            // Принимаем пакет 
+    203            stamp_t start = UST_now();
+    204            bool recv_res = RecvData(timeout, &sfd_stamp);
+    205            stamp_t stop = UST_now();
+    206            ustime_t rx_time = UST_interval(start, stop); 
+    207            WRITE_PARA_DBG(MODEL.RADIO.DEBUG_RX.fulltime, rx_time);
+    208            MODEL.RADIO.UptimeRX += rx_time;
+    209            WRITE_PARA_DBG(MODEL.RADIO.DEBUG_RX.received, recv_res);
+    210            if (!recv_res) // Нет пакета, возвращаем NULL
+    211              return NULL;
+    212            
+    213            uint8_t frame_size = RXFIFOCNT; // Количество принятых данных
+    214            
+    215            // Минимальный размер FCS1,FCS2 - 2 байта. LEN не включен в подсчет 
+    216            if (frame_size <= 2)
+    217              return NULL;
+    218            
+    219            UnLoadRXData(RXBUFF, frame_size);
+    220            
+    221            int8_t  FCS1 = RXBUFF[frame_size - 2]; // RSSI
+    222            uint8_t FCS2 = RXBUFF[frame_size - 1]; // bit7 = CRCOK, bit[6..0] Corr_val
+    223            uint8_t LEN_F = RXBUFF[0]; // Поле LEN
+    224            
+    225            // Проверим поле LEN. Размер данных в заголовке должен совпадать
+    226            // с фактической длинной принятых данных
+    227            if (LEN_F != frame_size - 1){
+    228              MODEL.RADIO.CRCError++;
+    229              return NULL;
+    230            }
+    231            
+    232            // Проверим поле CRCOK
+    233            if (!(FCS2 && 1<<7)){
+    234              MODEL.RADIO.CRCError++;
+    235              return NULL;
+    236            }
+    237            
+    238            // Создаем буфер, последнии два байта FCS1,2 и поле LEN не копируем
+    239            struct frame *frame = FR_create();
+    240            ASSERT(!frame);
+    241            bool add_h = FR_add_header(frame, &RXBUFF[1], frame_size - 3);
+    242            ASSERT(add_h);
+    243            
+    244            frame->meta.TIMESTAMP = sfd_stamp;
+    245            frame->meta.RSSI_SIG =  FCS1 + RSSI_OFFSET;
+    246            uint8_t corr = FCS2 & 0x7F;
+    247            frame->meta.LIQ = LIQ_CALC(corr);
+    248            frame->meta.CH = MODEL.RADIO.channel;
+    249            return frame;
+    250          }
+    251          
+    252          
+    253          /**
+    254          @breif Подссчет количества бит в байте
+    255          @return Возвращает количество бит
+    256          */
+    257          static uint8_t bits_count(uint8_t value) {
+    258            int ret = 0;
+    259            for ( ; value; value = value >> 1 )
+    260              ret += value & 1;
+    261            return ret;
+    262          }
+    263          
+    264          /**
+    265          @brief Возращает 1 байт случайного числа
+    266          @details Радио выдает всего лишь дви бита, нам нужно 8 
+    267          */
+    268          static inline uint8_t getRNDByte(void)
+    269          {
+    270            uint8_t val = 0;
+    271            val |= RFRND << 0;
+    272            val |= RFRND << 2;
+    273            val |= RFRND << 4;
+    274            val |= RFRND << 6;
+    275            return val;
+    276          }
+    277          
+    278          /**
+    279          @brief Возвращает случайное число с числом включеных бит от 2 до 6 включительно
+    280          @details Случайные числа появляются в регистре с частотой 170нс. Функция 
+    281          возвращает гарантированно новое значение. 
+    282          @return возвращает случайное число.
+    283          */
+    284          static inline uint8_t readRandom(void)
+    285          {
+    286            uint8_t rnd_val = 0;
+    287            uint8_t bit_cnt = 0;
+    288            while ( bit_cnt <= 2 || bit_cnt >= 6 )
+    289            {
+    290              rnd_val = getRNDByte();
+    291              while (rnd_val == getRNDByte());
+    292              rnd_val = getRNDByte();
+    293              bit_cnt = bits_count(rnd_val);
+    294            }
+    295            return rnd_val;
+    296          }
+    297          
+    298          /*!
+    299          \brief Иницилизирует ядро генератора случайных чисел данными из эфира
+    300          */
+    301          static void random_core_init(void)  
+    302          {
+    303            unsigned int rnd_core = 0;;
+    304               
+    305            pre_config();
+    306            FREQCTRL = 0x00; // Выбираем не используемую частоту
+    307          
+    308            // TODO По какой то причине OP_EXE не выполняет команду.
+    309            // регистра RFST читается как 0xD0. это его состояние при reset
+    310            // Включаем демодулятор
+    311            ISRXON();
+    312            
+    313            // Ждем пока статус RSSI_VALID станет true
+    314            while(!RSSISTAT);
+    315            
+    316            // Ждем случайных чисел
+    317            while (RFRND == 0);
+    318            
+    319            // Настраиваем ядро случайного генератора
+    320            rnd_core = readRandom();
+    321            rnd_core |= (unsigned int)readRandom()<<8;
+    322            srand(rnd_core);
+    323            
+    324            // Выключаем демодулятор
+    325            ISRFOFF();
+    326            // Первая генерация случайного числа занимает много времени.
+    327            // Влияло на работу радио, так как использовались случайные посылки
+    328            rand(); 
+    329          }
+    330          
+    331          /**
+    332          @brief Измерение мощности сигнала
+    333          @details Частота = 2394+fch. fch = [0..113]. 2394MHz to 2507MHz.
+    334           Устройство поддерживает частоты до 2507 МГц
+    335          @param[in] fch номер ЧАСТОТНОГО канала
+    336          @param[in] timeout_ms время сканирования в мс
+    337          @param[out] Максимальная мощность сигнала за время сканирования
+    338          @return true если успешно
+    339          */
+    340          bool RI_Measure_POW(char fch, ustime_t timeout, 
+    341                              int8_t *RSSI_SIG){
+    342            if (fch > 113)
+    343              return false;
+    344            //(2394+FREQCTRL.FREQ[6:0])
+    345            FREQCTRL = fch; // Выбираем не используемую частоту
+    346            ISRXON();
+    347            while(!RSSISTAT);
+    348            FRMCTRL0 |= 1<<4; // включаем ENERGY_SCAN, детектор пикового сигнала
+    349            UST_delay(timeout);
+    350            int8_t rssi = RSSI + RSSI_OFFSET;
+    351            *RSSI_SIG = rssi;
+    352            ISRFOFF();
+    353            return true;
+    354          }
+    355          
+
+   Maximum stack usage in bytes:
+
+   ISTACK XSTACK Function
+   ------ ------ --------
+      3      1   HW_Init
+      2     59   LoadTXData
+      1     16   RI_Measure_POW
+        0     14   -> UST_delay
+      1     42   RI_Receive
+        0     36   -> DBG_CORE_HALT
+        0     36   -> FR_add_header
+        0     36   -> FR_create
+        0     38   -> RecvData
+        0     40   -> UST_interval
+        0     36   -> UST_now
+        0     36   -> UnLoadRXData
+        0     36   -> pre_config
+        0     36   -> printf
+        0     42   -> printf
+      0     36   RI_Send
+        0     30   -> DBG_CORE_HALT
+        0     30   -> SendData
+        0     34   -> UST_interval
+        0     30   -> UST_now
+        0     30   -> pre_config
+        0     30   -> printf
+        0     36   -> printf
+      2      0   RI_SetChannel
+      0    109   RecvData
+        0     67   -> AT_time
+        0     67   -> UST_now
+        0     71   -> UST_time_over
+      2      0   SW_Init
+        2      0   -> random_core_init
+      0     89   SendData
+        0     59   -> AT_time
+        0     59   -> AT_wait
+        0     59   -> LoadTXData
+      3     36   UnLoadRXData
+      0      9   bits_count
+      2      9   getRNDByte
+      2     36   pre_config
+        2      0   -> setFreq
+      0      9   random_core_init
+        0      9   -> pre_config
+        0      9   -> rand
+        0      9   -> readRandom
+        0      9   -> srand
+      0     18   readRandom
+        0      9   -> bits_count
+        0      9   -> getRNDByte
+      1     17   setFreq
+        0     11   -> DBG_CORE_HALT
+        0     11   -> printf
+        0     17   -> printf
+
+
+   Segment part sizes:
+
+   Bytes  Function/Label
+   -----  --------------
+      13  ?<Constant "%s:%d:%s -> ">
+      19  ?<Constant "\"!frame\" Faild! \r\n">
+      45  ?<Constant "\"(ch >= MIN_CH) && (c...">
+      18  ?<Constant "\"add_h\" Faild! \r\n">
+      23  ?<Constant "\"fr != NULL\" Faild! \r\n">
+       8  ?<Constant "radio.c">
+      13  ?<Initializer for <Constant "%s:%d:%s -> ">>
+      19  ?<Initializer for <Constant "\"!frame\" Faild!
+      45  ?<Initializer for <Constant "\"(ch >= MIN_CH)
+      18  ?<Initializer for <Constant "\"add_h\" Faild!
+      23  ?<Initializer for <Constant "\"fr != NULL\" Fa
+       8  ?<Initializer for <Constant "radio.c">>
+       8  ?<Initializer for RADIO_MODULE>
+       4  ?<Initializer for __Constant_1>
+       8  ?<Initializer for __FUNCTION__>
+       8  ?<Initializer for __FUNCTION__>_1
+      11  ?<Initializer for __FUNCTION__>_2
+      63  HW_Init
+       6  HW_Init::?relay
+      54  LoadTXData
+       6  LoadTXData::?relay
+       8  RADIO_MODULE
+       1  RFD
+       1  RFIRQF0
+       1  RFIRQF1
+       1  RFST
+      96  RI_Measure_POW
+       6  RI_Measure_POW::?relay
+     601  RI_Receive
+       6  RI_Receive::?relay
+     256  RI_Send
+       6  RI_Send::?relay
+      32  RI_SetChannel
+       6  RI_SetChannel::?relay
+     128  RXBUFF
+     203  RecvData
+       6  RecvData::?relay
+      62  SW_Init
+       6  SW_Init::?relay
+     244  SendData
+       6  SendData::?relay
+      44  UnLoadRXData
+       6  UnLoadRXData::?relay
+       4  __Constant_1
+      34  bits_count
+       6  bits_count::?relay
+      53  getRNDByte
+       6  getRNDByte::?relay
+      27  pre_config
+       6  pre_config::?relay
+      78  random_core_init
+       6  random_core_init::?relay
+      54  readRandom
+       6  readRandom::?relay
+     121  setFreq
+       6  setFreq::?relay
+      27  -- Other
+
+ 
+ 2 022 bytes in segment BANKED_CODE
+    96 bytes in segment BANK_RELAYS
+     4 bytes in segment SFR_AN
+   165 bytes in segment XDATA_I
+   165 bytes in segment XDATA_ID
+   128 bytes in segment XDATA_Z
+ 
+   257 bytes of CODE     memory (+ 4 bytes shared)
+     0 bytes of DATA     memory (+ 4 bytes shared)
+ 2 022 bytes of HUGECODE memory
+   289 bytes of XDATA    memory (+ 4 bytes shared)
+
+Errors: none
+Warnings: none
