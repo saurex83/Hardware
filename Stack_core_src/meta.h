@@ -20,6 +20,5 @@ struct meta{
    unsigned int FDST;
    unsigned int FSRC;
    char IPP;
-   char tx_attempts;
-   nwtime_t SEND_TIME; 
+   char tx_attempts; 
 } __attribute__((packed));

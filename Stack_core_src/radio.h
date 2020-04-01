@@ -3,6 +3,7 @@
 #include "stdint.h"
 #include "frame.h"
 #include "ustimer.h"
+#include "alarm_timer.h"
 
 typedef char channel_t;
 typedef char power_t;
@@ -33,6 +34,7 @@ enum TX_POWER_e
 
 bool RI_SetChannel(channel_t CH);
 bool RI_Send(struct frame *fr);
+bool RI_Send_time(struct frame *fr, nwtime_t time);
 struct frame* RI_Receive(ustime_t timeout);
 bool RI_Measure_POW(channel_t fch, ustime_t timeout_ms, int8_t *RSSI_SIG);
 void RI_Reset(void);

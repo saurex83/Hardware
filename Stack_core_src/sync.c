@@ -184,12 +184,11 @@ static bool send_sync(void){
   ASSERT(fr);
   FR_add_header(fr, &sync, sizeof(struct sync));
   
-  fr->meta.SEND_TIME = (nwtime_t)SYNC_TIME;
   AES_StreamCoder(true, fr->payload, fr->payload, fr->len);
   
   bool set_ch_res = RI_SetChannel(MODEL.SYNC.sync_channel);
   ASSERT(set_ch_res);
-  bool res = RI_Send(fr);
+  bool res = RI_Send_time(fr, (nwtime_t)SYNC_TIME);
   FR_delete(fr);
   LOG_ON("SYNC sended, res = %d", res);
   return res;

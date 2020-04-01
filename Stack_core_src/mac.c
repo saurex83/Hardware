@@ -48,7 +48,6 @@ static inline void _send_ack(struct frame *frame){
   // Создаем кадр для отправки
   ack_frame = FR_create();
   FR_add_header(ack_frame, &ack, sizeof(struct ack));
-  ack_frame->meta.SEND_TIME = 0;
   RI_Send(ack_frame);
   FR_delete(ack_frame);  
 }

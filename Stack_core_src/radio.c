@@ -93,12 +93,12 @@ static void LoadTXData(char *src, size_t len){
   RFD = 0x00;
 };
 
-static bool SendData(struct frame *fr){
+static bool SendData(struct frame *fr, nwtime_t time){
   LoadTXData(fr->payload, fr->len);
   
   // Прежде чем включать радио нужно подождать
-  if (fr->meta.SEND_TIME != 0) 
-      AT_wait(fr->meta.SEND_TIME - 29);
+  if (time != 0) 
+      AT_wait(time - 29);
   
   ISRXON();
   WRITE_TIME_DBG(MODEL.RADIO.DEBUG_TX.isrxon);
@@ -108,8 +108,8 @@ static bool SendData(struct frame *fr){
   while(!RSSISTAT);
   WRITE_TIME_DBG(MODEL.RADIO.DEBUG_TX.rssistat);
   TRY{
-    if (fr->meta.SEND_TIME != 0) // Отправка в определеное время
-      AT_wait(fr->meta.SEND_TIME - 13); 
+    if (time != 0) // Отправка в определеное время
+      AT_wait(time - 13); 
     ISTXONCCA();
     WRITE_TIME_DBG(MODEL.RADIO.DEBUG_TX.istxoncca);
     if (!(FSMSTAT1 & 1<<3)) //SAMPLED_CCA == 0
@@ -140,7 +140,25 @@ bool RI_Send(struct frame *fr){
   ASSERT(fr != NULL);
   pre_config();
   stamp_t start = UST_now();
-  bool send_res = SendData(fr);
+  bool send_res = SendData(fr, 0);
+  stamp_t stop = UST_now();
+  //TODO Неверно считает интервал так как при отправке
+  // sync пакета мы ждем
+  ustime_t tx_time = UST_interval(start, stop); 
+  WRITE_PARA_DBG(MODEL.RADIO.DEBUG_TX.fulltime, tx_time);
+  MODEL.RADIO.UptimeTX += tx_time;
+  WRITE_PARA_DBG(MODEL.RADIO.DEBUG_TX.ccasampled, send_res);
+  if (!send_res)
+    MODEL.RADIO.CCAReject++;
+  return send_res;
+}
+
+bool RI_Send_time(struct frame *fr, nwtime_t time){
+  ASSERT(fr != NULL);
+  pre_config();
+  //TODO начало start отложено! неверно вычисляем интервал
+  stamp_t start = UST_now();
+  bool send_res = SendData(fr, time);
   stamp_t stop = UST_now();
   //TODO Неверно считает интервал так как при отправке
   // sync пакета мы ждем

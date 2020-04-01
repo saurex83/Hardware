@@ -2241,6 +2241,9 @@
             <name>$PROJ_DIR$\..\Stack_core_src\alarm_timer.h</name>
         </file>
         <file>
+            <name>$PROJ_DIR$\..\Stack_core_src\bugs.txt</name>
+        </file>
+        <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\coder.c</name>
         </file>
         <file>
@@ -2250,7 +2253,7 @@
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\cpu.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\STACK_CORE_SRC\cpu.h</name>
+            <name>$PROJ_DIR$\..\Stack_core_src\cpu.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\debug.c</name>
@@ -2274,6 +2277,9 @@
             <name>$PROJ_DIR$\..\Stack_core_src\global.h</name>
         </file>
         <file>
+            <name>$PROJ_DIR$\..\Stack_core_src\ideas.txt</name>
+        </file>
+        <file>
             <name>$PROJ_DIR$\..\Stack_core_src\led.c</name>
         </file>
         <file>
@@ -2289,22 +2295,22 @@
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\mac.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\STACK_CORE_SRC\mac.h</name>
+            <name>$PROJ_DIR$\..\Stack_core_src\mac.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\STACK_CORE_SRC\macros.h</name>
+            <name>$PROJ_DIR$\..\Stack_core_src\macros.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\mem_slots.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\STACK_CORE_SRC\mem_slots.h</name>
+            <name>$PROJ_DIR$\..\Stack_core_src\mem_slots.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\Stack_core_src\mem_utils.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\STACK_CORE_SRC\mem_utils.h</name>
+            <name>$PROJ_DIR$\..\Stack_core_src\mem_utils.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\Stack_core_src\meta.h</name>
@@ -2316,7 +2322,10 @@
             <name>$PROJ_DIR$\..\Stack_core_src\model.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\STACK_CORE_SRC\modules_list.h</name>
+            <name>$PROJ_DIR$\..\Stack_core_src\modules_list.h</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Stack_core_src\NOTE.txt</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\radio.c</name>
@@ -2325,13 +2334,16 @@
             <name>$PROJ_DIR$\..\Stack_core_src\radio.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\STACK_CORE_SRC\radio_defs.h</name>
+            <name>$PROJ_DIR$\..\Stack_core_src\radio_defs.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\rtc.c</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\Stack_core_src\rtc.h</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Stack_core_src\rules.txt</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\Stack_core_src\stdint.h</name>
@@ -2341,6 +2353,9 @@
         </file>
         <file>
             <name>$PROJ_DIR$\..\Stack_core_src\sync.h</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Stack_core_src\tempalte.txt</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\time_manager.c</name>
