@@ -10,6 +10,7 @@ E:\Neocore\Hardware\PRJ Test\Debug\Obj\frame.pbi
 E:\Neocore\Hardware\PRJ Test\Debug\Obj\led.pbi
 E:\Neocore\Hardware\PRJ Test\Debug\Obj\llc.pbi
 E:\Neocore\Hardware\PRJ Test\Debug\Obj\mac.pbi
+E:\Neocore\Hardware\PRJ Test\Debug\Obj\main.pbi
 E:\Neocore\Hardware\PRJ Test\Debug\Obj\mem_slots.pbi
 E:\Neocore\Hardware\PRJ Test\Debug\Obj\mem_utils.pbi
 E:\Neocore\Hardware\PRJ Test\Debug\Obj\model.pbi
@@ -17,7 +18,6 @@ E:\Neocore\Hardware\PRJ Test\Debug\Obj\radio.pbi
 E:\Neocore\Hardware\PRJ Test\Debug\Obj\rtc.pbi
 E:\Neocore\Hardware\PRJ Test\Debug\Obj\sync.pbi
 E:\Neocore\Hardware\PRJ Test\Debug\Obj\time_manager.pbi
-E:\Neocore\Hardware\PRJ Test\Debug\Obj\ustimer.pbi
 E:\Neocore\Hardware\PRJ Test\Debug\Obj\u_alarm_timer.pbi
 E:\Neocore\Hardware\PRJ Test\Debug\Obj\u_buffer.pbi
 E:\Neocore\Hardware\PRJ Test\Debug\Obj\u_debug.pbi
@@ -25,5 +25,5 @@ E:\Neocore\Hardware\PRJ Test\Debug\Obj\u_frame.pbi
 E:\Neocore\Hardware\PRJ Test\Debug\Obj\u_macros.pbi
 E:\Neocore\Hardware\PRJ Test\Debug\Obj\u_mem_slots.pbi
 E:\Neocore\Hardware\PRJ Test\Debug\Obj\u_mem_utils.pbi
+E:\Neocore\Hardware\PRJ Test\Debug\Obj\ustimer.pbi
 E:\Neocore\Hardware\PRJ Test\Debug\Obj\utest.pbi
-E:\Neocore\Hardware\PRJ Test\Debug\Obj\main.pbi

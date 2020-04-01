@@ -52,8 +52,32 @@ bool FR_del_header(struct frame* frame, char len){
   return true;
 }
 
+void FR_set_rx(struct frame* frame){
+  SL_set_rx((char*)frame);
+}
+
+void FR_set_tx(struct frame* frame){
+  SL_set_tx((char*)frame);
+}
+
+bool FR_is_rx(struct frame* frame){
+  return SL_is_rx((char*)frame);
+}
+
+bool FR_is_tx(struct frame* frame){
+  return SL_is_tx((char*)frame);
+}
+
 int FR_busy(){
   return SL_busy();
+}
+
+struct frame* FR_find_tx(struct frame* frame){
+  return (struct frame*)SL_find_tx((char*)frame);  
+}
+
+struct frame* FR_find_rx(struct frame* frame){
+  return (struct frame*)SL_find_rx((char*)frame);  
 }
 
 int FR_available(){

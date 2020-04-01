@@ -1,9 +1,9 @@
-"E:\WMNU\IAR_new_arch\STACK_CORE_SRC\dma.c"
+"E:\Neocore\Hardware\STACK_CORE_SRC\dma.c"
 -std=c99
 -ferror-limit=0
 -fbracket-depth=512
 -I
-E:\WMNU\IAR_new_arch\Stack_core_src
+E:\Neocore\Hardware\Stack_core_src
 -I
 C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.0\8051\inc
 -I
@@ -11,7 +11,7 @@ C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.0\8051\lib\dlib
 -I
 C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.0\8051\inc\dlib\c
 -I
-E:\WMNU\IAR_new_arch\Stack_core_src
+E:\Neocore\Hardware\Stack_core_src
 -D__CHAR_BITS__=8
 -D__CHAR_MAX__=0xff
 -D__CHAR_MIN__=0
@@ -128,13 +128,13 @@ E:\WMNU\IAR_new_arch\Stack_core_src
 -D__UINTPTR_T_MAX__=0xffffffffUL
 -D__INTPTR_SIZE_PREFIX__="l"
 -D__JMP_BUF_ELEMENT_TYPE__=signed char
--D__JMP_BUF_NUM_ELEMENTS__=49
+-D__JMP_BUF_NUM_ELEMENTS__=50
 -D__TID__=0x2000
 -D__VER__=1010
 -D__SUBVERSION__=1
 -D__BUILD_NUMBER__=4655
 -D__IAR_SYSTEMS_ICC__=8
--D__VA_STACK_DECREASING__=1
+-D__VA_STACK_DECREASING__=0
 -D__VA_STACK_ALIGN__=1
 -D__VA_STACK_ALIGN_EXTRA_BEFORE__=1
 -D__LITTLE_ENDIAN__=1
@@ -253,22 +253,14 @@ E:\WMNU\IAR_new_arch\Stack_core_src
 -D__CODE_MEM0_POINTER_OK__=1
 -D__CODE_MEM0_UNIQUE_POINTER__=1
 -D__CODE_MEM0_VAR_OK__=1
--D__CODE_MEM1__=__overlay_tiny_func
+-D__CODE_MEM1__=__near_func
 -D__CODE_MEM1_POINTER_OK__=1
 -D__CODE_MEM1_UNIQUE_POINTER__=1
 -D__CODE_MEM1_VAR_OK__=1
--D__CODE_MEM2__=__overlay_near_func
+-D__CODE_MEM2__=__banked_func
 -D__CODE_MEM2_POINTER_OK__=1
 -D__CODE_MEM2_UNIQUE_POINTER__=1
 -D__CODE_MEM2_VAR_OK__=1
--D__CODE_MEM3__=__near_func
--D__CODE_MEM3_POINTER_OK__=1
--D__CODE_MEM3_UNIQUE_POINTER__=1
--D__CODE_MEM3_VAR_OK__=1
--D__CODE_MEM4__=__banked_func
--D__CODE_MEM4_POINTER_OK__=1
--D__CODE_MEM4_UNIQUE_POINTER__=1
--D__CODE_MEM4_VAR_OK__=1
 -D__HEAP_MEM0__=6
 -D__HEAP_DEFAULT_MEM__=6
 -D__HEAP_MEM1__=9
@@ -277,7 +269,7 @@ E:\WMNU\IAR_new_arch\Stack_core_src
 -D__MULTIPLE_INHERITANCE__=0
 -D_CLIB_FP_INF_NAN=1
 -D_DIFUNCT_MEMORY=__code
--D__CALLING_CONVENTION__=4
+-D__CALLING_CONVENTION__=5
 -D__CC_DO__=0
 -D__CC_ER__=5
 -D__CC_IO__=1
@@ -303,6 +295,7 @@ E:\WMNU\IAR_new_arch\Stack_core_src
 -D__DM_LARGE__=2
 -D__DM_SMALL__=1
 -D__DM_TINY__=0
+-D__EXTENDED_STACK__=1
 -D__ICC8051__=1
 -D__NUMBER_OF_DPTRS__=1
 -D__XOR_DPSEL_SELECT__=1
@@ -320,7 +313,7 @@ E:\WMNU\IAR_new_arch\Stack_core_src
 -D__EDG_SIZE_TYPE__=unsigned int
 -D__EDG_PTRDIFF_TYPE__=int
 -D__EDG_JMP_BUF_ELEMENT_TYPE=signed char
--D__EDG_JMP_BUF_NUM_ELEMENTS=49
+-D__EDG_JMP_BUF_NUM_ELEMENTS=50
 -D__EDG_DELTA_TYPE=int
 -D__EDG_VIRTUAL_FUNCTION_INDEX_TYPE=unsigned short
 -D__EDG_VAR_HANDLE_TYPE=unsigned short

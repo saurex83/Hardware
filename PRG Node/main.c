@@ -35,7 +35,8 @@ static void callback(void){
   LLC_add_tx_frame(frame);
   LOG_ON("TX FRAME PUSH");
 }
-              
+//TODO alarm manager вызывает из прерывания TM_IRQ
+//в TM_IRQ засоряется стек прерывания
 static void pre_init(void){
   AM_HW_Init();
   AM_SW_Init();

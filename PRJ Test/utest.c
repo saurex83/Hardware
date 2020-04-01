@@ -2,6 +2,7 @@
 #include "macros.h"
 #include "stdio.h"
 #include "action_manager.h"
+#include "debug.h"
 
 struct test_unit* TEST_FUN[] = TEST_FUN_DEF;
 

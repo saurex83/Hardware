@@ -11,37 +11,6 @@ typedef char power_t;
 #define MAX_CH  CH28
 #define MIN_CH  CH11
 
-
-#define RADIO_MODEL RADIO
-struct RADIO{
-  unsigned long CRCError;
-  unsigned long CCAReject;
-  power_t power_tx;
-  channel_t channel;
-  float UptimeTX;       // В секундах
-  float UptimeRX;       // В секундах
-#ifdef RADIO_DEBUG
-  struct {
-    nwtime_t isrxon;
-    nwtime_t rssistat;
-    nwtime_t istxoncca;
-    nwtime_t sfd; 
-    nwtime_t txdone;
-    char ccasampled;
-    ustime_t fulltime;
-  } DEBUG_TX;
-  struct {
-    nwtime_t isrxon;
-    nwtime_t sfd; 
-    nwtime_t rxdone;
-    ustime_t fulltime;
-    char received;
-  } DEBUG_RX;  
-#endif  
-};
-
-
-
 enum CHANNAL_e
 {
   CH11 = 11, CH12 = 12, CH13 = 13, CH14 = 14, CH15 = 15, CH16 = 16,

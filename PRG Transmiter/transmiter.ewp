@@ -68,7 +68,7 @@
                 </option>
                 <option>
                     <name>Constant Placement</name>
-                    <state>0</state>
+                    <state>2</state>
                 </option>
                 <option>
                     <name>Datapointer Size</name>
@@ -129,15 +129,15 @@
                 </option>
                 <option>
                     <name>RTDescription</name>
-                    <state>Use the normal configuration of the C/EC++ runtime library. No locale interface, C locale, no file descriptor support, no multibytes in printf and scanf, and no hex floats in strtod.</state>
+                    <state>Use the legacy C runtime library.</state>
                 </option>
                 <option>
                     <name>RTConfigPath</name>
-                    <state>$TOOLKIT_DIR$\LIB\DLIB\dl8051Normal.h</state>
+                    <state></state>
                 </option>
                 <option>
                     <name>RTLibraryPath</name>
-                    <state>$TOOLKIT_DIR$\LIB\DLIB\dl-pli-blxd-1e16x01n.r51</state>
+                    <state>$TOOLKIT_DIR$\LIB\CLIB\cl-pli-blxc-1e16x01.r51</state>
                 </option>
                 <option>
                     <name>Input variant</name>
@@ -179,7 +179,7 @@
                 </option>
                 <option>
                     <name>General Ext Stack Size</name>
-                    <state>0x3FF</state>
+                    <state>0x300</state>
                 </option>
                 <option>
                     <name>General Xdata Heap Size</name>
@@ -212,7 +212,7 @@
                 </option>
                 <option>
                     <name>PDATA 16-31 register address</name>
-                    <state></state>
+                    <state>0x94</state>
                 </option>
                 <option>
                     <name>General Far22 Heap Size</name>
@@ -230,12 +230,12 @@
                 <option>
                     <name>GRuntimeLibSelect2</name>
                     <version>0</version>
-                    <state>1</state>
+                    <state>3</state>
                 </option>
                 <option>
                     <name>GRuntimeLibSelectSlave2</name>
                     <version>0</version>
-                    <state>1</state>
+                    <state>3</state>
                 </option>
                 <option>
                     <name>Extended stack address</name>
@@ -2244,7 +2244,7 @@
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\buffer.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\Stack_core_src\buffer.h</name>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\buffer.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\coder.c</name>
@@ -2256,7 +2256,7 @@
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\cpu.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\Stack_core_src\cpu.h</name>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\cpu.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\debug.c</name>
@@ -2286,7 +2286,7 @@
             <name>$PROJ_DIR$\..\Stack_core_src\led.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\Stack_core_src\list.h</name>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\list.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\llc.c</name>
@@ -2298,16 +2298,16 @@
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\mac.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\Stack_core_src\mac.h</name>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\mac.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\Stack_core_src\macros.h</name>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\macros.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\mem_slots.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\Stack_core_src\mem_slots.h</name>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\mem_slots.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\Stack_core_src\mem_utils.c</name>
@@ -2325,9 +2325,6 @@
             <name>$PROJ_DIR$\..\Stack_core_src\model.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\Stack_core_src\model_import_struct.h</name>
-        </file>
-        <file>
             <name>$PROJ_DIR$\..\Stack_core_src\modules_list.h</name>
         </file>
         <file>
@@ -2337,13 +2334,16 @@
             <name>$PROJ_DIR$\..\Stack_core_src\radio.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\Stack_core_src\radio_defs.h</name>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\radio_defs.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\Stack_core_src\rtc.c</name>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\rtc.c</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\Stack_core_src\rtc.h</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Stack_core_src\stdint.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\sync.c</name>

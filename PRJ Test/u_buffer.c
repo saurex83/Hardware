@@ -68,7 +68,7 @@ static int test3(void){
         test_res = 5;
       del_cursor = cursor;
       cursor = BF_cursor_next(cursor);
-      if (!BF_remove(del_cursor))
+      if (!BF_remove_tx(del_cursor))
         test_res = 6;
   }  
 
@@ -79,7 +79,7 @@ static int test3(void){
         test_res = 7;
       del_cursor = cursor;
       cursor = BF_cursor_next(cursor);
-      if (!BF_remove(del_cursor))
+      if (!BF_remove_tx(del_cursor))
         test_res = 8;
   }
   
@@ -121,7 +121,7 @@ static int test2(void){
         test_res = 3;
       del_cursor = cursor;
       cursor = BF_cursor_next(cursor);
-      if (!BF_remove(del_cursor))
+      if (!BF_remove_tx(del_cursor))
         test_res = 4;
   }
   
@@ -160,11 +160,11 @@ static int test1(void){
     test_res = 6;
     
   cursor = BF_cursor_tx();
-  if (!BF_remove(cursor))
+  if (!BF_remove_tx(cursor))
       return 8;
   
   cursor = BF_cursor_tx();
-  if (!BF_remove(cursor))
+  if (!BF_remove_tx(cursor))
       return 9;
 
   cursor = BF_cursor_tx();

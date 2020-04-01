@@ -2,25 +2,33 @@
 #include "global.h"
 #include "ioCC2530.h"
 #include "stdio.h"
+#include "pgmspace.h"
 
 extern void DBG_CORE_HALT(void);
 extern void DBG_CORE_FAULT(void);
 
 #ifdef DEBUG
   #define LOG_ON(...) {\
-    printf("%s:%d:%s -> ",__FILE__, __LINE__, __FUNCTION__); \
-    printf(__VA_ARGS__); \
-    printf("\r\n"); \
+    printf_P(__FILE__);\
+    printf_P(":%d:",__LINE__);\
+    printf_P(__FUNCTION__);\
+    printf_P(__VA_ARGS__); \
+    printf_P("\r\n"); \
       }
   #define ASSERT(cond) {\
     if (!(cond)) {\
-      printf("!%s:%d\r\n",__FILE__, __LINE__);\
+      printf_P(__FILE__);\
+      printf_P(":%d:",__LINE__);\
+      printf_P(__FUNCTION__);\
+      printf_P(#cond);\
       DBG_CORE_HALT();\
     }\
   }
   #define HALT(...) {\
-      printf("%s:%d:%s -> ",__FILE__, __LINE__, __FUNCTION__);\
-       printf(__VA_ARGS__); \
+      printf_P(__FILE__);\
+      printf_P(":%d:",__LINE__);\
+      printf_P(__FUNCTION__);\
+      printf_P(__VA_ARGS__); \
       DBG_CORE_HALT();\
   }
 #else

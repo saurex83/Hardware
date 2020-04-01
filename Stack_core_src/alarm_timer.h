@@ -1,14 +1,6 @@
 #pragma once
 #include "stdbool.h"
 
-/**
-@brief Представление модели модуля
-*/
-#define AT_MODEL AT
-struct AT{
-  int a;
-};
-
 #define NWTIME_TICK_US       31 //30.517578125    
 #define NWTIME_TO_US(nwtick) ((nwtick)*NWTIME_TICK_US)
 

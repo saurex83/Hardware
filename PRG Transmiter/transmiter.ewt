@@ -2169,7 +2169,7 @@
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\mac.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\Stack_core_src\mac.h</name>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\mac.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\macros.h</name>
@@ -2184,7 +2184,7 @@
             <name>$PROJ_DIR$\..\Stack_core_src\mem_utils.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\STACK_CORE_SRC\mem_utils.h</name>
+            <name>$PROJ_DIR$\..\Stack_core_src\mem_utils.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\Stack_core_src\meta.h</name>
@@ -2196,10 +2196,7 @@
             <name>$PROJ_DIR$\..\Stack_core_src\model.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\Stack_core_src\model_import_struct.h</name>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\..\STACK_CORE_SRC\modules_list.h</name>
+            <name>$PROJ_DIR$\..\Stack_core_src\modules_list.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\radio.c</name>
@@ -2211,10 +2208,13 @@
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\radio_defs.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\Stack_core_src\rtc.c</name>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\rtc.c</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\Stack_core_src\rtc.h</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Stack_core_src\stdint.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\sync.c</name>

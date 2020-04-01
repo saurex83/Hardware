@@ -2,14 +2,6 @@
 #include "meta.h"
 #include "stdbool.h"
 
-/**
-@brief Представление модели модуля
-*/
-#define FR_MODEL FR
-struct FR{
-  int a;
-};
-
 #define MAX_PAYLOAD_SIZE 127
 
 struct frame{
@@ -24,5 +16,10 @@ bool FR_add_header(struct frame*, void *head, char len);
 bool FR_del_header(struct frame*, char len);
 int FR_busy();
 int FR_available();
- 
+void FR_set_rx(struct frame* frame);
+void FR_set_tx(struct frame* frame);
+bool FR_is_rx(struct frame* frame);
+bool FR_is_tx(struct frame* frame);
+struct frame* FR_find_tx(struct frame* frame);
+struct frame* FR_find_rx(struct frame* frame);
 

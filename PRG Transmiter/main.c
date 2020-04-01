@@ -6,7 +6,7 @@
 #include "cmd_parser.h"
 #include "stdlib.h"
 #include "coder.h"
-
+#include "stdio.h"
 static void pre_init(void){
   AM_HW_Init();
   AM_SW_Init();

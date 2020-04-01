@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# IAR C/C++ Compiler V10.10.1.4655 for 8051               07/Mar/2020  11:28:59
+# IAR C/C++ Compiler V10.10.1.4655 for 8051               31/Mar/2020  11:31:32
 # Copyright 2004-2017 IAR Systems AB.
 # PC-locked license - IAR Embedded Workbench for 8051
 #
@@ -13,7 +13,7 @@
 #                          
 #    Source file        =  E:\Neocore\Hardware\STACK_CORE_SRC\action_manager.c
 #    Command line       =  
-#        -f C:\Users\08A4~1\AppData\Local\Temp\EWC554.tmp
+#        -f C:\Users\08A4~1\AppData\Local\Temp\EWA733.tmp
 #        (E:\Neocore\Hardware\STACK_CORE_SRC\action_manager.c -lc
 #        "E:\Neocore\Hardware\PRG Node\Debug\List" -o "E:\Neocore\Hardware\PRG
 #        Node\Debug\Obj" -e --debug --core=plain --dptr=16,1 --data_model=large
@@ -1536,7 +1536,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\llc.c
      80              void* cursor_for_delete = cursor;
      81              cursor = BF_cursor_next(cursor);
      82              if (!BF_remove_tx(cursor_for_delete))
-     83                HALT("Error");
+     83                HALT(FLASH_STR("Error"));
      84            }
      85          }
      86          
@@ -1568,7 +1568,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\llc.c
     112            struct frame *frame = ACTIONSLOTS[ts].frame_tx;
     113            
     114            if (!frame)
-    115              HALT("Error")
+    115              HALT(FLASH_STR("Error"))
     116            
     117            // Неудачные передачи учитывает MAC_Send()
     118            int send_res = MAC_Send(frame);
@@ -1590,7 +1590,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\llc.c
     134                break;
     135              }
     136              default:
-    137                HALT("Error");
+    137                HALT(FLASH_STR("Error"));
     138            };
     139          }
     140          
@@ -1632,7 +1632,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\mac.c
      24          
      25          static inline struct frame* _recv_frame(channel_t ch){
      26            if(!RI_SetChannel(ch))
-     27              HALT("Wrong channel");
+     27              HALT(FLASH_STR("Wrong channel"));
      28            
      29            //UST_delay(400);
      30            nwtime_t NOW1 = AT_time();
@@ -1684,7 +1684,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\mac.c
      76          
      77          static inline bool _send_frame(struct frame *frame){
      78            if(!RI_SetChannel(frame->meta.CH))
-     79              HALT("Wrong channel");  
+     79              HALT(FLASH_STR("Wrong channel"));  
      80            
      81            UST_delay(918);
      82            bool tx_success = RI_Send(frame);
@@ -1757,30 +1757,31 @@ E:\Neocore\Hardware\PRG Node\main.c
      35            LLC_add_tx_frame(frame);
      36            LOG_ON("TX FRAME PUSH");
      37          }
-     38                        
-     39          static void pre_init(void){
-     40            AM_HW_Init();
-     41            AM_SW_Init();
-     42            LOG_ON("Hardware inited");
-     43            MODEL.SYNC.mode = 1;
-     44            MODEL.TM.MODE = 1;
-     45            AM_set_callback(callback);
-     46          }
-     47          // TODO добавить в buffer.c размер RX и TX очереди
-     48          void main(void){
-     49            pre_init();
-     50            LOG_ON("Node started");
-     51            
-     52            while (1){
-     53              MODEL.SYNC.mode = 1;
-     54              MODEL.TM.MODE = 1;
-     55              while (!network_sync(1000000U));
-     56              LOG_ON("Synced");
-     57              Neocore_start();
-     58              AM_SW_Init();
-     59              LOG_ON("START RESYNC");
-     60            }
-     61          };
+     38          //TODO alarm manager вызывает из прерывания TM_IRQ
+     39          //в TM_IRQ засоряется стек прерывания
+     40          static void pre_init(void){
+     41            AM_HW_Init();
+     42            AM_SW_Init();
+     43            LOG_ON("Hardware inited");
+     44            MODEL.SYNC.mode = 1;
+     45            MODEL.TM.MODE = 1;
+     46            AM_set_callback(callback);
+     47          }
+     48          // TODO добавить в buffer.c размер RX и TX очереди
+     49          void main(void){
+     50            pre_init();
+     51            LOG_ON("Node started");
+     52            
+     53            while (1){
+     54              MODEL.SYNC.mode = 1;
+     55              MODEL.TM.MODE = 1;
+     56              while (!network_sync(1000000U));
+     57              LOG_ON("Synced");
+     58              Neocore_start();
+     59              AM_SW_Init();
+     60              LOG_ON("START RESYNC");
+     61            }
+     62          };
 E:\Neocore\Hardware\STACK_CORE_SRC\mem_slots.c
       1          #include "debug.h"
       2          #include "global.h"
@@ -2866,13 +2867,13 @@ E:\Neocore\Hardware\STACK_CORE_SRC\sync.c
     141              case MODE_1: mode_1_process(); break;
     142              case MODE_2: mode_2_process(); break;
     143              default:
-    144              HALT("Wrong mode");
+    144              HALT(FLASH_STR("Wrong mode"));
     145            }
     146          };
     147          
     148          static struct frame* recv_sync(void){
     149            if(!RI_SetChannel(MODEL.SYNC.sync_channel))
-    150              HALT("Wrong channel");
+    150              HALT(FLASH_STR("Wrong channel"));
     151            struct frame *frame;
     152            
     153            AT_wait(SYNC_TIME - NEG_RECV_OFFSET);
@@ -2934,7 +2935,7 @@ Warning[Pe111]: statement is unreachable
     197          
     198          static struct frame* network_recv_sync(ustime_t timeout){
     199            if(!RI_SetChannel(MODEL.SYNC.sync_channel))
-    200              HALT("Wrong channel");
+    200              HALT(FLASH_STR("Wrong channel"));
     201            
     202            struct frame *frame = NULL;
     203            TRY{
@@ -3153,7 +3154,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\time_manager.c
     112              start_mode_2();
     113              break;
     114            default: 
-    115              HALT("Incorrect MODEL.TM.MODE");
+    115              HALT(FLASH_STR("Incorrect MODEL.TM.MODE"));
     116            }
     117          }
 E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c

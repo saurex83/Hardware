@@ -46,11 +46,11 @@
                 </option>
                 <option>
                     <name>Use extended stack</name>
-                    <state>0</state>
+                    <state>1</state>
                 </option>
                 <option>
                     <name>Use extended stack slave</name>
-                    <state>0</state>
+                    <state>1</state>
                 </option>
                 <option>
                     <name>Start of extended stack</name>
@@ -59,7 +59,7 @@
                 <option>
                     <name>Calling convention</name>
                     <version>0</version>
-                    <state>4</state>
+                    <state>5</state>
                 </option>
                 <option>
                     <name>Workseg Size</name>
@@ -137,7 +137,7 @@
                 </option>
                 <option>
                     <name>RTLibraryPath</name>
-                    <state>$TOOLKIT_DIR$\LIB\DLIB\dl-pli-blxd-1e16x01n.r51</state>
+                    <state>$TOOLKIT_DIR$\LIB\DLIB\dl-ple-blec-1e16x01n.r51</state>
                 </option>
                 <option>
                     <name>Input variant</name>
@@ -171,11 +171,11 @@
                 </option>
                 <option>
                     <name>General Pdata Stack Size</name>
-                    <state>0x80</state>
+                    <state>0x00</state>
                 </option>
                 <option>
                     <name>General Xdata Stack Size</name>
-                    <state>0x800</state>
+                    <state>0x100</state>
                 </option>
                 <option>
                     <name>General Ext Stack Size</name>
@@ -2244,7 +2244,7 @@
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\buffer.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\STACK_CORE_SRC\buffer.h</name>
+            <name>$PROJ_DIR$\..\Stack_core_src\buffer.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\coder.c</name>
@@ -2256,7 +2256,7 @@
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\cpu.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\STACK_CORE_SRC\cpu.h</name>
+            <name>$PROJ_DIR$\..\Stack_core_src\cpu.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\debug.c</name>
@@ -2307,7 +2307,7 @@
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\mem_slots.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\STACK_CORE_SRC\mem_slots.h</name>
+            <name>$PROJ_DIR$\..\Stack_core_src\mem_slots.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\mem_utils.c</name>

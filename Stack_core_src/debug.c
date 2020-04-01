@@ -47,38 +47,14 @@ static void uart_init(void){
   U0CSR |= (1<<6);
 }
 
-#ifdef PRINT_TO_TERMINAL 
-#include <yfuns.h>
-_STD_BEGIN
-#pragma module_name = "?__write"
-
-int MyLowLevelPutchar(int x){
+//#ifdef PRINT_TO_TERMINAL 
+//#include <yfuns.h>
+//_STD_BEGIN
+//#pragma module_name = "?__write"
+//
+__near_func int putchar(int x){
   while( U0CSR&(1<<0));
   U0DBUF = x;
   return x;
 }
-
-size_t __write(int handle, const unsigned char * buffer, size_t size){
-  /* Remove the #if #endif pair to enable the implementation */
-  size_t nChars = 0;
-  if (buffer == 0)  {
-    return 0;
-  }
-  /* This template only writes to "standard out" and "standard err",
-   * for all other file handles it returns failure. */
-  if (handle != _LLIO_STDOUT && handle != _LLIO_STDERR)  {
-    return _LLIO_ERROR;
-  }
-
-  for (/* Empty */; size != 0; --size){
-    if (MyLowLevelPutchar(*buffer++) < 0){
-      return _LLIO_ERROR;
-    }
-    ++nChars;
-  }
-  return nChars;
-}
-_STD_END
-
-#endif
 

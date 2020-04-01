@@ -14,14 +14,6 @@ typedef struct {
   void (*Hot_Start)(void); 
 } module_s;
 
-/**
-@brief Представление модели модуля
-*/
-#define AM_MODEL AM
-struct AM{
-  int a;
-};
-
 void AM_Callback(void);
 void AM_Cold_start(void);
 void AM_Hot_start(void);

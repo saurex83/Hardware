@@ -1,9 +1,9 @@
-"E:\WMNU\IAR_new_arch\Stack_core_src\led.c"
+"E:\Neocore\Hardware\Stack_core_src\led.c"
 -std=c99
 -ferror-limit=0
 -fbracket-depth=512
 -I
-E:\WMNU\IAR_new_arch\Stack_core_src
+E:\Neocore\Hardware\Stack_core_src
 -I
 C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.0\8051\inc
 -I
@@ -11,7 +11,7 @@ C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.0\8051\lib\dlib
 -I
 C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.0\8051\inc\dlib\c
 -I
-E:\WMNU\IAR_new_arch\Stack_core_src
+E:\Neocore\Hardware\Stack_core_src
 -D__CHAR_BITS__=8
 -D__CHAR_MAX__=0xff
 -D__CHAR_MIN__=0

@@ -10,6 +10,10 @@
 
 "8" 
 
+"--proc_extended_stack" 
+
+"0" 
+
 "--proc_pdata_bank_reg_addr" 
 
 "0x93" 
