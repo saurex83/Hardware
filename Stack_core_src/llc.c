@@ -1,5 +1,4 @@
 #include "action_manager.h"
-#include "buffer.h"
 #include "stddef.h"
 #include "macros.h"
 #include "model.h"
@@ -55,32 +54,28 @@ void LLC_close_slot(timeslot_t ts){
 
 bool LLC_add_tx_frame(struct frame *frame){
   ASSERT(frame);
-  AES_StreamCoder(true, frame->payload, frame->payload, frame->len);    
-  if (BF_push_tx(frame))
-    return true;
-  return false;
+  AES_StreamCoder(true, frame->payload, frame->payload, frame->len); 
+  FR_set_tx(frame);
+  return true;
 }
 
 static void scheduler_tx(void){
-  void *cursor = BF_cursor_tx();
-  if (!cursor)
+  struct frame* tx_frame = NULL; 
+  tx_frame = FR_find_tx(tx_frame);
+  
+  if (!tx_frame)
     return;
   
-  struct frame *frame = NULL;
-  while(cursor){
-    frame = BF_content(cursor);
-    ASSERT(frame->meta.TS != 0);
+  while(tx_frame){
+    ASSERT(tx_frame->meta.TS != 0);
     // Если у нас есть что передавать, берем следующий кадр из буфера
-    if (ACTIONSLOTS[frame->meta.TS].frame_tx){
-      cursor = BF_cursor_next(cursor);
+    if (ACTIONSLOTS[tx_frame->meta.TS].frame_tx){
+      tx_frame = FR_find_tx(tx_frame);
       continue;
     }
-    ACTIONSLOTS[frame->meta.TS].frame_tx = frame;
-    TM_SetAlarm(frame->meta.TS, TX_ALARM); 
-    void* cursor_for_delete = cursor;
-    cursor = BF_cursor_next(cursor);
-    if (!BF_remove_tx(cursor_for_delete))
-      HALT("Error");
+    ACTIONSLOTS[tx_frame->meta.TS].frame_tx = tx_frame;
+    TM_SetAlarm(tx_frame->meta.TS, TX_ALARM); 
+    tx_frame = FR_find_tx(tx_frame);
   }
 }
 

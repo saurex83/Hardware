@@ -3,7 +3,6 @@
 #include "model.h"
 #include "debug.h"
 #include "frame.h"
-#include "buffer.h"
 #include "mem_utils.h"
 #include "llc.h"
 

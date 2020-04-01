@@ -48,6 +48,24 @@ void SW_Init(void){
   }
 };
 
+int SL_rx_slots(){
+    int cnt=0;
+    for_each_type(struct slot, SLOT_POOL, slot){
+      if (slot->property.taken && slot->property.RX)
+        cnt++;
+    }
+    return cnt;
+}
+
+int SL_tx_slots(){
+    int cnt=0;
+    for_each_type(struct slot, SLOT_POOL, slot){
+      if (slot->property.taken && slot->property.TX)
+        cnt++;
+    }
+    return cnt;
+}
+
 /**
 @brief Возвращает указатель на следующий буфер tx
 @param buff. buff = NULL поиск от начала списка или от последнего найденого 

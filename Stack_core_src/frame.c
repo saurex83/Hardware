@@ -68,6 +68,14 @@ bool FR_is_tx(struct frame* frame){
   return SL_is_tx((char*)frame);
 }
 
+int FR_rx_frames(){
+  return SL_rx_slots();
+};
+
+int FR_tx_frames(){
+  return SL_tx_slots();
+};
+
 int FR_busy(){
   return SL_busy();
 }

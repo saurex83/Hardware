@@ -11,3 +11,5 @@ void SL_set_tx(char *buff);
 void SL_set_rx(char *buff);
 char* SL_find_rx(char* buff);
 char* SL_find_tx(char* buff);
+int SL_rx_slots();
+int SL_tx_slots();

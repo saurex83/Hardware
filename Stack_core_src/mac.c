@@ -5,7 +5,6 @@
 #include "ustimer.h"
 #include "debug.h"
 #include "model.h"
-#include "buffer.h"
 
 #define RECV_TIMEOUT 2500
 
@@ -66,12 +65,7 @@ void MAC_Receive(channel_t ch){
   AES_StreamCoder(false, frame->payload, frame->payload, frame->len);
   
   LOG_ON("push");
-  bool push_res = BF_push_rx(frame);
-  if (!push_res){
-    FR_delete(frame);
-    LOG_ON("push del");
-  }
-  
+  FR_set_rx(frame);  
 }
 
 static inline bool _send_frame(struct frame *frame){

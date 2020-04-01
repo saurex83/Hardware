@@ -2,7 +2,6 @@
 #include "cmd_parser.h"
 #include "model.h"
 #include "debug.h"
-#include "buffer.h"
 
 #define ARGS_SIZE sizeof(cmd_args_s)
 typedef struct //!< Аргументы команды
@@ -18,7 +17,7 @@ bool cmd_0x0A(uint8_t *cmd, uint8_t size)
   CHECK_SIZE();  
   CHECK_NETWORK_SEEDING();
 
-  uint8_t nbItems = BF_tx_busy();
+  uint8_t nbItems = FR_tx_frames();
   cmd_answer(ATYPE_CMD_OK, &nbItems, sizeof(nbItems));
   
   LOG_ON("CMD 0x09. TX frame count");

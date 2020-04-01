@@ -2,8 +2,6 @@
 #include "cmd_parser.h"
 #include "model.h"
 #include "debug.h"
-#include "buffer.h"
-
 
 static void upload_frame(struct frame *fr);
 static void mem_move(uint8_t *dst, uint8_t *src, uint8_t len);
@@ -25,17 +23,14 @@ bool cmd_0x0C(uint8_t *cmd, uint8_t size)
   CHECK_SIZE();  
   CHECK_NETWORK_SEEDING();
   
-  void* cursor = BF_cursor_rx();
-  if (!cursor){
+  struct frame *rx_frame = NULL;
+  rx_frame = FR_find_rx(rx_frame);
+  
+  if (!rx_frame){
     cmd_answer_err(ATYPE_CMD_ERR, CMD_RX_EMPTY);
     return false;
   }
   
-  struct frame *rx_frame = BF_content(cursor);
-  if (!BF_remove_rx(cursor))
-    HALT("Remove error");
-  
- 
   upload_frame(rx_frame);
   
   FR_delete(rx_frame);
