@@ -90,7 +90,7 @@
             <file>$PROJ_DIR$\..\Stack_core_src\llc.h</file>
             <file>$PROJ_DIR$\..\STACK_CORE_SRC\mac.c</file>
             <file>$PROJ_DIR$\..\STACK_CORE_SRC\mac.h</file>
-            <file>$PROJ_DIR$\..\Stack_core_src\macros.h</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\macros.h</file>
             <file>$PROJ_DIR$\..\STACK_CORE_SRC\mem_slots.c</file>
             <file>$PROJ_DIR$\..\STACK_CORE_SRC\mem_slots.h</file>
             <file>$PROJ_DIR$\..\Stack_core_src\mem_utils.c</file>
@@ -234,6 +234,10 @@
                 <tool>
                     <name>__cstat</name>
                     <file> 10</file>
+                </tool>
+                <tool>
+                    <name>ICC8051</name>
+                    <file> 150 49 37 45 39 44 146 36 41 42 15 161 157 158 156 13 43 40 181 17 171 148 149 152 33 175 166 165 180 169 177 176 179 167 174 168 29 172</file>
                 </tool>
             </outputs>
             <inputs>
@@ -547,7 +551,7 @@
             <inputs>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 64 195 205 96 198 76 77 208 68 105 202 62 92 72 85 99 101 197 90 103 163 196 201 204</file>
+                    <file> 205 195 64 72 208 68 105 76 77 99 101 62 92 85 90 103 197 201 204</file>
                 </tool>
             </inputs>
         </file>
@@ -756,7 +760,7 @@
             <inputs>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 198 64 62 205 208 103 77 92 76 96 197 125 72 99 68 101 90 105 163 196 202 82</file>
+                    <file> 198 64 62 205 208 103 77 82 76 96 197 125 72 99 68 101 90 105 163 196 202</file>
                 </tool>
             </inputs>
         </file>
@@ -775,7 +779,7 @@
             <inputs>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 205 64 77 208 72 198 101 76 125 92 163 196 105 90 103 197 99 202 62 68</file>
+                    <file> 205 64 77 208 72 198 96 76 125 92 163 196 105 90 103 197 99 202 62 68 101</file>
                 </tool>
             </inputs>
         </file>
@@ -1135,10 +1139,6 @@
         <forcedrebuild>
             <name>$PROJ_DIR$\main.c</name>
             <tool>ICC8051</tool>
-        </forcedrebuild>
-        <forcedrebuild>
-            <name>[MULTI_TOOL]</name>
-            <tool>XLINK</tool>
         </forcedrebuild>
     </configuration>
     <configuration>

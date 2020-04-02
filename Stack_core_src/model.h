@@ -24,7 +24,7 @@ typedef struct {
       timeslot_t timeslot;
       char alarm;
       nwtime_t time;
-    }TM;
+    } TM;
     
     struct {int a;} FR;
     

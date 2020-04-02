@@ -12,7 +12,7 @@
         <ByteLimit>50</ByteLimit>
     </Stack>
     <DebugChecksum>
-        <Checksum>2307260944</Checksum>
+        <Checksum>1912490848</Checksum>
     </DebugChecksum>
     <CodeCoverage>
         <Enabled>_ 0</Enabled>
@@ -82,12 +82,10 @@
         <Fmt0>struct SYNC-sync_channel	3	0</Fmt0>
     </struct_types>
     <Breakpoints>
-        <Bp0>_ "STD_CODE" "{$PROJ_DIR$\..\STACK_CORE_SRC\alarm_timer.c}.193.19" 1 0 0 0 "" 0 ""</Bp0>
-        <Bp1>_ "STD_CODE" "{$PROJ_DIR$\..\STACK_CORE_SRC\time_manager.c}.64.5" 1 0 0 0 "" 0 ""</Bp1>
-        <Count>2</Count>
+        <Count>0</Count>
     </Breakpoints>
     <ChipconEmu>
-        <StopTimersOnHalt>0</StopTimersOnHalt>
+        <StopTimersOnHalt>1</StopTimersOnHalt>
         <LeaveTargetRunning>1</LeaveTargetRunning>
     </ChipconEmu>
     <LogFile>
