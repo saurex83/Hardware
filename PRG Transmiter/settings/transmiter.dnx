@@ -85,7 +85,7 @@
         <Count>0</Count>
     </Breakpoints>
     <ChipconEmu>
-        <StopTimersOnHalt>1</StopTimersOnHalt>
+        <StopTimersOnHalt>0</StopTimersOnHalt>
         <LeaveTargetRunning>1</LeaveTargetRunning>
     </ChipconEmu>
     <LogFile>
