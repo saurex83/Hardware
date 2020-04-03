@@ -41,6 +41,10 @@ static void SW_Init(void){
   }
 };
 
+void LLC_restart(){
+  SW_Init();
+}
+
 void LLC_open_slot(timeslot_t ts, channel_t ch){
   ASSERT(ts >= 1 && ts < MAX_SLOTS);
   ASSERT(ch >= MIN_CH && ch <= MAX_CH);

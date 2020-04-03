@@ -1,4 +1,4 @@
-"E:\Neocore\Hardware\Stack_core_src\mem_utils.c"
+"E:\Neocore\Hardware\STACK_CORE_SRC\mem_utils.c"
 -std=c99
 -ferror-limit=0
 -fbracket-depth=512

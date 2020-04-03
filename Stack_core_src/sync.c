@@ -50,6 +50,13 @@ static void SW_Init(void){
   retransmite = 0;
 };
 
+void SY_restart(){
+  MODEL.SYNC.next_sync_send = 0;
+  MODEL.SYNC.next_time_recv = 0;
+  MODEL.SYNC.last_time_recv = 0;
+  retransmite = 0;
+}
+
 static void Cold_Start(void){
 };
 

@@ -16,5 +16,5 @@ struct SYNC{
   char panid;
 };
 
-
+void SY_restart();
 bool network_sync(ustime_t timeout);

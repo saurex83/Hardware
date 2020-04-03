@@ -75,7 +75,7 @@
             <file>$PROJ_DIR$\..\STACK_CORE_SRC\coder.c</file>
             <file>$PROJ_DIR$\..\Stack_core_src\coder.h</file>
             <file>$PROJ_DIR$\..\STACK_CORE_SRC\cpu.c</file>
-            <file>$PROJ_DIR$\..\STACK_CORE_SRC\cpu.h</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\cpu.h</file>
             <file>$PROJ_DIR$\..\STACK_CORE_SRC\debug.c</file>
             <file>$PROJ_DIR$\..\Stack_core_src\debug.h</file>
             <file>$PROJ_DIR$\..\STACK_CORE_SRC\dma.c</file>
@@ -90,10 +90,10 @@
             <file>$PROJ_DIR$\..\Stack_core_src\llc.h</file>
             <file>$PROJ_DIR$\..\STACK_CORE_SRC\mac.c</file>
             <file>$PROJ_DIR$\..\STACK_CORE_SRC\mac.h</file>
-            <file>$PROJ_DIR$\..\STACK_CORE_SRC\macros.h</file>
+            <file>$PROJ_DIR$\..\Stack_core_src\macros.h</file>
             <file>$PROJ_DIR$\..\STACK_CORE_SRC\mem_slots.c</file>
             <file>$PROJ_DIR$\..\STACK_CORE_SRC\mem_slots.h</file>
-            <file>$PROJ_DIR$\..\Stack_core_src\mem_utils.c</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\mem_utils.c</file>
             <file>$PROJ_DIR$\..\STACK_CORE_SRC\mem_utils.h</file>
             <file>$PROJ_DIR$\..\Stack_core_src\meta.h</file>
             <file>$PROJ_DIR$\..\STACK_CORE_SRC\model.c</file>
@@ -304,7 +304,7 @@
             <inputs>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 77 90 74 105 64 62 200 92 208 205 103 96 163 89 76 197 68 99 101</file>
+                    <file> 77 90 74 105 64 200 92 208 205 103 197 68 163 62 89 96 76 99 101</file>
                 </tool>
             </inputs>
         </file>
@@ -342,7 +342,7 @@
             <inputs>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 163 103 105 205 64 196 208 62 77 198 96 76 90 197 72 202</file>
+                    <file> 163 64 105 205 196 208 62 77 198 96 76 90 103 197 72 202</file>
                 </tool>
             </inputs>
         </file>
@@ -380,7 +380,7 @@
             <inputs>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 205 105 89 103 163 72 196 208 197 76 77 87 90 64 198 96 62 202</file>
+                    <file> 96 205 76 89 64 77 72 198 197 87 90 103 163 196 208 105 62 202</file>
                 </tool>
             </inputs>
         </file>
@@ -418,7 +418,7 @@
             <inputs>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 76 72 96 163 85 84 205 62 103 208 64 201 92 197 204 99 68 101 105 196 90 77 198 202</file>
+                    <file> 201 197 101 64 72 99 163 85 84 204 68 205 208 96 76 92 62 103 77 196 90 105 198 202</file>
                 </tool>
             </inputs>
         </file>
@@ -437,7 +437,7 @@
             <inputs>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 105 197 64 77 62 68 92 90 205 208 198 103 96 76 72 163 196 202 99 101</file>
+                    <file> 208 103 96 196 76 105 205 64 68 92 90 77 163 72 198 202 197 99 101 62</file>
                 </tool>
             </inputs>
         </file>
@@ -461,7 +461,7 @@
             </inputs>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\Stack_core_src\mem_utils.c</name>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\mem_utils.c</name>
             <outputs>
                 <tool>
                     <name>BICOMP</name>
@@ -494,7 +494,7 @@
             <inputs>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 68 64 205 208 99 62 76 103 96 105 92 101 90 77</file>
+                    <file> 68 64 205 208 99 90 62 76 103 101 105 92 96 77</file>
                 </tool>
             </inputs>
         </file>
@@ -513,7 +513,7 @@
             <inputs>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 205 96 92 105 195 64 198 204 72 200 76 90 77 89 97 62 85 208 103 163 196 197 201 202 99 68 101</file>
+                    <file> 205 96 92 103 105 195 64 163 204 72 200 76 90 196 89 97 62 85 208 77 198 197 201 202 99 68 101</file>
                 </tool>
             </inputs>
         </file>
@@ -532,7 +532,7 @@
             <inputs>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 76 77 205 96 64 92 62 103 90 208 99 68 101 105</file>
+                    <file> 99 77 205 101 64 92 68 208 96 76 62 103 90 105</file>
                 </tool>
             </inputs>
         </file>
@@ -551,7 +551,7 @@
             <inputs>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 205 195 64 72 208 68 105 76 77 99 101 62 92 85 90 103 197 201 204</file>
+                    <file> 64 195 205 96 198 76 77 208 68 105 202 62 92 72 85 99 101 197 90 103 163 196 201 204</file>
                 </tool>
             </inputs>
         </file>
@@ -570,7 +570,7 @@
             <inputs>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 64 62 77 70 103 90 205 96 197 76 208 198 202 204 92 72 85 99 68 101 105 163 196 201</file>
+                    <file> 101 76 208 96 70 205 99 163 62 82 64 68 77 196 92 72 85 103 90 105 198 197 202 201 204</file>
                 </tool>
             </inputs>
         </file>
@@ -608,7 +608,7 @@
             <inputs>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 198 64 62 205 208 103 77 92 76 96 197 125 72 99 68 101 90 105 163 196 202</file>
+                    <file> 96 62 64 208 103 205 77 72 76 125 99 68 101 90 105</file>
                 </tool>
             </inputs>
         </file>
@@ -760,7 +760,7 @@
             <inputs>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 198 64 62 205 208 103 77 82 76 96 197 125 72 99 68 101 90 105 163 196 202</file>
+                    <file> 198 64 62 205 208 103 77 92 76 96 197 125 72 99 68 101 90 105 163 196 202 82</file>
                 </tool>
             </inputs>
         </file>
@@ -817,7 +817,7 @@
             <inputs>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 198 64 62 205 208 103 77 92 76 96 197 125 72 99 68 101 90 105 163 196 202 89 82</file>
+                    <file> 68 76 64 90 208 92 82 101 205 125 72 89 62 103 96 105 77</file>
                 </tool>
             </inputs>
         </file>
@@ -893,7 +893,7 @@
             <inputs>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 198 64 62 205 208 103 77 92 76 96 197 125 72 99 68 101 90 105 163 196 202</file>
+                    <file> 62 205 163 208 103 101 92 76 96 105 196 202 125 72 64 99 68 77 198 197</file>
                 </tool>
             </inputs>
         </file>
@@ -931,7 +931,7 @@
             <inputs>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 208 196 125 123 163 105 90 64 197 205 72 77 198 96 76 103 127 202</file>
+                    <file> 205 208 196 64 125 103 123 163 105 90 197 72 77 198 96 76 127 202</file>
                 </tool>
             </inputs>
         </file>
@@ -950,7 +950,7 @@
             <inputs>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 64 74 198 205 90 197 208 77 76 163 196 105 103 72 202</file>
+                    <file> 105 205 74 163 64 208 196 77 198 96 76 90 103 202 197 72</file>
                 </tool>
             </inputs>
         </file>
@@ -1033,7 +1033,7 @@
             <tool>ICC8051</tool>
         </forcedrebuild>
         <forcedrebuild>
-            <name>$PROJ_DIR$\..\Stack_core_src\mem_utils.c</name>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\mem_utils.c</name>
             <tool>ICC8051</tool>
         </forcedrebuild>
         <forcedrebuild>

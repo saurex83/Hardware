@@ -48,6 +48,10 @@ void SW_Init(void){
   }
 };
 
+void SW_restart(){
+  SW_Init();
+};
+
 int SL_rx_slots(){
     int cnt=0;
     for_each_type(struct slot, SLOT_POOL, slot){
@@ -85,6 +89,7 @@ char* SL_find_tx(char* buff){
   while (geven_slot <= &SLOT_POOL[SLOT_POOL_ITEMS]){
     if (geven_slot->property.taken && geven_slot->property.TX)
       return geven_slot->buffer;
+    geven_slot++;
   }
   return NULL;
 }

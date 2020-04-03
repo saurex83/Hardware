@@ -26,8 +26,9 @@ bool cmd_0x0B(uint8_t *cmd, uint8_t size)
   }
   
   cmd_args_s *args = (cmd_args_s*)cmd; // Извлекаем аргументы
-
-  if (size - 2 != ARGS_SIZE + args->len - 1){ // Проверим точный размер
+  int lenn = ARGS_SIZE;
+  
+  if (size - 2 != lenn + args->len - 1){ // Проверим точный размер
     cmd_answer_err(ATYPE_CMD_ERR, CMD_LEN);
     return false;
   }

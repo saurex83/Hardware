@@ -16,6 +16,10 @@ module_s FR_MODULE = {ALIAS(SW_Init)};
 static void SW_Init(void){ 
 }; 
 
+void FR_restart(){
+  SW_restart();
+}
+
 struct frame* FR_create(){
   return (struct frame*)SL_alloc();
 };

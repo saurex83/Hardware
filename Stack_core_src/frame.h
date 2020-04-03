@@ -24,4 +24,5 @@ bool FR_is_rx(struct frame* frame);
 bool FR_is_tx(struct frame* frame);
 struct frame* FR_find_tx(struct frame* frame);
 struct frame* FR_find_rx(struct frame* frame);
+void FR_restart();
 

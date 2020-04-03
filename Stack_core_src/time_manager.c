@@ -4,6 +4,7 @@
 #include "debug.h"
 #include "cpu.h"
 #include "macros.h"
+#include "LLC.h"
 
 /**
 @file
@@ -102,6 +103,8 @@ static void start_mode_2(void){
 }
 
 void Neocore_start(void){
+  FR_restart(); // Уничтожает все пакеты и mem_slot.
+  LLC_restart(); // Убираем все пакеты на передачу
   switch (MODEL.TM.MODE){
   case 0:
     return;

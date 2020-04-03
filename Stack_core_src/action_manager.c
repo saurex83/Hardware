@@ -16,7 +16,6 @@ for (char i = 0; i < ITEMS_COUNT(array); i++){\
     }\
 };
 
-
 /* Локальные переменные */
 static module_s* COLD_MOD[] = COLD_MOD_DEF;
 static module_s* HOT_MOD[] = HOT_MOD_DEF;
