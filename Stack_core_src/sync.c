@@ -130,10 +130,31 @@ static void mode_1_process(){
   }
 }
 
+/**
+* brief Сканирование энергии в канале
+*
+* Работает только в режиме шлюза.
+*/
+static void energy_scan(){
+  static channel_t scan_channel = CH11;
+  int8_t rssi_sig;
+  
+  RI_Measure_POW(scan_channel, 8000, &rssi_sig);
+  // Сохраняем пиковые значения
+  if (rssi_sig > MODEL.PWR_SCAN.energy[scan_channel - 11])
+    MODEL.PWR_SCAN.energy[scan_channel - 11] = rssi_sig;
+  
+  scan_channel++;
+  if (scan_channel > CH28)
+    scan_channel = CH11;
+};
+
 static void mode_2_process(){
   // Периодическое вещание
-  if ( MODEL.RTC.uptime < MODEL.SYNC.next_sync_send)
+  if ( MODEL.RTC.uptime < MODEL.SYNC.next_sync_send){
+    energy_scan();
     return;
+  }
   MODEL.SYNC.next_sync_send = MODEL.RTC.uptime + SEND_PERIOD;
   LOW(PIN1);
   send_sync();

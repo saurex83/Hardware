@@ -29,6 +29,10 @@ typedef struct {
     struct {int a;} FR;
     
     struct {
+      signed char energy[18];
+    } PWR_SCAN;
+    
+    struct {
       char  STREAM_KEY[16];
       char  STREAM_IV[16];
       char  CCM_KEY[16];

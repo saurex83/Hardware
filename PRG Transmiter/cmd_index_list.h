@@ -21,3 +21,4 @@ bool cmd_0x0D(uint8_t *cmd, uint8_t size);
 bool cmd_0x0E(uint8_t *cmd, uint8_t size);
 bool cmd_0x0F(uint8_t *cmd, uint8_t size);
 bool cmd_0x10(uint8_t *cmd, uint8_t size);
+bool cmd_0x11(uint8_t *cmd, uint8_t size);
