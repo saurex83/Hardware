@@ -20,6 +20,7 @@ bool cmd_0x04(uint8_t *cmd, uint8_t size)
   CHECK_NETWORK_NOT_SEEDING();
    
   cmd_args_s *args = (cmd_args_s*)cmd; // Извлекаем аргументы
+
   memcpy(MODEL.AES.STREAM_IV,  args->IV, 16);   
  
   LOG_ON("CMD 0x04. IV loaded");

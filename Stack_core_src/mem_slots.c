@@ -113,6 +113,7 @@ char* SL_find_rx(char* buff){
   while (geven_slot <= &SLOT_POOL[SLOT_POOL_ITEMS]){
     if (geven_slot->property.taken && geven_slot->property.RX)
       return geven_slot->buffer;
+    geven_slot++;
   }
   return NULL;
 }

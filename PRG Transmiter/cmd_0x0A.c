@@ -20,6 +20,6 @@ bool cmd_0x0A(uint8_t *cmd, uint8_t size)
   uint8_t nbItems = FR_tx_frames();
   cmd_answer(ATYPE_CMD_OK, &nbItems, sizeof(nbItems));
   
-  LOG_ON("CMD 0x09. TX frame count");
+  LOG_OFF("CMD 0x09. TX frame count");
   return true;
 }

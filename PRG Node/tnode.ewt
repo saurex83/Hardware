@@ -2100,6 +2100,12 @@
     <group>
         <name>high protocol</name>
         <file>
+            <name>$PROJ_DIR$\auth_eth.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\auth_eth.h</name>
+        </file>
+        <file>
             <name>$PROJ_DIR$\balancer.c</name>
         </file>
         <file>
@@ -2166,13 +2172,7 @@
             <name>$PROJ_DIR$\..\Stack_core_src\alarm_timer.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\Stack_core_src\basic.h</name>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\..\STACK_CORE_SRC\buffer.c</name>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\..\Stack_core_src\buffer.h</name>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\basic.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\coder.c</name>
@@ -2220,7 +2220,7 @@
             <name>$PROJ_DIR$\..\Stack_core_src\led.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\STACK_CORE_SRC\list.h</name>
+            <name>$PROJ_DIR$\..\Stack_core_src\list.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\llc.c</name>
@@ -2232,22 +2232,22 @@
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\mac.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\STACK_CORE_SRC\mac.h</name>
+            <name>$PROJ_DIR$\..\Stack_core_src\mac.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\STACK_CORE_SRC\macros.h</name>
+            <name>$PROJ_DIR$\..\Stack_core_src\macros.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\mem_slots.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\STACK_CORE_SRC\mem_slots.h</name>
+            <name>$PROJ_DIR$\..\Stack_core_src\mem_slots.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\mem_utils.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\STACK_CORE_SRC\mem_utils.h</name>
+            <name>$PROJ_DIR$\..\Stack_core_src\mem_utils.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\Stack_core_src\meta.h</name>
@@ -2271,7 +2271,7 @@
             <name>$PROJ_DIR$\..\Stack_core_src\radio.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\STACK_CORE_SRC\radio_defs.h</name>
+            <name>$PROJ_DIR$\..\Stack_core_src\radio_defs.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\Stack_core_src\rtc.c</name>

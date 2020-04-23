@@ -68,7 +68,7 @@
                 </option>
                 <option>
                     <name>Constant Placement</name>
-                    <state>0</state>
+                    <state>2</state>
                 </option>
                 <option>
                     <name>Datapointer Size</name>
@@ -129,15 +129,15 @@
                 </option>
                 <option>
                     <name>RTDescription</name>
-                    <state>Use the normal configuration of the C/EC++ runtime library. No locale interface, C locale, no file descriptor support, no multibytes in printf and scanf, and no hex floats in strtod.</state>
+                    <state>Use the legacy C runtime library.</state>
                 </option>
                 <option>
                     <name>RTConfigPath</name>
-                    <state>$TOOLKIT_DIR$\LIB\DLIB\dl8051Normal.h</state>
+                    <state></state>
                 </option>
                 <option>
                     <name>RTLibraryPath</name>
-                    <state>$TOOLKIT_DIR$\LIB\DLIB\dl-pli-blxd-1e16x01n.r51</state>
+                    <state>$TOOLKIT_DIR$\LIB\CLIB\cl-pli-blxc-1e16x01.r51</state>
                 </option>
                 <option>
                     <name>Input variant</name>
@@ -167,11 +167,11 @@
                 </option>
                 <option>
                     <name>General Idata Stack Size</name>
-                    <state>0x0</state>
+                    <state>0x80</state>
                 </option>
                 <option>
                     <name>General Pdata Stack Size</name>
-                    <state>0x0</state>
+                    <state>0x80</state>
                 </option>
                 <option>
                     <name>General Xdata Stack Size</name>
@@ -230,12 +230,12 @@
                 <option>
                     <name>GRuntimeLibSelect2</name>
                     <version>0</version>
-                    <state>1</state>
+                    <state>3</state>
                 </option>
                 <option>
                     <name>GRuntimeLibSelectSlave2</name>
                     <version>0</version>
-                    <state>1</state>
+                    <state>3</state>
                 </option>
                 <option>
                     <name>Extended stack address</name>
@@ -2229,6 +2229,12 @@
     <group>
         <name>high protocol</name>
         <file>
+            <name>$PROJ_DIR$\auth_eth.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\auth_eth.h</name>
+        </file>
+        <file>
             <name>$PROJ_DIR$\balancer.c</name>
         </file>
         <file>
@@ -2298,12 +2304,6 @@
             <name>$PROJ_DIR$\..\Stack_core_src\basic.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\STACK_CORE_SRC\buffer.c</name>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\..\Stack_core_src\buffer.h</name>
-        </file>
-        <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\coder.c</name>
         </file>
         <file>
@@ -2349,13 +2349,13 @@
             <name>$PROJ_DIR$\..\Stack_core_src\led.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\STACK_CORE_SRC\list.h</name>
+            <name>$PROJ_DIR$\..\Stack_core_src\list.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\llc.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\Stack_core_src\llc.h</name>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\llc.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\mac.c</name>
@@ -2382,7 +2382,7 @@
             <name>$PROJ_DIR$\..\Stack_core_src\meta.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\Stack_core_src\model.c</name>
+            <name>$PROJ_DIR$\..\STACK_CORE_SRC\model.c</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\Stack_core_src\model.h</name>

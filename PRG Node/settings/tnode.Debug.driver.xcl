@@ -42,6 +42,8 @@
 
 "C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.0\8051\config\devices\Texas Instruments\ioCC2530F256.ddf" 
 
+"--proc_exclude_exit_breakpoint" 
+
 "--proc_driver" 
 
 "chipcon" 

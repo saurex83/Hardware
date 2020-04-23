@@ -2,7 +2,7 @@
 #include "stdint.h"
 #include "RADIO.h"
 //C compiler options->extra options add  --no_path_in_file_macros
-#define GATEWAY
+//#define GATEWAY
 #define NODE_VER 0
 #define NODE_TYPE 1
 

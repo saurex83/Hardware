@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# IAR C/C++ Compiler V10.10.1.4655 for 8051               31/Mar/2020  11:31:32
+# IAR C/C++ Compiler V10.10.1.4655 for 8051               24/Apr/2020  00:01:15
 # Copyright 2004-2017 IAR Systems AB.
 # PC-locked license - IAR Embedded Workbench for 8051
 #
@@ -8,24 +8,22 @@
 #    Code model         =  banked
 #    Data model         =  large
 #    Calling convention =  xdata reentrant
-#    Constant location  =  data
+#    Constant location  =  code
 #    Dptr setup         =  1,16
 #                          
 #    Source file        =  E:\Neocore\Hardware\STACK_CORE_SRC\action_manager.c
 #    Command line       =  
-#        -f C:\Users\08A4~1\AppData\Local\Temp\EWA733.tmp
+#        -f C:\Users\08A4~1\AppData\Local\Temp\EW5D1C.tmp
 #        (E:\Neocore\Hardware\STACK_CORE_SRC\action_manager.c -lc
 #        "E:\Neocore\Hardware\PRG Node\Debug\List" -o "E:\Neocore\Hardware\PRG
 #        Node\Debug\Obj" -e --debug --core=plain --dptr=16,1 --data_model=large
 #        --code_model=banked --calling_convention=xdata_reentrant
-#        --place_constants=data --nr_virtual_regs 8 --dlib_config "C:\Program
-#        Files (x86)\IAR Systems\Embedded Workbench
-#        8.0\8051\LIB\DLIB\dl8051Normal.h" --no_path_in_file_macros -I
+#        --place_constants=code --nr_virtual_regs 8 --no_path_in_file_macros -I
 #        E:\Neocore\Hardware\Stack_core_src\ -On --no_cse --no_unroll
 #        --no_inline --no_code_motion --no_tbaa --no_cross_call --mfc
 #        E:\Neocore\Hardware\STACK_CORE_SRC\alarm_timer.c
 #        "E:\Neocore\Hardware\PRG Node\auth.c" "E:\Neocore\Hardware\PRG
-#        Node\balancer.c" E:\Neocore\Hardware\STACK_CORE_SRC\buffer.c
+#        Node\auth_eth.c" "E:\Neocore\Hardware\PRG Node\balancer.c"
 #        E:\Neocore\Hardware\STACK_CORE_SRC\coder.c
 #        E:\Neocore\Hardware\Stack_core_src\config.c "E:\Neocore\Hardware\PRG
 #        Node\controller.c" E:\Neocore\Hardware\Stack_core_src\cpu.c
@@ -38,7 +36,7 @@
 #        E:\Neocore\Hardware\STACK_CORE_SRC\mac.c "E:\Neocore\Hardware\PRG
 #        Node\main.c" E:\Neocore\Hardware\STACK_CORE_SRC\mem_slots.c
 #        E:\Neocore\Hardware\STACK_CORE_SRC\mem_utils.c
-#        E:\Neocore\Hardware\Stack_core_src\model.c "E:\Neocore\Hardware\PRG
+#        E:\Neocore\Hardware\STACK_CORE_SRC\model.c "E:\Neocore\Hardware\PRG
 #        Node\neigh.c" E:\Neocore\Hardware\STACK_CORE_SRC\radio.c
 #        "E:\Neocore\Hardware\PRG Node\route.c"
 #        E:\Neocore\Hardware\Stack_core_src\rtc.c
@@ -73,47 +71,46 @@ E:\Neocore\Hardware\STACK_CORE_SRC\action_manager.c
      16              }\
      17          };
      18          
-     19          
-     20          /* Локальные переменные */
-     21          static module_s* COLD_MOD[] = COLD_MOD_DEF;
-     22          static module_s* HOT_MOD[] = HOT_MOD_DEF;
-     23          static module_s* HW_MOD[] = HW_MOD_DEF;
-     24          static module_s* SW_MOD[] = SW_MOD_DEF;
-     25          static module_s* IRQ_MOD[] = IRQ_MOD_DEF;
-     26          
-     27          static void (*CALLBACK)(void);
-     28          
-     29          void AM_set_callback(void (*fn)(void)){
-     30            ASSERT(fn);
-     31            CALLBACK = fn;
-     32          }
-     33          
-     34          void AM_Callback(void){
-     35            ASSERT(CALLBACK);
-     36            CALLBACK();
-     37          }
-     38          
-     39          void AM_Cold_start(void){
-     40            RUNNER(COLD_MOD, Cold_Start);
-     41          }
-     42          
-     43          void AM_Hot_start(void){
-     44            RUNNER(HOT_MOD, Hot_Start);  
-     45          }
-     46          
-     47          void AM_HW_Init(void){
-     48            RUNNER(HW_MOD, HW_Init);      
-     49          }
-     50          
-     51          void AM_SW_Init(void){
-     52            RUNNER(SW_MOD, SW_Init);
-     53          }
-     54          
-     55          void AM_IRQ_Init(void){
-     56            RUNNER(IRQ_MOD, IRQ_Init);
-     57          }
+     19          /* Локальные переменные */
+     20          static module_s* COLD_MOD[] = COLD_MOD_DEF;
+     21          static module_s* HOT_MOD[] = HOT_MOD_DEF;
+     22          static module_s* HW_MOD[] = HW_MOD_DEF;
+     23          static module_s* SW_MOD[] = SW_MOD_DEF;
+     24          static module_s* IRQ_MOD[] = IRQ_MOD_DEF;
+     25          
+     26          static void (*CALLBACK)(void);
+     27          
+     28          void AM_set_callback(void (*fn)(void)){
+     29            ASSERT(fn);
+     30            CALLBACK = fn;
+     31          }
+     32          
+     33          void AM_Callback(void){
+     34            ASSERT(CALLBACK);
+     35            CALLBACK();
+     36          }
+     37          
+     38          void AM_Cold_start(void){
+     39            RUNNER(COLD_MOD, Cold_Start);
+     40          }
+     41          
+     42          void AM_Hot_start(void){
+     43            RUNNER(HOT_MOD, Hot_Start);  
+     44          }
+     45          
+     46          void AM_HW_Init(void){
+     47            RUNNER(HW_MOD, HW_Init);      
+     48          }
+     49          
+     50          void AM_SW_Init(void){
+     51            RUNNER(SW_MOD, SW_Init);
+     52          }
+     53          
+     54          void AM_IRQ_Init(void){
+     55            RUNNER(IRQ_MOD, IRQ_Init);
+     56          }
+     57          
      58          
-     59          
 E:\Neocore\Hardware\STACK_CORE_SRC\alarm_timer.c
       1          #include "alarm_timer.h"
       2          #include "time_manager.h"
@@ -313,198 +310,177 @@ E:\Neocore\Hardware\STACK_CORE_SRC\alarm_timer.c
     196            TM_IRQ(time); // Передаем управление менеджеру времени
     197            STIF = 0; // Очищаем флаг прерывания
     198          }
+E:\Neocore\Hardware\PRG Node\auth_eth.c
+      1          #include "model.h"
+      2          #include "debug.h"
+      3          #include "frame.h"
+      4          #include "ethernet.h"
+      5          #include "protocol_defs.h"
+      6          
+      7          #define REQUEST_INTERVAL 30
+      8          static unsigned long last_request = 0;
+      9          
+     10          static void AUTH_request();
+     11          static void receiveCMD_Request(struct frame* frame);
+     12          static void receiveCMD_Response(struct frame* frame);
+     13          
+     14          enum AUTH_ETH_TYPES {AUTH_CMD_REQ = 0, AUTH_CMD_RESP = 1};
+     15          
+     16          struct AUTH_ETH_REQ{
+     17            char mac[8]; // Кто делает запрос
+     18            char node_type;
+     19            char node_ver;
+     20            char sensor_types[7];
+     21            char sensor_channels[7];
+     22          } __attribute__((packed));
+     23          
+     24          struct AUTH_ETH_RESP{
+     25            char mac[8]; // Для кого предназначен ответ
+     26            bool access;
+     27            unsigned int ipaddr;
+     28            char param[16];
+     29          } __attribute__((packed));
+     30          
+     31          void AUTH_ETH_Receive(struct frame *frame){
+     32            LOG_ON("AUTH_ETH receive frame");
+     33            // Проверим пакет.
+     34            // Мы можем получить пакет REQ или RESP
+     35            // Нужно типы пакетов разделить по нормальному а не cmd
+     36            // Для этого первым байтом делаем тип команды/данных а потом
+     37            // отрезаем от фрейма
+     38            
+     39            bool filter_rule = (frame->meta.TS == 1) &&
+     40                               (frame->meta.NDST == 0xffff) &&
+     41                               (frame->len > 0);  
+     42            if (!filter_rule){
+     43              LOG_ON("AUTH_ETH frame filltered");
+     44              return;
+     45            }
+     46            
+     47            char cmd = frame->payload[0];
+     48            bool res = FR_del_header(frame, 1);
+     49            ASSERT(res);
+     50            
+     51            switch(cmd){
+     52              case AUTH_CMD_REQ :
+     53                // TODO обработка приема
+     54                receiveCMD_Request(frame);
+     55                break;
+     56            case AUTH_CMD_RESP:
+     57                // TODO обработка приема 
+     58                receiveCMD_Response(frame);
+     59                break;
+     60            default:
+     61              LOG_ON("Unrecognized cmd");
+     62              break;
+     63            };
+     64          };
+     65          
+     66          /** brief Обработка ответа об авторизации
+     67          * Ответ принимается если узел еще не авторизован и пакет
+     68          * предназначени этому узлу
+     69          */
+     70          static void receiveCMD_Response(struct frame* frame){
+     71            LOG_ON("AUTH_ETH Response");
+     72            if (MODEL.AUTH.auth_ok == true)
+     73              return;  
+     74            
+     75            if (frame-> len != sizeof(struct AUTH_ETH_RESP)){
+     76              LOG_ON("Frame AUTH_ETH_RESP wrong size");
+     77              return;
+     78            };
+     79            LOG_ON("Extract response");
+     80            struct AUTH_ETH_RESP *resp = (struct AUTH_ETH_RESP*)frame->payload;
+     81            
+     82            // Проверим что пакет для нас. Должны совпадать мак адресса
+     83            bool mac_eq = true;
+     84            for (char i = 0; i < 8; i++)
+     85              if (resp->mac[i] != MODEL.node_mac[i]){
+     86                mac_eq = false;
+     87                break;
+     88              };
+     89            
+     90            if (!mac_eq){
+     91              LOG_ON("AUTH_ETH request filtered by mac");
+     92              return;
+     93            }
+     94            
+     95            MODEL.AUTH.auth_ok = true;
+     96            // Пакет для нас. Проверим доступ
+     97            if (!resp->access){
+     98              LOG_ON("Access depricated");
+     99              MODEL.AUTH.access_ok = false;
+    100              return;
+    101            };
+    102            
+    103            MODEL.AUTH.access_ok = true;
+    104            
+    105            for (char i = 0; i < 16 ; i++)
+    106              MODEL.node_param[i] = resp->param[i];
+    107            
+    108            MODEL.node_adr = resp->ipaddr;
+    109            LOG_ON("Node auth ok! ipaddr=%d", MODEL.node_adr);
+    110          };
+    111          
+    112          /** brief Обработка запроса авторизации
+    113          * Запрос обрабатывается если данный узел авторизован  
+    114          */
+    115          static void receiveCMD_Request(struct frame* frame){
+    116            if (MODEL.AUTH.auth_ok == false)
+    117              return;
+    118            
+    119            // TODO Сохранить запрос в таблице и добавить геттер запросов.
+    120            // Авторизация уровня IP будет опрашивать таблицу и
+    121            // общаться со шлюзом по этому вопросу.
+    122            LOG_ON("AUTH REQ received and droped");
+    123          };
+    124          
+    125          void AUTH_ETH_TimeAlloc(){
+    126             // Выходим если узел авторизован
+    127            if (MODEL.AUTH.auth_ok == true)
+    128               return;
+    129            
+    130             AUTH_request(); 
+    131          };
+    132          
+    133          static void AUTH_request(){
+    134            // Еще не наступло время передачи запроса
+    135            if ((MODEL.RTC.uptime - last_request) < REQUEST_INTERVAL)
+    136              return;
+    137            // Обновляем время
+    138            last_request = MODEL.RTC.uptime;
+    139            
+    140            // Создаем запрос
+    141            struct frame* frame = FR_create();
+    142            struct AUTH_ETH_REQ req;
+    143            for (int i = 0; i < 8; i++)
+    144              req.mac[i] = MODEL.node_mac[i];
+    145            
+    146            req.node_type = NODE_TYPE;
+    147            req.node_ver = NODE_VER;
+    148          
+    149            bool res;
+    150            res = FR_add_header(frame, &req, sizeof(struct AUTH_ETH_REQ));
+    151            ASSERT(res);
+    152            char cmd = AUTH_CMD_REQ;
+    153            res = FR_add_header(frame, &cmd, sizeof(cmd));
+    154            ASSERT(res);
+    155            
+    156            frame->meta.TS = 1;
+    157            frame->meta.CH = MODEL.SYNC.sys_channel;
+    158            frame->meta.PID = PID_AUTH;
+    159            frame->meta.NDST = 0xffff;
+    160            frame->meta.NSRC = 0;
+    161           
+    162            eth_send(frame); 
+    163            LOG_ON("AUTH req add to tx");
+    164          };
 E:\Neocore\Hardware\PRG Node\balancer.c
       1          #include "model.h"
       2          #include "debug.h"
-      3          #include "buffer.h"
-      4          
-      5          
-      6          void TB_Receive(struct frame *frame){
-      7          }
-E:\Neocore\Hardware\STACK_CORE_SRC\buffer.c
-      1          #include "debug.h"
-      2          #include "macros.h"
-      3          #include "frame.h"
-      4          #include "stdbool.h"
-      5          #include "cpu.h"
-      6          #include "list.h"
-      7          
-      8          #include "action_manager.h"
-      9          static void SW_Init(void);
-     10          static void IRQ_Init(void);
-     11          module_s BF_MODULE = {ALIAS(SW_Init),ALIAS(IRQ_Init)};
-     12          
-     13          struct node {
-     14            struct frame *frame;
-     15            struct list_head list ;
-     16          };
-     17          
-     18          static struct node NODE_LIST[MAX_TXRX_BUFF_SIZE];
-     19          LIST_HEAD(TX_LIST_HEAD);
-     20          LIST_HEAD(RX_LIST_HEAD);
-     21          static int TX_BUFF_FRAME_COUNT;
-     22          static int RX_BUFF_FRAME_COUNT;
-     23          
-     24          static void IRQ_Init(void){};
-     25          
-     26          static void SW_Init(void){
-     27            TX_BUFF_FRAME_COUNT = 0;
-     28            RX_BUFF_FRAME_COUNT = 0;
-     29            INIT_LIST_HEAD(&TX_LIST_HEAD);
-     30            INIT_LIST_HEAD(&RX_LIST_HEAD);
-     31            
-     32            for_each_type(struct node, NODE_LIST, node){
-     33              node->frame = NULL;
-     34              INIT_LIST_HEAD(&node->list);
-     35            }
-     36          };
-     37          
-     38          int BF_rx_busy(){
-     39            return RX_BUFF_FRAME_COUNT;
-     40          };
-     41          
-     42          int BF_tx_busy(){
-     43            return TX_BUFF_FRAME_COUNT;
-     44          }
-     45          
-     46          int BF_available(){
-     47            int summ = RX_BUFF_FRAME_COUNT + TX_BUFF_FRAME_COUNT;
-     48            ASSERT(summ <= MAX_TXRX_BUFF_SIZE);
-     49            return MAX_TXRX_BUFF_SIZE - summ;
-     50          }
-     51          
-     52          int BF_available_tx(){
-     53            int summ = MAX_TX_BUFF - TX_BUFF_FRAME_COUNT;
-     54            return summ;
-     55          }
-     56          
-     57          int BF_available_rx(){
-     58            int summ = MAX_RX_BUFF - RX_BUFF_FRAME_COUNT;
-     59            return summ;
-     60          }
-     61          
-     62          static inline struct node* find_free_node(void){
-     63            for_each_type(struct node, NODE_LIST, node)
-     64              if (node->frame == NULL){
-     65                INIT_LIST_HEAD(&node->list);
-     66                return node;
-     67              }
-     68            return NULL;
-     69          };
-     70          
-     71          
-     72          static inline bool _push(struct list_head *list, struct frame *frame){
-     73            ASSERT(frame != NULL);
-     74            struct node *node = find_free_node();
-     75            if (!node) // Нет свободных мест
-     76              return false;
-     77            node->frame = frame;
-     78            list_add(&node->list , list);
-     79            return true;
-     80          };
-     81          
-     82          bool BF_push_tx(struct frame *frame){
-     83            bool res = false;
-     84            ATOMIC_BLOCK_RESTORE{
-     85              if (TX_BUFF_FRAME_COUNT < MAX_TX_BUFF){
-     86                res = _push(&TX_LIST_HEAD, frame);
-     87                if (res)
-     88                  TX_BUFF_FRAME_COUNT++;
-     89              }
-     90            };
-     91            return res;
-     92          };
-     93          
-     94          bool BF_push_rx(struct frame *frame){
-     95            bool res = false;
-     96            ATOMIC_BLOCK_RESTORE{
-     97              if (RX_BUFF_FRAME_COUNT < MAX_RX_BUFF){
-     98                res = _push(&RX_LIST_HEAD, frame);
-     99                if (res)
-    100                  RX_BUFF_FRAME_COUNT++;
-    101              }
-    102            };
-    103            return res;
-    104          };
-    105          
-    106          void* BF_cursor_rx(void){
-    107            if (list_empty(&RX_LIST_HEAD)) 
-    108              return NULL;
-    109            void *ret_val;
-    110            ATOMIC_BLOCK_RESTORE{   
-    111              struct node *node = list_first_entry(&RX_LIST_HEAD, struct node, list);
-    112              ret_val =  node;
-    113            }
-    114            return ret_val;
-    115          }
-    116          
-    117          void* BF_cursor_tx(void){
-    118            if (list_empty(&TX_LIST_HEAD)) 
-    119              return NULL;
-    120            void *ret_val;
-    121            ATOMIC_BLOCK_RESTORE{   
-    122              struct node *node = list_first_entry(&TX_LIST_HEAD, struct node, list);
-    123              ret_val =  node;
-    124            }
-    125            return ret_val;
-    126          }  
-    127          
-    128          void* BF_cursor_next(void* cursor){
-    129            if (!cursor)
-    130              return NULL;
-    131            void *ret_val;
-    132            ATOMIC_BLOCK_RESTORE{  
-    133              TRY{
-    134                struct node *node = (struct node*)(cursor);
-    135              
-    136                // Убедимся что это не конец списков
-    137                if (list_is_last(&node->list, &TX_LIST_HEAD))
-    138                  THROW(1);
-    139             
-    140                if (list_is_last(&node->list, &RX_LIST_HEAD))
-    141                  THROW(1); 
-    142              
-    143                struct node *next = list_next_entry(node, struct node, list);
-    144                ret_val = next;
-    145              }
-    146              CATCH(1){
-    147                ret_val = NULL;
-    148              } 
-    149              ETRY;
-    150            };
-    151            return ret_val;
-    152          }
-    153          
-    154          bool BF_remove_tx(void *cursor){
-    155            if (!cursor)
-    156              return false;
-    157            ATOMIC_BLOCK_RESTORE{
-    158              struct node *node = (struct node*)(cursor);    
-    159              node->frame = NULL;
-    160              list_del(&node->list);    
-    161              TX_BUFF_FRAME_COUNT--; 
-    162            };  
-    163            return true;
-    164          }
-    165          
-    166          bool BF_remove_rx(void *cursor){
-    167            if (!cursor)
-    168              return false;
-    169            ATOMIC_BLOCK_RESTORE{
-    170              struct node *node = (struct node*)(cursor);    
-    171              node->frame = NULL;
-    172              list_del(&node->list);    
-    173              RX_BUFF_FRAME_COUNT--; 
-    174            };  
-    175            return true;
-    176          }
-    177          
-    178          struct frame* BF_content(void* cursor){
-    179            if (!cursor)
-    180              return NULL;
-    181            struct node *node = (struct node*)(cursor);
-    182            return node->frame;
-    183          }
+      3          
+      4          void TB_Receive(struct frame *frame){
+      5          }
 E:\Neocore\Hardware\STACK_CORE_SRC\coder.c
       1          #include "coder.h"
       2          #include "ioCC2530.h"
@@ -1123,25 +1099,24 @@ E:\Neocore\Hardware\Stack_core_src\config.c
 E:\Neocore\Hardware\PRG Node\controller.c
       1          #include "model.h"
       2          #include "debug.h"
-      3          #include "buffer.h"
-      4          #include "action_manager.h"
-      5          #include "ethernet.h"
-      6          
-      7          static void HP_callback(void);
-      8          
-      9          void HP_Init(void){
-     10              AM_set_callback(HP_callback);
-     11          #warning Call other protocols init
+      3          #include "action_manager.h"
+      4          #include "ethernet.h"
+      5          
+      6          static void HP_callback(void);
+      7          
+      8          void HP_Init(void){
+      9              AM_set_callback(HP_callback);
+     10          #warning Call other protocols init
                   ^
 Warning[Pe1105]: #warning directive: Call other protocols init
           detected during compilation of secondary translation unit
                     "E:\Neocore\Hardware\PRG Node\controller.c"
-     12          }
-     13          
-     14          static void HP_callback(void){
-     15            ethernet_process();
-     16          };
-     17          
+     11          }
+     12          
+     13          static void HP_callback(void){
+     14            ethernet_process();
+     15          };
+     16          
 E:\Neocore\Hardware\Stack_core_src\cpu.c
       1          #include "action_manager.h"
       2          #include "ioCC2530.h"
@@ -1214,41 +1189,17 @@ E:\Neocore\Hardware\STACK_CORE_SRC\debug.c
      47            U0CSR |= (1<<6);
      48          }
      49          
-     50          #ifdef PRINT_TO_TERMINAL 
-     51          #include <yfuns.h>
-     52          _STD_BEGIN
-     53          #pragma module_name = "?__write"
-     54          
-     55          int MyLowLevelPutchar(int x){
+     50          //#ifdef PRINT_TO_TERMINAL 
+     51          //#include <yfuns.h>
+     52          //_STD_BEGIN
+     53          //#pragma module_name = "?__write"
+     54          //
+     55          __near_func int putchar(int x){
      56            while( U0CSR&(1<<0));
      57            U0DBUF = x;
      58            return x;
      59          }
      60          
-     61          size_t __write(int handle, const unsigned char * buffer, size_t size){
-     62            /* Remove the #if #endif pair to enable the implementation */
-     63            size_t nChars = 0;
-     64            if (buffer == 0)  {
-     65              return 0;
-     66            }
-     67            /* This template only writes to "standard out" and "standard err",
-     68             * for all other file handles it returns failure. */
-     69            if (handle != _LLIO_STDOUT && handle != _LLIO_STDERR)  {
-     70              return _LLIO_ERROR;
-     71            }
-     72          
-     73            for (/* Empty */; size != 0; --size){
-     74              if (MyLowLevelPutchar(*buffer++) < 0){
-     75                return _LLIO_ERROR;
-     76              }
-     77              ++nChars;
-     78            }
-     79            return nChars;
-     80          }
-     81          _STD_END
-     82          
-     83          #endif
-     84          
 E:\Neocore\Hardware\Stack_core_src\dma.c
       1          #include "dma.h"
       2          #include "ioCC2530.h"
@@ -1278,96 +1229,116 @@ E:\Neocore\Hardware\Stack_core_src\dma.c
 E:\Neocore\Hardware\PRG Node\ethernet.c
       1          #include "model.h"
       2          #include "debug.h"
-      3          #include "buffer.h"
-      4          #include "route.c"
-
-    #warning update route tables
-     ^
-"E:\Neocore\Hardware\PRG Node\route.c",21  Warning[Pe1105]: #warning directive:
-          update route tables
-          detected during compilation of secondary translation unit
-                    "E:\Neocore\Hardware\PRG Node\ethernet.c"
-      5          
-      6          #define ETH_LAY_SIZE sizeof(struct ETH_LAY)
-      7          
-      8          struct ETH_LAY{  
-      9            union{
-     10              uint8_t value;
-     11              struct {
-     12                char PID:4;
-     13                char UNUSED:1;
-     14                char ETH_VER:3;
-     15              } bits;
-     16            } ETH_T;
-     17          
-     18            char NETID;
-     19            unsigned int NDST;
-     20            unsigned int NSRC;
-     21          } __attribute__((packed));
-     22          
-     23          static bool frame_filter(struct frame *frame){
-     24            struct ETH_LAY *eth_header = (struct ETH_LAY*)frame->payload;
-     25          
-     26            // Фильтр 1: по размеру кадра
-     27            if (frame->len < ETH_LAY_SIZE)
-     28              return false;
-     29          
-     30            // Фильтр 2: по версии протокола
-     31            if (eth_header->ETH_T.bits.ETH_VER != HEADER_ETH_VER)
-     32              return false;
-     33          
-     34            // Фильтр 3: по идентификатору сети
-     35            if (eth_header->NETID!= MODEL.SYNC.panid)
+      3          #include "route.h"
+      4          #include "auth_eth.h"
+      5          #include "llc.h"
+      6          
+      7          #define ETH_LAY_SIZE sizeof(struct ETH_LAY)
+      8          
+      9          struct ETH_LAY{  
+     10            union{
+     11              uint8_t value;
+     12              struct {
+     13                char PID:4;
+     14                char UNUSED:1;
+     15                char ETH_VER:3;
+     16              } bits;
+     17            } ETH_T;
+     18          
+     19            char NETID;
+     20            unsigned int NDST;
+     21            unsigned int NSRC;
+     22          } __attribute__((packed));
+     23          
+     24          static bool frame_filter(struct frame *frame){
+     25            struct ETH_LAY *eth_header = (struct ETH_LAY*)frame->payload;
+     26          
+     27            // Фильтр 1: по размеру кадра
+     28            if (frame->len < ETH_LAY_SIZE){
+     29              LOG_ON("Filtered ETH_LAY_SIZE");
+     30              return false;
+     31            }
+     32              
+     33            // Фильтр 2: по версии протокола
+     34            if (eth_header->ETH_T.bits.ETH_VER != HEADER_ETH_VER){
+     35              LOG_ON("Filtered ETH_VER. %d",eth_header->ETH_T.bits.ETH_VER );
      36              return false;
-     37          
-     38            // Фильтр 4: по адресу получателю
-     39            if (eth_header->NDST != 0xffff )
-     40              if (eth_header->NDST != MODEL.node_adr)
-     41                return false;
-     42            return true;
-     43          }
+     37            }
+     38          
+     39            // Фильтр 3: по идентификатору сети
+     40            if (eth_header->NETID!= MODEL.SYNC.panid){
+     41              LOG_ON("Filtered panid");
+     42              return false;
+     43            }
      44          
-     45          static inline void fill_meta_data(struct frame *frame){
-     46            // Заполняем метаданные
-     47            struct ETH_LAY *eth_header = (struct ETH_LAY*)frame->payload;
-     48            frame->meta.NDST = eth_header->NDST;
-     49            frame->meta.NSRC = eth_header->NSRC;
-     50            frame->meta.PID = eth_header->ETH_T.bits.PID;  
-     51          }
-     52          
-     53          static void parse_frame(struct frame *frame){
-     54            // Разбор пакета
-     55            if (!frame_filter(frame))
-     56              return;
-     57            
-     58            fill_meta_data(frame);
-     59            FR_del_header(frame, ETH_LAY_SIZE);
-     60            RP_Receive(frame);  
-     61          }
-     62          
-     63          void ethernet_process(void){
-     64            // Извлекает все принятые пакеты из буфера
-     65            void* cursor = BF_cursor_rx();
-     66            void *cursor_delete;
+     45            // Фильтр 4: по адресу получателю
+     46            if (eth_header->NDST != 0xffff )
+     47              if (eth_header->NDST != MODEL.node_adr){
+     48                LOG_ON("Filtered node addr");
+     49                return false;
+     50              }
+     51            return true;
+     52          }
+     53          
+     54          static inline void fill_meta_data(struct frame *frame){
+     55            // Заполняем метаданные
+     56            struct ETH_LAY *eth_header = (struct ETH_LAY*)frame->payload;
+     57            frame->meta.NDST = eth_header->NDST;
+     58            frame->meta.NSRC = eth_header->NSRC;
+     59            frame->meta.PID = eth_header->ETH_T.bits.PID;  
+     60          }
+     61          
+     62          static void parse_frame(struct frame *frame){
+     63            // Разбор пакета
+     64            LOG_ON("Frame Filter");
+     65            if (!frame_filter(frame))
+     66              return;
      67            
-     68            struct frame *rx_frame;
-     69            
-     70            while (cursor){
-     71              rx_frame = BF_content(cursor);
-     72              parse_frame(rx_frame);
-     73              
-     74              if (!FR_delete(rx_frame))
-     75                HALT("Delete");
-     76              
-     77              cursor_delete = cursor;
-     78              if (!BF_remove_rx(cursor_delete))
-     79                HALT("Remove");
-     80              
-     81              cursor = BF_cursor_next(cursor);
-     82            }
-     83            if (!BF_remove_rx(cursor))
-     84              HALT("Remove error");  
-     85          };
+     68            LOG_ON("Fill metadata");
+     69            fill_meta_data(frame);
+     70            LOG_ON("Delete eth header");
+     71            FR_del_header(frame, ETH_LAY_SIZE);
+     72            LOG_ON("Route protocol");
+     73            RP_Receive(frame);  
+     74          }
+     75          
+     76          /* brief Обработка принятых пакетов
+     77          * Извлекает пакеты из входящего буфера, разбирает заголовок ETH, фильтрует 
+     78          * пакет и передает их на обработку  протоколу маршрутизации. 
+     79          * После обработки пакет удаляется.
+     80          */
+     81          void ethernet_process(void){
+     82            struct frame* frame = NULL;
+     83            frame = FR_find_rx(frame); 
+     84            LOG_OFF("Start search rx");
+     85            while (frame){
+     86              LOG_ON("Find rx!");
+     87              LOG_ON("ETH. LEN:%d, TS:%d, CH:%d, PID:%d", frame->len,
+     88                     frame->meta.TS, frame->meta.CH, frame->meta.PID);
+     89              parse_frame(frame);
+     90              FR_delete(frame);
+     91              frame = FR_find_rx(frame);
+     92            };
+     93            LOG_OFF("Stop search rx");
+     94            AUTH_ETH_TimeAlloc();
+     95          };
+     96          
+     97          void eth_send(struct frame *frame){
+     98            struct ETH_LAY eth_header;
+     99            eth_header.ETH_T.bits.PID = frame->meta.PID ;
+    100            eth_header.ETH_T.bits.ETH_VER =HEADER_ETH_VER;
+    101            eth_header.NETID = MODEL.SYNC.panid;
+    102            eth_header.NDST = frame->meta.NDST;
+    103            eth_header.NSRC = frame->meta.NSRC;
+    104            
+    105            bool res;
+    106            res = FR_add_header(frame, &eth_header,
+    107                                sizeof(struct ETH_LAY));
+    108            ASSERT(res);
+    109           
+    110            frame->meta.tx_attempts = 5;
+    111            res = LLC_add_tx_frame(frame); 
+    112          };
 E:\Neocore\Hardware\STACK_CORE_SRC\frame.c
       1          #include "action_manager.h"
       2          #include "frame.h"
@@ -1387,57 +1358,97 @@ E:\Neocore\Hardware\STACK_CORE_SRC\frame.c
      16          static void SW_Init(void){ 
      17          }; 
      18          
-     19          struct frame* FR_create(){
-     20            return (struct frame*)SL_alloc();
-     21          };
+     19          void FR_restart(){
+     20            SW_restart();
+     21          }
      22          
-     23          bool FR_delete(struct frame *frame){
-     24            return SL_free((char*)frame);
-     25          }
+     23          struct frame* FR_create(){
+     24            return (struct frame*)SL_alloc();
+     25          };
      26          
-     27          bool FR_add_header(struct frame* frame ,void *head, char len){
-     28            int new_len = frame->len + len;
-     29            if (!(new_len < MAX_PAYLOAD_SIZE))
-     30              return false;
-     31            
-     32            // Сдвинем данные на размер вставки при необходимости
-     33            if (frame->len != 0)
-     34              MEMCPY(&frame->payload[len], frame->payload, len);
-     35            
-     36            // Скопируем новые данные
-     37            MEMCPY(frame->payload, head, len);
-     38            frame->len = new_len;
-     39            return true;
-     40          };
-     41          
-     42          bool FR_del_header(struct frame* frame, char len){
-     43            if (len == 0 || len > frame->len )
-     44              return false;
-     45            MEMCPY(frame->payload, &frame->payload[len], len);
-     46            
-     47            #ifdef FRAME_FOOTER_DEL
-     48            MEMSET(&frame->payload[len], 0, len);
-     49            #endif
-     50            
-     51            frame->len = frame->len - len;;
-     52            return true;
-     53          }
-     54          
-     55          int FR_busy(){
-     56            return SL_busy();
-     57          }
-     58          
-     59          int FR_available(){
-     60            return SL_available();
-     61          };
+     27          bool FR_delete(struct frame *frame){
+     28            return SL_free((char*)frame);
+     29          }
+     30          
+     31          static void mem_move(char *dst, char *src, char len){
+     32            for (int i = len - 1; i >= 0; i--)
+     33              dst[i] = src[i];
+     34          };
+     35          
+     36          bool FR_add_header(struct frame* frame ,void *head, char len){
+     37            int new_len = frame->len + len;
+     38            if (!(new_len < MAX_PAYLOAD_SIZE))
+     39              return false;
+     40            
+     41            // Сдвинем данные на размер вставки при необходимости
+     42            if (frame->len != 0)
+     43              mem_move(&frame->payload[len], frame->payload, frame->len);
+     44            
+     45            // Скопируем новые данные
+     46            MEMCPY(frame->payload, head, len);
+     47            frame->len = new_len;
+     48            return true;
+     49          };
+     50          
+     51          
+     52          bool FR_del_header(struct frame* frame, char len){
+     53            if (len == 0 || len > frame->len )
+     54              return false;
+     55            frame->len = frame->len - len;
+     56            MEMCPY(frame->payload, &frame->payload[len], frame->len);
+     57            
+     58            #ifdef FRAME_FOOTER_DEL
+     59            MEMSET(&frame->payload[frame->len], 0, len);
+     60            #endif
+     61            return true;
+     62          }
+     63          
+     64          void FR_set_rx(struct frame* frame){
+     65            SL_set_rx((char*)frame);
+     66          }
+     67          
+     68          void FR_set_tx(struct frame* frame){
+     69            SL_set_tx((char*)frame);
+     70          }
+     71          
+     72          bool FR_is_rx(struct frame* frame){
+     73            return SL_is_rx((char*)frame);
+     74          }
+     75          
+     76          bool FR_is_tx(struct frame* frame){
+     77            return SL_is_tx((char*)frame);
+     78          }
+     79          
+     80          int FR_rx_frames(){
+     81            return SL_rx_slots();
+     82          };
+     83          
+     84          int FR_tx_frames(){
+     85            return SL_tx_slots();
+     86          };
+     87          
+     88          int FR_busy(){
+     89            return SL_busy();
+     90          }
+     91          
+     92          struct frame* FR_find_tx(struct frame* frame){
+     93            return (struct frame*)SL_find_tx((char*)frame);  
+     94          }
+     95          
+     96          struct frame* FR_find_rx(struct frame* frame){
+     97            return (struct frame*)SL_find_rx((char*)frame);  
+     98          }
+     99          
+    100          int FR_available(){
+    101            return SL_available();
+    102          };
 E:\Neocore\Hardware\PRG Node\ip.c
       1          #include "model.h"
       2          #include "debug.h"
-      3          #include "buffer.h"
+      3          
       4          
-      5          
-      6          void IP_Receive(struct frame *frame){
-      7          }
+      5          void IP_Receive(struct frame *frame){
+      6          }
 E:\Neocore\Hardware\Stack_core_src\led.c
       1          #include "action_manager.h"
       2          
@@ -1455,156 +1466,155 @@ E:\Neocore\Hardware\Stack_core_src\led.c
      14          static void Hot_Start(void){};
 E:\Neocore\Hardware\STACK_CORE_SRC\llc.c
       1          #include "action_manager.h"
-      2          #include "buffer.h"
-      3          #include "stddef.h"
-      4          #include "macros.h"
-      5          #include "model.h"
-      6          #include "debug.h"
-      7          #include "radio.h"
-      8          #include "mac.h"
+      2          #include "stddef.h"
+      3          #include "macros.h"
+      4          #include "model.h"
+      5          #include "debug.h"
+      6          #include "radio.h"
+      7          #include "mac.h"
+      8          
       9          
-     10          
-     11          #define MAX_SLOTS 50
-     12          
-     13          #define RX_ALARM (1<<0)
-     14          #define TX_ALARM (1<<1)
-     15          
-     16          static void SW_Init(void);
-     17          static void Cold_Start(void);
-     18          static void Hot_Start(void);
-     19          static void IRQ_Init(void);
-     20          
-     21          module_s LLC_MODULE = {ALIAS(SW_Init), ALIAS(Cold_Start), 
-     22            ALIAS(Hot_Start), ALIAS(IRQ_Init)};
-     23          
-     24          struct action{
-     25            channel_t rx;
-     26            struct frame *frame_tx;
-     27          };
-     28          
-     29          static struct action ACTIONSLOTS[MAX_SLOTS];
-     30          
-     31          static void IRQ_Init(void){
-     32            for_each_type(struct action, ACTIONSLOTS, slot){
-     33              slot->rx = 0;
-     34              slot->frame_tx = NULL;
-     35            }
-     36          };
-     37          
-     38          static void SW_Init(void){
-     39            for_each_type(struct action, ACTIONSLOTS, slot){
-     40              slot->rx = 0;
-     41              slot->frame_tx = NULL;
-     42            }
-     43          };
-     44          
-     45          void LLC_open_slot(timeslot_t ts, channel_t ch){
-     46            ASSERT(ts >= 1 && ts < MAX_SLOTS);
-     47            ASSERT(ch >= MIN_CH && ch <= MAX_CH);
-     48            ACTIONSLOTS[ts].rx = ch;
-     49          }
-     50          
-     51          void LLC_close_slot(timeslot_t ts){
-     52            ASSERT(ts >= 1 && ts < MAX_SLOTS);
-     53            ACTIONSLOTS[ts].rx = 0;
-     54          }
-     55          
-     56          bool LLC_add_tx_frame(struct frame *frame){
-     57            ASSERT(frame);
-     58            AES_StreamCoder(true, frame->payload, frame->payload, frame->len);    
-     59            if (BF_push_tx(frame))
-     60              return true;
-     61            return false;
-     62          }
-     63          
-     64          static void scheduler_tx(void){
-     65            void *cursor = BF_cursor_tx();
-     66            if (!cursor)
-     67              return;
-     68            
-     69            struct frame *frame = NULL;
-     70            while(cursor){
-     71              frame = BF_content(cursor);
-     72              ASSERT(frame->meta.TS != 0);
-     73              // Если у нас есть что передавать, берем следующий кадр из буфера
-     74              if (ACTIONSLOTS[frame->meta.TS].frame_tx){
-     75                cursor = BF_cursor_next(cursor);
-     76                continue;
-     77              }
-     78              ACTIONSLOTS[frame->meta.TS].frame_tx = frame;
-     79              TM_SetAlarm(frame->meta.TS, TX_ALARM); 
-     80              void* cursor_for_delete = cursor;
-     81              cursor = BF_cursor_next(cursor);
-     82              if (!BF_remove_tx(cursor_for_delete))
-     83                HALT(FLASH_STR("Error"));
-     84            }
-     85          }
-     86          
-     87          static void scheduler_rx(void){
-     88            ASSERT(ACTIONSLOTS[0].rx == 0);
-     89            for (char i = 1; i < MAX_SLOTS; i++)
-     90              if (ACTIONSLOTS[i].rx)
-     91                TM_SetAlarm(i, RX_ALARM);
-     92              else
-     93                TM_ClrAlarm(i, RX_ALARM);
-     94          }
-     95          
-     96          static void Cold_Start(void){
-     97          // Планировщик планирует на один суперфрейм в начале ts0
-     98            if (MODEL.TM.timeslot != 0)
-     99              return;
-    100            
-    101            scheduler_tx();
-    102            scheduler_rx();
-    103          };
-    104          
-    105          static inline void receive(){
-    106            timeslot_t ts = MODEL.TM.timeslot;
-    107            MAC_Receive(ACTIONSLOTS[ts].rx);
-    108          }
-    109          
-    110          static void transmite(void){
-    111            timeslot_t ts = MODEL.TM.timeslot;
-    112            struct frame *frame = ACTIONSLOTS[ts].frame_tx;
-    113            
-    114            if (!frame)
-    115              HALT(FLASH_STR("Error"))
-    116            
-    117            // Неудачные передачи учитывает MAC_Send()
-    118            int send_res = MAC_Send(frame);
-    119            switch (send_res) {
-    120              case 1: { // удачная передача
-    121                TM_ClrAlarm(ts, TX_ALARM);
-    122                ACTIONSLOTS[ts].frame_tx = NULL;
-    123                LOG_ON("Send success");
-    124                break;
-    125              }
-    126              case 0: { // неудачная передача. ACK не получен или CCA
-    127                LOG_ON("CCA/ACK err")
-    128                break;
-    129              }
-    130              case -1: { // Исчерпаны попытки отправки
-    131                TM_ClrAlarm(ts, TX_ALARM);
-    132                ACTIONSLOTS[ts].frame_tx = NULL;
-    133                LOG_ON("Attempts exired");
-    134                break;
-    135              }
-    136              default:
-    137                HALT(FLASH_STR("Error"));
-    138            };
-    139          }
-    140          
-    141          static void Hot_Start(void){
-    142            timeslot_t ts = MODEL.TM.timeslot;
-    143            if (ts == 0)
-    144              return;
-    145            char alarm = MODEL.TM.alarm;
-    146            
-    147            if (alarm & TX_ALARM)
-    148              transmite();
-    149            else if (alarm & RX_ALARM)
-    150              receive();
-    151          };
+     10          #define MAX_SLOTS 50
+     11          
+     12          #define RX_ALARM (1<<0)
+     13          #define TX_ALARM (1<<1)
+     14          
+     15          static void SW_Init(void);
+     16          static void Cold_Start(void);
+     17          static void Hot_Start(void);
+     18          static void IRQ_Init(void);
+     19          
+     20          module_s LLC_MODULE = {ALIAS(SW_Init), ALIAS(Cold_Start), 
+     21            ALIAS(Hot_Start), ALIAS(IRQ_Init)};
+     22          
+     23          struct action{
+     24            channel_t rx;
+     25            struct frame *frame_tx;
+     26          };
+     27          
+     28          static struct action ACTIONSLOTS[MAX_SLOTS];
+     29          
+     30          static void IRQ_Init(void){
+     31            for_each_type(struct action, ACTIONSLOTS, slot){
+     32              slot->rx = 0;
+     33              slot->frame_tx = NULL;
+     34            }
+     35          };
+     36          
+     37          static void SW_Init(void){
+     38            for_each_type(struct action, ACTIONSLOTS, slot){
+     39              slot->rx = 0;
+     40              slot->frame_tx = NULL;
+     41            }
+     42          };
+     43          
+     44          void LLC_restart(){
+     45            SW_Init();
+     46          }
+     47          
+     48          void LLC_open_slot(timeslot_t ts, channel_t ch){
+     49            ASSERT(ts >= 1 && ts < MAX_SLOTS);
+     50            ASSERT(ch >= MIN_CH && ch <= MAX_CH);
+     51            ACTIONSLOTS[ts].rx = ch;
+     52          }
+     53          
+     54          void LLC_close_slot(timeslot_t ts){
+     55            ASSERT(ts >= 1 && ts < MAX_SLOTS);
+     56            ACTIONSLOTS[ts].rx = 0;
+     57          }
+     58          
+     59          bool LLC_add_tx_frame(struct frame *frame){
+     60            ASSERT(frame);
+     61            AES_StreamCoder(true, frame->payload, frame->payload, frame->len); 
+     62            FR_set_tx(frame);
+     63            return true;
+     64          }
+     65          
+     66          static void scheduler_tx(void){
+     67            struct frame* tx_frame = NULL; 
+     68            tx_frame = FR_find_tx(tx_frame);
+     69            
+     70            if (!tx_frame)
+     71              return;
+     72            
+     73            while(tx_frame){
+     74              ASSERT(tx_frame->meta.TS != 0);
+     75              // Если у нас есть что передавать, берем следующий кадр из буфера
+     76              if (ACTIONSLOTS[tx_frame->meta.TS].frame_tx){
+     77                tx_frame = FR_find_tx(tx_frame);
+     78                continue;
+     79              }
+     80              ACTIONSLOTS[tx_frame->meta.TS].frame_tx = tx_frame;
+     81              TM_SetAlarm(tx_frame->meta.TS, TX_ALARM); 
+     82              tx_frame = FR_find_tx(tx_frame);
+     83            }
+     84          }
+     85          
+     86          static void scheduler_rx(void){
+     87            ASSERT(ACTIONSLOTS[0].rx == 0);
+     88            for (char i = 1; i < MAX_SLOTS; i++)
+     89              if (ACTIONSLOTS[i].rx)
+     90                TM_SetAlarm(i, RX_ALARM);
+     91              else
+     92                TM_ClrAlarm(i, RX_ALARM);
+     93          }
+     94          
+     95          static void Cold_Start(void){
+     96          // Планировщик планирует на один суперфрейм в начале ts0
+     97            if (MODEL.TM.timeslot != 0)
+     98              return;
+     99            
+    100            scheduler_tx();
+    101            scheduler_rx();
+    102          };
+    103          
+    104          static inline void receive(){
+    105            timeslot_t ts = MODEL.TM.timeslot;
+    106            MAC_Receive(ACTIONSLOTS[ts].rx);
+    107          }
+    108          
+    109          static void transmite(void){
+    110            timeslot_t ts = MODEL.TM.timeslot;
+    111            struct frame *frame = ACTIONSLOTS[ts].frame_tx;
+    112            
+    113            if (!frame)
+    114              HALT("Error")
+    115            
+    116            // Неудачные передачи учитывает MAC_Send()
+    117            int send_res = MAC_Send(frame);
+    118            switch (send_res) {
+    119              case 1: { // удачная передача
+    120                TM_ClrAlarm(ts, TX_ALARM);
+    121                ACTIONSLOTS[ts].frame_tx = NULL;
+    122                LOG_ON("Send success");
+    123                break;
+    124              }
+    125              case 0: { // неудачная передача. ACK не получен или CCA
+    126                LOG_ON("CCA/ACK err")
+    127                break;
+    128              }
+    129              case -1: { // Исчерпаны попытки отправки
+    130                TM_ClrAlarm(ts, TX_ALARM);
+    131                ACTIONSLOTS[ts].frame_tx = NULL;
+    132                LOG_ON("Attempts exired");
+    133                break;
+    134              }
+    135              default:
+    136                HALT("Error");
+    137            };
+    138          }
+    139          
+    140          static void Hot_Start(void){
+    141            timeslot_t ts = MODEL.TM.timeslot;
+    142            if (ts == 0)
+    143              return;
+    144            char alarm = MODEL.TM.alarm;
+    145            
+    146            if (alarm & TX_ALARM)
+    147              transmite();
+    148            else if (alarm & RX_ALARM)
+    149              receive();
+    150          };
 E:\Neocore\Hardware\STACK_CORE_SRC\mac.c
       1          #include "action_manager.h"
       2          #include "frame.h"
@@ -1613,112 +1623,105 @@ E:\Neocore\Hardware\STACK_CORE_SRC\mac.c
       5          #include "ustimer.h"
       6          #include "debug.h"
       7          #include "model.h"
-      8          #include "buffer.h"
-      9          
-     10          #define RECV_TIMEOUT 2500
-     11          
-     12          static void SW_Init(void);
-     13          static void IRQ_Init(void);
-     14          
-     15          module_s MAC_MODULE = {ALIAS(SW_Init), ALIAS(IRQ_Init)};
-     16          
-     17          struct ack{ // Формат структуры пакета ACK
-     18            char CRC8;
-     19          } __attribute__((packed));
-     20          
-     21          static void SW_Init(void){};
-     22          static void IRQ_Init(void){};
+      8          
+      9          #define RECV_TIMEOUT 2500
+     10          
+     11          static void SW_Init(void);
+     12          static void IRQ_Init(void);
+     13          
+     14          module_s MAC_MODULE = {ALIAS(SW_Init), ALIAS(IRQ_Init)};
+     15          
+     16          struct ack{ // Формат структуры пакета ACK
+     17            char CRC8;
+     18          } __attribute__((packed));
+     19          
+     20          static void SW_Init(void){};
+     21          static void IRQ_Init(void){};
+     22          
      23          
-     24          
-     25          static inline struct frame* _recv_frame(channel_t ch){
-     26            if(!RI_SetChannel(ch))
-     27              HALT(FLASH_STR("Wrong channel"));
-     28            
-     29            //UST_delay(400);
-     30            nwtime_t NOW1 = AT_time();
-     31            struct frame *frame = RI_Receive(RECV_TIMEOUT); //
-     32            nwtime_t NOW2 = AT_time();
-     33            return frame;
-     34          }
-     35          
-     36          static uint8_t xor_calc(struct frame *frame){
-     37            uint8_t crc = 0x34; // Начальное значение
-     38            uint8_t *val = (uint8_t*)frame->payload;
-     39            for (uint8_t i = 0; i < frame->len; i++)
-     40              crc ^= val[i];
-     41            return crc;
-     42          }
-     43          
-     44          static inline void _send_ack(struct frame *frame){
-     45            struct ack ack;
-     46            struct frame *ack_frame;
-     47            // Создаем подтверждение кадра
-     48            ack.CRC8 = xor_calc(frame);
-     49            // Создаем кадр для отправки
-     50            ack_frame = FR_create();
-     51            FR_add_header(ack_frame, &ack, sizeof(struct ack));
-     52            ack_frame->meta.SEND_TIME = 0;
-     53            RI_Send(ack_frame);
-     54            FR_delete(ack_frame);  
-     55          }
-     56          
-     57          void MAC_Receive(channel_t ch){
-     58            struct frame *frame = _recv_frame(ch);
-     59            if (!frame)
-     60              return;
-     61            
-     62            frame->meta.TS = MODEL.TM.timeslot;
-     63            if (MODEL.TM.timeslot > 1) // не системный таймслот требует подтверждения
-     64              _send_ack(frame);
+     24          static inline struct frame* _recv_frame(channel_t ch){
+     25            if(!RI_SetChannel(ch))
+     26              HALT("Wrong channel");
+     27            
+     28            //UST_delay(400);
+     29            nwtime_t NOW1 = AT_time();
+     30            struct frame *frame = RI_Receive(RECV_TIMEOUT); //
+     31            nwtime_t NOW2 = AT_time();
+     32            return frame;
+     33          }
+     34          
+     35          static uint8_t xor_calc(struct frame *frame){
+     36            uint8_t crc = 0x34; // Начальное значение
+     37            uint8_t *val = (uint8_t*)frame->payload;
+     38            for (uint8_t i = 0; i < frame->len; i++)
+     39              crc ^= val[i];
+     40            return crc;
+     41          }
+     42          
+     43          static inline void _send_ack(struct frame *frame){
+     44            struct ack ack;
+     45            struct frame *ack_frame;
+     46            // Создаем подтверждение кадра
+     47            ack.CRC8 = xor_calc(frame);
+     48            // Создаем кадр для отправки
+     49            ack_frame = FR_create();
+     50            FR_add_header(ack_frame, &ack, sizeof(struct ack));
+     51            RI_Send(ack_frame);
+     52            FR_delete(ack_frame);  
+     53          }
+     54          
+     55          void MAC_Receive(channel_t ch){
+     56            struct frame *frame = _recv_frame(ch);
+     57            if (!frame)
+     58              return;
+     59            
+     60            frame->meta.TS = MODEL.TM.timeslot;
+     61            if (MODEL.TM.timeslot > 1) // не системный таймслот требует подтверждения
+     62              _send_ack(frame);
+     63            
+     64            AES_StreamCoder(false, frame->payload, frame->payload, frame->len);
      65            
-     66            AES_StreamCoder(false, frame->payload, frame->payload, frame->len);
-     67            
-     68            LOG_ON("push");
-     69            bool push_res = BF_push_rx(frame);
-     70            if (!push_res){
-     71              FR_delete(frame);
-     72              LOG_ON("push del");
-     73            }
-     74            
-     75          }
-     76          
-     77          static inline bool _send_frame(struct frame *frame){
-     78            if(!RI_SetChannel(frame->meta.CH))
-     79              HALT(FLASH_STR("Wrong channel"));  
-     80            
-     81            UST_delay(918);
-     82            bool tx_success = RI_Send(frame);
-     83            return tx_success;
-     84          }
-     85          
-     86          static inline bool _recv_ack(struct frame *frame){
-     87            return true;
-     88          }
-     89          
-     90          int MAC_Send(struct frame *frame){
-     91            bool tx_success = _send_frame(frame);
-     92            
-     93            bool ack_success = false;
-     94            if (MODEL.TM.timeslot > 1) // Ждем подтверждения ack для не системных слотов
-     95              ack_success = _recv_ack(frame);
-     96            else
-     97              ack_success = true;
-     98            
-     99            if (tx_success && ack_success){ // Удачная передача
-    100              FR_delete(frame);
-    101              return 1;
-    102            }
-    103            else{ // неудачная передача
-    104              if (frame->meta.tx_attempts > 0)
-    105                frame->meta.tx_attempts --;
-    106              
-    107              if (!frame->meta.tx_attempts){ // кончились попытки передачи
-    108                FR_delete(frame);
-    109                return -1;
-    110              }
-    111            }
-    112            return 0;
-    113          }
+     66            LOG_ON("push");
+     67            FR_set_rx(frame);  
+     68          }
+     69          
+     70          static inline bool _send_frame(struct frame *frame){
+     71            if(!RI_SetChannel(frame->meta.CH))
+     72              HALT("Wrong channel");  
+     73            
+     74            UST_delay(918);
+     75            bool tx_success = RI_Send(frame);
+     76            return tx_success;
+     77          }
+     78          
+     79          static inline bool _recv_ack(struct frame *frame){
+     80            return true;
+     81          }
+     82          
+     83          int MAC_Send(struct frame *frame){
+     84            bool tx_success = _send_frame(frame);
+     85            
+     86            bool ack_success = false;
+     87            if (MODEL.TM.timeslot > 1) // Ждем подтверждения ack для не системных слотов
+     88              ack_success = _recv_ack(frame);
+     89            else
+     90              ack_success = true;
+     91            
+     92            if (tx_success && ack_success){ // Удачная передача
+     93              FR_delete(frame);
+     94              return 1;
+     95            }
+     96            else{ // неудачная передача
+     97              if (frame->meta.tx_attempts > 0)
+     98                frame->meta.tx_attempts --;
+     99              
+    100              if (!frame->meta.tx_attempts){ // кончились попытки передачи
+    101                FR_delete(frame);
+    102                return -1;
+    103              }
+    104            }
+    105            return 0;
+    106          }
 E:\Neocore\Hardware\PRG Node\main.c
       1          #include "action_manager.h"
       2          #include "time_manager.h"
@@ -1727,10 +1730,10 @@ E:\Neocore\Hardware\PRG Node\main.c
       5          #include "sync.h"
       6          #include "action_manager.h"
       7          #include "frame.h"
-      8          #include "buffer.h"
-      9          #include "model.h"
-     10          #include "radio.h"
-     11          #include "llc.h"
+      8          #include "model.h"
+      9          #include "radio.h"
+     10          #include "llc.h"
+     11          #include "ethernet.h"
      12          
      13          static struct frame* get_frame(void){
      14            struct frame *frame = FR_create(); 
@@ -1742,31 +1745,31 @@ E:\Neocore\Hardware\PRG Node\main.c
      20            return frame;
      21          }
      22          
-     23          static void callback(void){
-     24            if (!(MODEL.RTC.rtc % 5))
-     25              return;
-     26            
-     27            int tx_num = BF_tx_busy();
-     28            
-     29            if (tx_num){
-     30              //LOG_ON("tx frames in buff %d", tx_num);
-     31              return;  
-     32            }
-     33            
-     34            struct frame *frame = get_frame();
-     35            LLC_add_tx_frame(frame);
-     36            LOG_ON("TX FRAME PUSH");
-     37          }
-     38          //TODO alarm manager вызывает из прерывания TM_IRQ
-     39          //в TM_IRQ засоряется стек прерывания
-     40          static void pre_init(void){
-     41            AM_HW_Init();
-     42            AM_SW_Init();
-     43            LOG_ON("Hardware inited");
-     44            MODEL.SYNC.mode = 1;
-     45            MODEL.TM.MODE = 1;
-     46            AM_set_callback(callback);
-     47          }
+     23          /** brief Функция вызывается после приема пакетов
+     24          * Здесь происходит обработка протоколов верхнего уровня
+     25          */
+     26          static void callback(void){
+     27            static bool first=true;
+     28            if (first){
+     29              LLC_open_slot(1, MODEL.SYNC.sys_channel);
+     30              first = false;
+     31            }
+     32            ethernet_process();
+     33          //  LLC_add_tx_frame(frame);
+     34           LOG_ON("callback exit");
+     35          }
+     36          
+     37          //TODO alarm manager вызывает из прерывания TM_IRQ
+     38          //в TM_IRQ засоряется стек прерывания
+     39          static void pre_init(void){
+     40            AM_HW_Init();
+     41            AM_SW_Init();
+     42            LOG_ON("Hardware inited");
+     43            MODEL.SYNC.mode = 1;
+     44            MODEL.TM.MODE = 1;
+     45            AM_set_callback(callback);
+     46          }
+     47          
      48          // TODO добавить в buffer.c размер RX и TX очереди
      49          void main(void){
      50            pre_init();
@@ -1790,114 +1793,207 @@ E:\Neocore\Hardware\STACK_CORE_SRC\mem_slots.c
       5          #include "action_manager.h"
       6          #include "mem_utils.h"  
       7          #include "cpu.h"
-      8          
-      9          //!< Максимальный размер данных в одном слоте
-     10          #define SLOT_BUFFER_SIZE 150
-     11          #define RED_ZONE_CODE 0x73
-     12          
-     13          typedef char red_zone_t;
-     14          
-     15          static void SW_Init(void);
-     16          module_s MS_MODULE = {ALIAS(SW_Init)};
-     17          
-     18          struct property{
-     19            char taken: 1;
-     20          };
-     21          
-     22          struct slot{
-     23            struct property property;
-     24            red_zone_t red_zone_1;
-     25            char buffer[SLOT_BUFFER_SIZE];
-     26            red_zone_t red_zone_2;
-     27          };
-     28          
-     29          //!< Хранилище слотов
-     30          static struct slot SLOT_POOL[SLOT_POOL_ITEMS];
-     31          //!< Количество занятых слотов
-     32          static int slot_busy;
-     33          
-     34          void SW_Init(void){
-     35            slot_busy = 0;
-     36            for_each_type(struct slot, SLOT_POOL, slot){
-     37              slot->property.taken = false;
-     38              #ifdef FILL_SLOT_ZERO
-     39                MEMSET(slot->buffer, 0, SLOT_BUFFER_SIZE);
-     40              #endif    
-     41              slot->red_zone_1 = RED_ZONE_CODE;
-     42              slot->red_zone_2 = RED_ZONE_CODE;
-     43            }
-     44          };
-     45          
-     46          /**
-     47          @brief Возвращает указатель на буфер или NULL. Буфер заполнен 0
-     48          @detail 
-     49          */
-     50          char* SL_alloc(void){  
-     51            char *ret_ptr = NULL;
-     52            ATOMIC_BLOCK_RESTORE{
-     53              for_each_type(struct slot, SLOT_POOL, slot){
-     54                if (!slot->property.taken){
-     55                  slot->property.taken = true;
-     56                  slot_busy++;
-     57                  #ifdef FILL_SLOT_ZERO
-     58                    MEMSET(slot->buffer, 0, SLOT_BUFFER_SIZE);
-     59                  #endif
-     60                  ret_ptr = slot->buffer;
-     61                  break;
-     62                };
-     63              };  
-     64            };
-     65            return ret_ptr;
-     66          };
-     67          
-     68          static bool _free(char *buff){
-     69            struct slot *slot = container_of(buff, struct slot, buffer);
-     70            
-     71            if (!is_array_ptr(SLOT_POOL, slot, sizeof(struct slot)))
-     72              return false;
-     73            
-     74            size_t index = array_index(SLOT_POOL, slot, sizeof(struct slot));
-     75            if (!(index < SLOT_BUFFER_SIZE))
-     76              return false;
-     77            
-     78            if (slot->property.taken != true)
-     79              return false;
-     80              
-     81            slot->property.taken = false;
-     82            slot_busy--;
-     83            return true;
-     84          }
-     85          
-     86          bool SL_free(char *buff){
-     87            bool res;
-     88            ATOMIC_BLOCK_RESTORE{
-     89              res = _free(buff);
-     90            }
-     91            return res;
-     92          };
-     93          
-     94          
-     95          int SL_busy(){
-     96            ASSERT(slot_busy <= SLOT_POOL_ITEMS);
-     97            return slot_busy;
-     98          };
-     99          
-    100          int SL_available(){
-    101            ASSERT(slot_busy <= SLOT_POOL_ITEMS);  
-    102            return SLOT_POOL_ITEMS - slot_busy;
-    103          };
-    104          
-    105          int SL_zone_check(){
-    106            int index = 0;
-    107            for_each_type(struct slot, SLOT_POOL, slot){
-    108              if (!(slot->red_zone_1 == RED_ZONE_CODE &&
-    109                    slot->red_zone_2 == RED_ZONE_CODE))
-    110                return index;
-    111              index++;
-    112            }
-    113            return -1;
-    114          };
-    115          
+      8          #include "mem_slots.h"
+      9          
+     10          //!< Максимальный размер данных в одном слоте
+     11          #define SLOT_BUFFER_SIZE 150
+     12          #define RED_ZONE_CODE 0x73
+     13          
+     14          typedef char red_zone_t;
+     15          
+     16          static void SW_Init(void);
+     17          module_s MS_MODULE = {ALIAS(SW_Init)};
+     18          
+     19          struct property{
+     20            char taken: 1;
+     21            char RX :1;
+     22            char TX :1;
+     23          };
+     24          
+     25          struct slot{
+     26            struct property property;
+     27            red_zone_t red_zone_1;
+     28            char buffer[SLOT_BUFFER_SIZE];
+     29            red_zone_t red_zone_2;
+     30          };
+     31          
+     32          //!< Хранилище слотов
+     33          static struct slot SLOT_POOL[SLOT_POOL_ITEMS];
+     34          //!< Количество занятых слотов
+     35          static int slot_busy;
+     36          
+     37          void SW_Init(void){
+     38            slot_busy = 0;
+     39            for_each_type(struct slot, SLOT_POOL, slot){
+     40              slot->property.taken = false;
+     41              slot->property.RX = false;
+     42              slot->property.TX = false;
+     43              #ifdef FILL_SLOT_ZERO
+     44                MEMSET(slot->buffer, 0, SLOT_BUFFER_SIZE);
+     45              #endif    
+     46              slot->red_zone_1 = RED_ZONE_CODE;
+     47              slot->red_zone_2 = RED_ZONE_CODE;
+     48            }
+     49          };
+     50          
+     51          void SW_restart(){
+     52            SW_Init();
+     53          };
+     54          
+     55          int SL_rx_slots(){
+     56              int cnt=0;
+     57              for_each_type(struct slot, SLOT_POOL, slot){
+     58                if (slot->property.taken && slot->property.RX)
+     59                  cnt++;
+     60              }
+     61              return cnt;
+     62          }
+     63          
+     64          int SL_tx_slots(){
+     65              int cnt=0;
+     66              for_each_type(struct slot, SLOT_POOL, slot){
+     67                if (slot->property.taken && slot->property.TX)
+     68                  cnt++;
+     69              }
+     70              return cnt;
+     71          }
+     72          
+     73          /**
+     74          @brief Возвращает указатель на следующий буфер tx
+     75          @param buff. buff = NULL поиск от начала списка или от последнего найденого 
+     76           буфера.
+     77          */
+     78          char* SL_find_tx(char* buff){  
+     79            if (!buff){
+     80              for_each_type(struct slot, SLOT_POOL, slot){
+     81                if (slot->property.taken && slot->property.TX)
+     82                  return slot->buffer;
+     83              }
+     84              return NULL;
+     85            }
+     86            struct slot *geven_slot = container_of(buff, struct slot, buffer);
+     87            geven_slot++;
+     88            
+     89            while (geven_slot <= &SLOT_POOL[SLOT_POOL_ITEMS]){
+     90              if (geven_slot->property.taken && geven_slot->property.TX)
+     91                return geven_slot->buffer;
+     92              geven_slot++;
+     93            }
+     94            return NULL;
+     95          }
+     96          
+     97          /**
+     98          @brief Возвращает указатель на следующий буфер rx
+     99          @param buff. buff = NULL поиск от начала списка или от последнего найденого 
+    100           буфера.
+    101          */
+    102          char* SL_find_rx(char* buff){  
+    103            if (!buff){
+    104              for_each_type(struct slot, SLOT_POOL, slot){
+    105                if (slot->property.taken && slot->property.RX)
+    106                  return slot->buffer;
+    107              }
+    108              return NULL;
+    109            }
+    110            struct slot *geven_slot = container_of(buff, struct slot, buffer);
+    111            geven_slot++;
+    112            
+    113            while (geven_slot <= &SLOT_POOL[SLOT_POOL_ITEMS]){
+    114              if (geven_slot->property.taken && geven_slot->property.RX)
+    115                return geven_slot->buffer;
+    116              geven_slot++;
+    117            }
+    118            return NULL;
+    119          }
+    120          
+    121          /**
+    122          @brief Возвращает указатель на буфер или NULL. Буфер заполнен 0
+    123          @detail 
+    124          */
+    125          char* SL_alloc(void){  
+    126            char *ret_ptr = NULL;
+    127            ATOMIC_BLOCK_RESTORE{
+    128              for_each_type(struct slot, SLOT_POOL, slot){
+    129                if (!slot->property.taken){
+    130                  slot->property.taken = true;
+    131                  slot->property.RX = false;
+    132                  slot->property.TX = false;
+    133                  slot_busy++;
+    134                  #ifdef FILL_SLOT_ZERO
+    135                    MEMSET(slot->buffer, 0, SLOT_BUFFER_SIZE);
+    136                  #endif
+    137                  ret_ptr = slot->buffer;
+    138                  break;
+    139                };
+    140              };  
+    141            };
+    142            return ret_ptr;
+    143          };
+    144          
+    145          static bool _free(char *buff){
+    146            struct slot *slot = container_of(buff, struct slot, buffer);
+    147              
+    148            slot->property.taken = false;
+    149            slot->property.RX = false;
+    150            slot->property.TX = false;
+    151            slot_busy--;
+    152            return true;
+    153          }
+    154          
+    155          bool SL_is_tx(char *buff){
+    156            struct slot *slot = container_of(buff, struct slot, buffer);
+    157            return slot->property.TX;
+    158          }
+    159          
+    160          bool SL_is_rx(char *buff){
+    161            struct slot *slot = container_of(buff, struct slot, buffer);
+    162            return slot->property.RX;
+    163          }
+    164          
+    165          void SL_set_tx(char *buff){
+    166            ATOMIC_BLOCK_RESTORE{
+    167              struct slot *slot = container_of(buff, struct slot, buffer);
+    168              slot->property.TX = true;
+    169            }
+    170          }
+    171          
+    172          void SL_set_rx(char *buff){
+    173            ATOMIC_BLOCK_RESTORE{
+    174              struct slot *slot = container_of(buff, struct slot, buffer);
+    175              slot->property.RX = true;
+    176            }
+    177          }
+    178          
+    179          bool SL_free(char *buff){
+    180            bool res;
+    181            ATOMIC_BLOCK_RESTORE{
+    182              res = _free(buff);
+    183            }
+    184            return res;
+    185          };
+    186          
+    187          
+    188          int SL_busy(){
+    189            ASSERT(slot_busy <= SLOT_POOL_ITEMS);
+    190            return slot_busy;
+    191          };
+    192          
+    193          int SL_available(){
+    194            ASSERT(slot_busy <= SLOT_POOL_ITEMS);  
+    195            return SLOT_POOL_ITEMS - slot_busy;
+    196          };
+    197          
+    198          int SL_zone_check(){
+    199            int index = 0;
+    200            for_each_type(struct slot, SLOT_POOL, slot){
+    201              if (!(slot->red_zone_1 == RED_ZONE_CODE &&
+    202                    slot->red_zone_2 == RED_ZONE_CODE))
+    203                return index;
+    204              index++;
+    205            }
+    206            return -1;
+    207          };
+    208          
 E:\Neocore\Hardware\STACK_CORE_SRC\mem_utils.c
       1          #include "mem_utils.h"
       2          #include "debug.h"
@@ -1924,7 +2020,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\mem_utils.c
      23          };
      24          
      25          
-E:\Neocore\Hardware\Stack_core_src\model.c
+E:\Neocore\Hardware\STACK_CORE_SRC\model.c
       1          #include "model.h"
       2          #include "action_manager.h"
       3          
@@ -1940,13 +2036,30 @@ E:\Neocore\Hardware\Stack_core_src\model.c
      13          module_s MD_MODULE = {ALIAS(SW_Init)};
      14          
      15           
-     16          static void SW_Init(void){}; 
-     17          
-     18          
+     16          static void SW_Init(void){
+     17            for (int i = 0; i < sizeof(MODEL.PWR_SCAN.energy); i++)
+     18              MODEL.PWR_SCAN.energy[i] = -127;
+     19            
+     20            MODEL.node_adr = 0;
+     21            MODEL.node_mac[0] = 0x11;
+     22            MODEL.node_mac[1] = 0x22;
+     23            MODEL.node_mac[2] = 0x33;
+     24            MODEL.node_mac[3] = 0x44;
+     25            MODEL.node_mac[4] = 0x55;
+     26            MODEL.node_mac[5] = 0xaa;
+     27            MODEL.node_mac[6] = 0xee;
+     28            MODEL.node_mac[7] = 0xff;
+     29            
+     30            MODEL.AUTH.auth_ok = false;
+     31            MODEL.AUTH.access_ok = false;
+     32            
+     33          }; 
+     34          
+     35          
 E:\Neocore\Hardware\PRG Node\neigh.c
       1          #include "model.h"
       2          #include "debug.h"
-      3          #include "buffer.h"
+      3          #include "protocol_defs.h"
       4          
       5          #define NB_TABLE_ITEMS 20
       6          #define MAX_OPEN_SLOTS 2
@@ -2028,11 +2141,7 @@ Warning[Pe1105]: #warning directive: GW may open lot of slots
      78          
      79          static void update_record(struct frame *frame, uint8_t index){
      80            struct frame_card *card = (struct frame_card*)frame->payload;
-     81            re_memcpy(&NB_TABLE[index].card, card, NB_FRAME_CARD_SIZE);
-                   ^
-Warning[Pe223]: function "re_memcpy" declared implicitly
-          detected during compilation of secondary translation unit
-                    "E:\Neocore\Hardware\PRG Node\neigh.c"
+     81          //re_memcpy(&NB_TABLE[index].card, card, NB_FRAME_CARD_SIZE);
      82            NB_TABLE[index].update_time = MODEL.RTC.uptime;
      83            uint8_t weight = calc_weight(card);
      84            NB_TABLE[index].weight = weight;
@@ -2115,155 +2224,56 @@ Warning[Pe223]: function "re_memcpy" declared implicitly
     161          }
     162          
     163          static void send_card(void){
-    164            struct frame_card card;
-    165          
-    166            int etx = NP_GetETX();
-                             ^
-Warning[Pe223]: function "NP_GetETX" declared implicitly
-          detected during compilation of secondary translation unit
-                    "E:\Neocore\Hardware\PRG Node\neigh.c"
-    167            
-    168            // Выходим если ETX не определен
-    169            if (etx == -1){
-    170              // Раз нет ETX то продлим время отправки карты
-    171              uint32_t now = MODEL.RTC.uptime();
-                                    ^
-Error[Pe109]: expression preceding parentheses of apparent call must have
-          (pointer-to-) function type
-          detected during compilation of secondary translation unit
-                    "E:\Neocore\Hardware\PRG Node\neigh.c"
-    172              NEXT_CARD_SEND_TIME = now + NEIGHBOR_CARD_SEND_INTERVAL + 
-                     ^
-Error[Pe020]: identifier "NEXT_CARD_SEND_TIME" is undefined
-          detected during compilation of secondary translation unit
-                    "E:\Neocore\Hardware\PRG Node\neigh.c"
-
-      NEXT_CARD_SEND_TIME = now + NEIGHBOR_CARD_SEND_INTERVAL + 
-                                  ^
-"E:\Neocore\Hardware\PRG Node\neigh.c",172  Error[Pe020]: identifier
-          "NEIGHBOR_CARD_SEND_INTERVAL" is undefined
-          detected during compilation of secondary translation unit
-                    "E:\Neocore\Hardware\PRG Node\neigh.c"
-    173                rand() % NEIGHBOR_CARD_SEND_INTERVAL_DEV;
-                       ^
-Warning[Pe223]: function "rand" declared implicitly
-          detected during compilation of secondary translation unit
-                    "E:\Neocore\Hardware\PRG Node\neigh.c"
-
-        rand() % NEIGHBOR_CARD_SEND_INTERVAL_DEV;
-                 ^
-"E:\Neocore\Hardware\PRG Node\neigh.c",173  Error[Pe020]: identifier
-          "NEIGHBOR_CARD_SEND_INTERVAL_DEV" is undefined
-          detected during compilation of secondary translation unit
-                    "E:\Neocore\Hardware\PRG Node\neigh.c"
-    174              LOG_ON("ETX not defind. Card not sended.")
-    175              return;
-    176            }
-    177          
-    178            card.ETX = etx;
-    179          
-    180            // Проверим что у нас есть открытые слоты
-    181            bool opened = false;
-    182            for (uint8_t i = 0; i < MAX_OPEN_SLOTS; i++){
-    183            if (CONFIG.ts_slots[i] !=0 )
-                       ^
-Error[Pe020]: identifier "CONFIG" is undefined
-          detected during compilation of secondary translation unit
-                    "E:\Neocore\Hardware\PRG Node\neigh.c"
-    184              if (CONFIG.ch_slots[i] !=0){
-    185                opened = true;
-    186                break;
-    187              }
-    188            }
-    189          
-    190           
-    191            if (!opened){
-    192              uint32_t now = TIC_GetUptime();
-                                    ^
-Warning[Pe223]: function "TIC_GetUptime" declared implicitly
-          detected during compilation of secondary translation unit
-                    "E:\Neocore\Hardware\PRG Node\neigh.c"
-    193              NEXT_CARD_SEND_TIME = now + NEIGHBOR_CARD_SEND_INTERVAL + 
-                     ^
-Error[Pe020]: identifier "NEXT_CARD_SEND_TIME" is undefined
-          detected during compilation of secondary translation unit
-                    "E:\Neocore\Hardware\PRG Node\neigh.c"
-
-      NEXT_CARD_SEND_TIME = now + NEIGHBOR_CARD_SEND_INTERVAL + 
-                                  ^
-"E:\Neocore\Hardware\PRG Node\neigh.c",193  Error[Pe020]: identifier
-          "NEIGHBOR_CARD_SEND_INTERVAL" is undefined
-          detected during compilation of secondary translation unit
-                    "E:\Neocore\Hardware\PRG Node\neigh.c"
-    194                rand() % NEIGHBOR_CARD_SEND_INTERVAL_DEV;
-                       ^
-Warning[Pe223]: function "rand" declared implicitly
-          detected during compilation of secondary translation unit
-                    "E:\Neocore\Hardware\PRG Node\neigh.c"
-
-        rand() % NEIGHBOR_CARD_SEND_INTERVAL_DEV;
-                 ^
-"E:\Neocore\Hardware\PRG Node\neigh.c",194  Error[Pe020]: identifier
-          "NEIGHBOR_CARD_SEND_INTERVAL_DEV" is undefined
-          detected during compilation of secondary translation unit
-                    "E:\Neocore\Hardware\PRG Node\neigh.c"
-    195              LOG_ON("Slots not opened. Card not sended.")
-    196              return;
-    197            }
-    198          
-    199            for (uint8_t i = 0; i < MAX_OPEN_SLOTS; i++){
-    200              card.ts_slots[i] = CONFIG.ts_slots[i];
-                                        ^
-Error[Pe020]: identifier "CONFIG" is undefined
-          detected during compilation of secondary translation unit
-                    "E:\Neocore\Hardware\PRG Node\neigh.c"
-    201              card.ch_slots[i] = CONFIG.ch_slots[i];
-    202            }
-    203          
-    204            frame_s *fr = frame_create();
-                   ^
-Error[Pe020]: identifier "frame_s" is undefined
-          detected during compilation of secondary translation unit
-                    "E:\Neocore\Hardware\PRG Node\neigh.c"
-
-    frame_s *fr = frame_create();
-             ^
-"E:\Neocore\Hardware\PRG Node\neigh.c",204  Error[Pe020]: identifier "fr" is
-          undefined
-          detected during compilation of secondary translation unit
-                    "E:\Neocore\Hardware\PRG Node\neigh.c"
-
-    frame_s *fr = frame_create();
-                  ^
-"E:\Neocore\Hardware\PRG Node\neigh.c",204  Warning[Pe223]: function
-          "frame_create" declared implicitly
-          detected during compilation of secondary translation unit
-                    "E:\Neocore\Hardware\PRG Node\neigh.c"
-    205            frame_addHeader(fr, &card, NB_FRAME_CARD_SIZE);
-                   ^
-Warning[Pe223]: function "frame_addHeader" declared implicitly
-          detected during compilation of secondary translation unit
-                    "E:\Neocore\Hardware\PRG Node\neigh.c"
-    206            fr->meta.PID = PID_NP;
-                                  ^
-Error[Pe020]: identifier "PID_NP" is undefined
-          detected during compilation of secondary translation unit
-                    "E:\Neocore\Hardware\PRG Node\neigh.c"
-    207            fr->meta.NDST = 0xffff;
-    208            fr->meta.NSRC = CONFIG.node_adr; 
-                                   ^
-Error[Pe020]: identifier "CONFIG" is undefined
-          detected during compilation of secondary translation unit
-                    "E:\Neocore\Hardware\PRG Node\neigh.c"
-    209            fr->meta.TS = 0;
-    210            fr->meta.CH = CONFIG.sys_channel;
-    211            fr->meta.TX_METHOD = BROADCAST;
-    212            RP_Send(fr);
-                   ^
-Warning[Pe223]: function "RP_Send" declared implicitly
-          detected during compilation of secondary translation unit
-                    "E:\Neocore\Hardware\PRG Node\neigh.c"
-    213            LOG_ON("NP Card sended");
+    164          //  struct frame_card card;
+    165          //
+    166          //  int etx = NP_GetETX();
+    167          //  
+    168          //  // Выходим если ETX не определен
+    169          //  if (etx == -1){
+    170          //    // Раз нет ETX то продлим время отправки карты
+    171          //    uint32_t now = MODEL.RTC.uptime();
+    172          //    NEXT_CARD_SEND_TIME = now + NEIGHBOR_CARD_SEND_INTERVAL + 
+    173          //      rand() % NEIGHBOR_CARD_SEND_INTERVAL_DEV;
+    174          //    LOG_ON("ETX not defind. Card not sended.")
+    175          //    return;
+    176          //  }
+    177          //
+    178          //  card.ETX = etx;
+    179          //
+    180          //  // Проверим что у нас есть открытые слоты
+    181          //  bool opened = false;
+    182          //  for (uint8_t i = 0; i < MAX_OPEN_SLOTS; i++){
+    183          //  if (CONFIG.ts_slots[i] !=0 )
+    184          //    if (CONFIG.ch_slots[i] !=0){
+    185          //      opened = true;
+    186          //      break;
+    187          //    }
+    188          //  }
+    189          //
+    190          // 
+    191          //  if (!opened){
+    192          //    uint32_t now = TIC_GetUptime();
+    193          //    NEXT_CARD_SEND_TIME = now + NEIGHBOR_CARD_SEND_INTERVAL + 
+    194          //      rand() % NEIGHBOR_CARD_SEND_INTERVAL_DEV;
+    195          //    LOG_ON("Slots not opened. Card not sended.")
+    196          //    return;
+    197          //  }
+    198          //
+    199          //  for (uint8_t i = 0; i < MAX_OPEN_SLOTS; i++){
+    200          //    card.ts_slots[i] = CONFIG.ts_slots[i];
+    201          //    card.ch_slots[i] = CONFIG.ch_slots[i];
+    202          //  }
+    203          //
+    204          //  frame_s *fr = frame_create();
+    205          //  frame_addHeader(fr, &card, NB_FRAME_CARD_SIZE);
+    206          //  fr->meta.PID = PID_NP;
+    207          //  fr->meta.NDST = 0xffff;
+    208          //  fr->meta.NSRC = MODEL.node_adr; 
+    209          //  fr->meta.TS = 0;
+    210          //  fr->meta.CH = CONFIG.sys_channel;
+    211          //  fr->meta.TX_METHOD = BROADCAST;
+    212          //  RP_Send(fr);
+    213          //  LOG_ON("NP Card sended");
     214          }
     215          
     216          
@@ -2384,12 +2394,12 @@ E:\Neocore\Hardware\STACK_CORE_SRC\radio.c
      93            RFD = 0x00;
      94          };
      95          
-     96          static bool SendData(struct frame *fr){
+     96          static bool SendData(struct frame *fr, nwtime_t time){
      97            LoadTXData(fr->payload, fr->len);
      98            
      99            // Прежде чем включать радио нужно подождать
-    100            if (fr->meta.SEND_TIME != 0) 
-    101                AT_wait(fr->meta.SEND_TIME - 29);
+    100            if (time != 0) 
+    101                AT_wait(time - 29);
     102            
     103            ISRXON();
     104            WRITE_TIME_DBG(MODEL.RADIO.DEBUG_TX.isrxon);
@@ -2399,8 +2409,8 @@ E:\Neocore\Hardware\STACK_CORE_SRC\radio.c
     108            while(!RSSISTAT);
     109            WRITE_TIME_DBG(MODEL.RADIO.DEBUG_TX.rssistat);
     110            TRY{
-    111              if (fr->meta.SEND_TIME != 0) // Отправка в определеное время
-    112                AT_wait(fr->meta.SEND_TIME - 13); 
+    111              if (time != 0) // Отправка в определеное время
+    112                AT_wait(time - 13); 
     113              ISTXONCCA();
     114              WRITE_TIME_DBG(MODEL.RADIO.DEBUG_TX.istxoncca);
     115              if (!(FSMSTAT1 & 1<<3)) //SAMPLED_CCA == 0
@@ -2431,7 +2441,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\radio.c
     140            ASSERT(fr != NULL);
     141            pre_config();
     142            stamp_t start = UST_now();
-    143            bool send_res = SendData(fr);
+    143            bool send_res = SendData(fr, 0);
     144            stamp_t stop = UST_now();
     145            //TODO Неверно считает интервал так как при отправке
     146            // sync пакета мы ждем
@@ -2444,221 +2454,239 @@ E:\Neocore\Hardware\STACK_CORE_SRC\radio.c
     153            return send_res;
     154          }
     155          
-    156          
-    157          static void UnLoadRXData(char *src, size_t len){
-    158            for (size_t i = 0 ; i < len; i++)
-    159              src[i] = RFD;
-    160          };
-    161          
-    162          
-    163          static bool RecvData(ustime_t timeout, nwtime_t *sfd_stamp){   
-    164            bool recv_result = true;
-    165            
-    166            ISFLUSHRX();
-    167            RFIRQF0 &= ~RFIRQF0_RXPKTDONE;  
-    168            RFIRQF0 &= ~RFIRQF0_SFD; 
-    169            ISRXON();
-    170            WRITE_TIME_DBG(MODEL.RADIO.DEBUG_RX.isrxon);
-    171            stamp_t start = UST_now();
-    172            TRY{
-    173              while(true){
-    174                if (UST_time_over(start, timeout))
-    175                  THROW(1);
-    176                
-    177                if ((RFIRQF0 & RFIRQF0_SFD)){ // Принят сигнал SFD
-    178                  *sfd_stamp = AT_time(); 
-    179                  WRITE_TIME_DBG(MODEL.RADIO.DEBUG_RX.sfd);
-    180                  break;
-    181                }
-    182              }
-    183              // Ждем окончания приема пакета
-    184              while (!(RFIRQF0 & RFIRQF0_RXPKTDONE));
-    185              WRITE_TIME_DBG(MODEL.RADIO.DEBUG_RX.rxdone);
-    186            }
-    187            CATCH(1){ // Вышло время ожидания
-    188              recv_result = false;
-    189            }
-    190            FINALLY{
-    191              ISRFOFF();
-    192            }
-    193            ETRY;
-    194            return recv_result;
-    195          }
-    196          
-    197          /*!
-    198          \brief Принимает данные из эфира
-    199          \details Функция принимает данные из эфира. Проводит проверку CRC, увеличивает
-    200          RI_CRC_ERROR. Отмечает время прихода SFD в тактах сетевого времени .
-    201          \param[in] timeout Время ожидания данных в микросекундах
-    202          \return Возвращает NULL если данных нет
-    203          */
-    204          struct frame* RI_Receive(ustime_t timeout){
-    205            // Устанавливаем частоту передачи пакета
-    206            pre_config();
-    207            nwtime_t sfd_stamp;
-    208               
-    209            // Принимаем пакет 
-    210            stamp_t start = UST_now();
-    211            bool recv_res = RecvData(timeout, &sfd_stamp);
-    212            stamp_t stop = UST_now();
-    213            ustime_t rx_time = UST_interval(start, stop); 
-    214            WRITE_PARA_DBG(MODEL.RADIO.DEBUG_RX.fulltime, rx_time);
-    215            MODEL.RADIO.UptimeRX += rx_time;
-    216            WRITE_PARA_DBG(MODEL.RADIO.DEBUG_RX.received, recv_res);
-    217            if (!recv_res) // Нет пакета, возвращаем NULL
-    218              return NULL;
-    219            
-    220            uint8_t frame_size = RXFIFOCNT; // Количество принятых данных
-    221            
-    222            // Минимальный размер FCS1,FCS2 - 2 байта. LEN не включен в подсчет 
-    223            if (frame_size <= 2)
-    224              return NULL;
-    225            
-    226            UnLoadRXData(RXBUFF, frame_size);
-    227            
-    228            int8_t  FCS1 = RXBUFF[frame_size - 2]; // RSSI
-    229            uint8_t FCS2 = RXBUFF[frame_size - 1]; // bit7 = CRCOK, bit[6..0] Corr_val
-    230            uint8_t LEN_F = RXBUFF[0]; // Поле LEN
-    231            
-    232            // Проверим поле LEN. Размер данных в заголовке должен совпадать
-    233            // с фактической длинной принятых данных
-    234            if (LEN_F != frame_size - 1){
-    235              MODEL.RADIO.CRCError++;
+    156          bool RI_Send_time(struct frame *fr, nwtime_t time){
+    157            ASSERT(fr != NULL);
+    158            pre_config();
+    159            //TODO начало start отложено! неверно вычисляем интервал
+    160            stamp_t start = UST_now();
+    161            bool send_res = SendData(fr, time);
+    162            stamp_t stop = UST_now();
+    163            //TODO Неверно считает интервал так как при отправке
+    164            // sync пакета мы ждем
+    165            ustime_t tx_time = UST_interval(start, stop); 
+    166            WRITE_PARA_DBG(MODEL.RADIO.DEBUG_TX.fulltime, tx_time);
+    167            MODEL.RADIO.UptimeTX += tx_time;
+    168            WRITE_PARA_DBG(MODEL.RADIO.DEBUG_TX.ccasampled, send_res);
+    169            if (!send_res)
+    170              MODEL.RADIO.CCAReject++;
+    171            return send_res;
+    172          }
+    173          
+    174          
+    175          static void UnLoadRXData(char *src, size_t len){
+    176            for (size_t i = 0 ; i < len; i++)
+    177              src[i] = RFD;
+    178          };
+    179          
+    180          
+    181          static bool RecvData(ustime_t timeout, nwtime_t *sfd_stamp){   
+    182            bool recv_result = true;
+    183            
+    184            ISFLUSHRX();
+    185            RFIRQF0 &= ~RFIRQF0_RXPKTDONE;  
+    186            RFIRQF0 &= ~RFIRQF0_SFD; 
+    187            ISRXON();
+    188            WRITE_TIME_DBG(MODEL.RADIO.DEBUG_RX.isrxon);
+    189            stamp_t start = UST_now();
+    190            TRY{
+    191              while(true){
+    192                if (UST_time_over(start, timeout))
+    193                  THROW(1);
+    194                
+    195                if ((RFIRQF0 & RFIRQF0_SFD)){ // Принят сигнал SFD
+    196                  *sfd_stamp = AT_time(); 
+    197                  WRITE_TIME_DBG(MODEL.RADIO.DEBUG_RX.sfd);
+    198                  break;
+    199                }
+    200              }
+    201              // Ждем окончания приема пакета
+    202              while (!(RFIRQF0 & RFIRQF0_RXPKTDONE));
+    203              WRITE_TIME_DBG(MODEL.RADIO.DEBUG_RX.rxdone);
+    204            }
+    205            CATCH(1){ // Вышло время ожидания
+    206              recv_result = false;
+    207            }
+    208            FINALLY{
+    209              ISRFOFF();
+    210            }
+    211            ETRY;
+    212            return recv_result;
+    213          }
+    214          
+    215          /*!
+    216          \brief Принимает данные из эфира
+    217          \details Функция принимает данные из эфира. Проводит проверку CRC, увеличивает
+    218          RI_CRC_ERROR. Отмечает время прихода SFD в тактах сетевого времени .
+    219          \param[in] timeout Время ожидания данных в микросекундах
+    220          \return Возвращает NULL если данных нет
+    221          */
+    222          struct frame* RI_Receive(ustime_t timeout){
+    223            // Устанавливаем частоту передачи пакета
+    224            pre_config();
+    225            nwtime_t sfd_stamp;
+    226               
+    227            // Принимаем пакет 
+    228            stamp_t start = UST_now();
+    229            bool recv_res = RecvData(timeout, &sfd_stamp);
+    230            stamp_t stop = UST_now();
+    231            ustime_t rx_time = UST_interval(start, stop); 
+    232            WRITE_PARA_DBG(MODEL.RADIO.DEBUG_RX.fulltime, rx_time);
+    233            MODEL.RADIO.UptimeRX += rx_time;
+    234            WRITE_PARA_DBG(MODEL.RADIO.DEBUG_RX.received, recv_res);
+    235            if (!recv_res) // Нет пакета, возвращаем NULL
     236              return NULL;
-    237            }
-    238            
-    239            // Проверим поле CRCOK
-    240            if (!(FCS2 && 1<<7)){
-    241              MODEL.RADIO.CRCError++;
+    237            
+    238            uint8_t frame_size = RXFIFOCNT; // Количество принятых данных
+    239            
+    240            // Минимальный размер FCS1,FCS2 - 2 байта. LEN не включен в подсчет 
+    241            if (frame_size <= 2)
     242              return NULL;
-    243            }
-    244            
-    245            // Создаем буфер, последнии два байта FCS1,2 и поле LEN не копируем
-    246            struct frame *frame = FR_create();
-    247            ASSERT(frame);
-    248            bool add_h = FR_add_header(frame, &RXBUFF[1], frame_size - 3);
-    249            ASSERT(add_h);
-    250            
-    251            frame->meta.TIMESTAMP = sfd_stamp;
-    252            frame->meta.RSSI_SIG =  FCS1 + RSSI_OFFSET;
-    253            uint8_t corr = FCS2 & 0x7F;
-    254            frame->meta.LIQ = LIQ_CALC(corr);
-    255            frame->meta.CH = MODEL.RADIO.channel;
-    256            return frame;
-    257          }
-    258          
-    259          
-    260          /**
-    261          @breif Подссчет количества бит в байте
-    262          @return Возвращает количество бит
-    263          */
-    264          static uint8_t bits_count(uint8_t value) {
-    265            int ret = 0;
-    266            for ( ; value; value = value >> 1 )
-    267              ret += value & 1;
-    268            return ret;
-    269          }
-    270          
-    271          /**
-    272          @brief Возращает 1 байт случайного числа
-    273          @details Радио выдает всего лишь дви бита, нам нужно 8 
-    274          */
-    275          static inline uint8_t getRNDByte(void)
-    276          {
-    277            uint8_t val = 0;
-    278            val |= RFRND << 0;
-    279            val |= RFRND << 2;
-    280            val |= RFRND << 4;
-    281            val |= RFRND << 6;
-    282            return val;
-    283          }
-    284          
-    285          /**
-    286          @brief Возвращает случайное число с числом включеных бит от 2 до 6 включительно
-    287          @details Случайные числа появляются в регистре с частотой 170нс. Функция 
-    288          возвращает гарантированно новое значение. 
-    289          @return возвращает случайное число.
-    290          */
-    291          static inline uint8_t readRandom(void)
-    292          {
-    293            uint8_t rnd_val = 0;
-    294            uint8_t bit_cnt = 0;
-    295            while ( bit_cnt <= 2 || bit_cnt >= 6 )
-    296            {
-    297              rnd_val = getRNDByte();
-    298              while (rnd_val == getRNDByte());
-    299              rnd_val = getRNDByte();
-    300              bit_cnt = bits_count(rnd_val);
-    301            }
-    302            return rnd_val;
-    303          }
-    304          
-    305          /*!
-    306          \brief Иницилизирует ядро генератора случайных чисел данными из эфира
-    307          */
-    308          static void random_core_init(void)  
-    309          {
-    310            unsigned int rnd_core = 0;;
-    311               
-    312            pre_config();
-    313            FREQCTRL = 0x00; // Выбираем не используемую частоту
-    314          
-    315            // TODO По какой то причине OP_EXE не выполняет команду.
-    316            // регистра RFST читается как 0xD0. это его состояние при reset
-    317            // Включаем демодулятор
-    318            ISRXON();
-    319            
-    320            // Ждем пока статус RSSI_VALID станет true
-    321            while(!RSSISTAT);
-    322            
-    323            // Ждем случайных чисел
-    324            while (RFRND == 0);
-    325            
-    326            // Настраиваем ядро случайного генератора
-    327            rnd_core = readRandom();
-    328            rnd_core |= (unsigned int)readRandom()<<8;
-    329            srand(rnd_core);
-    330            
-    331            // Выключаем демодулятор
-    332            ISRFOFF();
-    333            // Первая генерация случайного числа занимает много времени.
-    334            // Влияло на работу радио, так как использовались случайные посылки
-    335            rand(); 
-    336          }
-    337          
-    338          /**
-    339          @brief Измерение мощности сигнала
-    340          @details Частота = 2394+fch. fch = [0..113]. 2394MHz to 2507MHz.
-    341           Устройство поддерживает частоты до 2507 МГц
-    342          @param[in] fch номер ЧАСТОТНОГО канала
-    343          @param[in] timeout_ms время сканирования в мс
-    344          @param[out] Максимальная мощность сигнала за время сканирования
-    345          @return true если успешно
-    346          */
-    347          bool RI_Measure_POW(char fch, ustime_t timeout, 
-    348                              int8_t *RSSI_SIG){
-    349            if (fch > 113)
-    350              return false;
-    351            //(2394+FREQCTRL.FREQ[6:0])
-    352            FREQCTRL = fch; // Выбираем не используемую частоту
-    353            ISRXON();
-    354            while(!RSSISTAT);
-    355            FRMCTRL0 |= 1<<4; // включаем ENERGY_SCAN, детектор пикового сигнала
-    356            UST_delay(timeout);
-    357            int8_t rssi = RSSI + RSSI_OFFSET;
-    358            *RSSI_SIG = rssi;
-    359            ISRFOFF();
-    360            return true;
-    361          }
-    362          
+    243            
+    244            UnLoadRXData(RXBUFF, frame_size);
+    245            
+    246            int8_t  FCS1 = RXBUFF[frame_size - 2]; // RSSI
+    247            uint8_t FCS2 = RXBUFF[frame_size - 1]; // bit7 = CRCOK, bit[6..0] Corr_val
+    248            uint8_t LEN_F = RXBUFF[0]; // Поле LEN
+    249            
+    250            // Проверим поле LEN. Размер данных в заголовке должен совпадать
+    251            // с фактической длинной принятых данных
+    252            if (LEN_F != frame_size - 1){
+    253              MODEL.RADIO.CRCError++;
+    254              return NULL;
+    255            }
+    256            
+    257            // Проверим поле CRCOK
+    258            if (!(FCS2 && 1<<7)){
+    259              MODEL.RADIO.CRCError++;
+    260              return NULL;
+    261            }
+    262            
+    263            // Создаем буфер, последнии два байта FCS1,2 и поле LEN не копируем
+    264            struct frame *frame = FR_create();
+    265            ASSERT(frame);
+    266            bool add_h = FR_add_header(frame, &RXBUFF[1], frame_size - 3);
+    267            ASSERT(add_h);
+    268            
+    269            frame->meta.TIMESTAMP = sfd_stamp;
+    270            frame->meta.RSSI_SIG =  FCS1 + RSSI_OFFSET;
+    271            uint8_t corr = FCS2 & 0x7F;
+    272            frame->meta.LIQ = LIQ_CALC(corr);
+    273            frame->meta.CH = MODEL.RADIO.channel;
+    274            return frame;
+    275          }
+    276          
+    277          
+    278          /**
+    279          @breif Подссчет количества бит в байте
+    280          @return Возвращает количество бит
+    281          */
+    282          static uint8_t bits_count(uint8_t value) {
+    283            int ret = 0;
+    284            for ( ; value; value = value >> 1 )
+    285              ret += value & 1;
+    286            return ret;
+    287          }
+    288          
+    289          /**
+    290          @brief Возращает 1 байт случайного числа
+    291          @details Радио выдает всего лишь дви бита, нам нужно 8 
+    292          */
+    293          static inline uint8_t getRNDByte(void)
+    294          {
+    295            uint8_t val = 0;
+    296            val |= RFRND << 0;
+    297            val |= RFRND << 2;
+    298            val |= RFRND << 4;
+    299            val |= RFRND << 6;
+    300            return val;
+    301          }
+    302          
+    303          /**
+    304          @brief Возвращает случайное число с числом включеных бит от 2 до 6 включительно
+    305          @details Случайные числа появляются в регистре с частотой 170нс. Функция 
+    306          возвращает гарантированно новое значение. 
+    307          @return возвращает случайное число.
+    308          */
+    309          static inline uint8_t readRandom(void)
+    310          {
+    311            uint8_t rnd_val = 0;
+    312            uint8_t bit_cnt = 0;
+    313            while ( bit_cnt <= 2 || bit_cnt >= 6 )
+    314            {
+    315              rnd_val = getRNDByte();
+    316              while (rnd_val == getRNDByte());
+    317              rnd_val = getRNDByte();
+    318              bit_cnt = bits_count(rnd_val);
+    319            }
+    320            return rnd_val;
+    321          }
+    322          
+    323          /*!
+    324          \brief Иницилизирует ядро генератора случайных чисел данными из эфира
+    325          */
+    326          static void random_core_init(void)  
+    327          {
+    328            unsigned int rnd_core = 0;;
+    329               
+    330            pre_config();
+    331            FREQCTRL = 0x00; // Выбираем не используемую частоту
+    332          
+    333            // TODO По какой то причине OP_EXE не выполняет команду.
+    334            // регистра RFST читается как 0xD0. это его состояние при reset
+    335            // Включаем демодулятор
+    336            ISRXON();
+    337            
+    338            // Ждем пока статус RSSI_VALID станет true
+    339            while(!RSSISTAT);
+    340            
+    341            // Ждем случайных чисел
+    342            while (RFRND == 0);
+    343            
+    344            // Настраиваем ядро случайного генератора
+    345            rnd_core = readRandom();
+    346            rnd_core |= (unsigned int)readRandom()<<8;
+    347            srand(rnd_core);
+    348            
+    349            // Выключаем демодулятор
+    350            ISRFOFF();
+    351            // Первая генерация случайного числа занимает много времени.
+    352            // Влияло на работу радио, так как использовались случайные посылки
+    353            rand(); 
+    354          }
+    355          
+    356          /**
+    357          @brief Измерение мощности сигнала
+    358          @details Частота = 2394+fch. fch = [0..113]. 2394MHz to 2507MHz.
+    359           Устройство поддерживает частоты до 2507 МГц
+    360          @param[in] fch номер ЧАСТОТНОГО канала
+    361          @param[in] timeout_ms время сканирования в мс
+    362          @param[out] Максимальная мощность сигнала за время сканирования
+    363          @return true если успешно
+    364          */
+    365          bool RI_Measure_POW(char fch, ustime_t timeout, 
+    366                              int8_t *RSSI_SIG){
+    367            if (fch > 113)
+    368              return false;
+    369            //(2394+FREQCTRL.FREQ[6:0])
+    370            FREQCTRL = fch; // Выбираем не используемую частоту
+    371            ISRXON();
+    372            while(!RSSISTAT);
+    373            FRMCTRL0 |= 1<<4; // включаем ENERGY_SCAN, детектор пикового сигнала
+    374            UST_delay(timeout);
+    375            int8_t rssi = RSSI + RSSI_OFFSET;
+    376            *RSSI_SIG = rssi;
+    377            ISRFOFF();
+    378            return true;
+    379          }
+    380          
 E:\Neocore\Hardware\PRG Node\route.c
       1          #include "model.h"
       2          #include "debug.h"
-      3          #include "buffer.h"
-      4          #include "protocol_defs.h"
-      5          #include "ip.h"
-      6          #include "neigh.h"
-      7          #include "balancer.h"
+      3          #include "protocol_defs.h"
+      4          #include "ip.h"
+      5          #include "neigh.h"
+      6          #include "balancer.h"
+      7          #include "auth_eth.h"
       8          
       9          #define ROUTE_TABLE_ITEMS 20
      10          
@@ -2678,30 +2706,33 @@ Warning[Pe1105]: #warning directive: update route tables
           detected during compilation of secondary translation unit
                     "E:\Neocore\Hardware\PRG Node\route.c"
      22            switch (frame->meta.PID){
-     23            case PID_IP: 
+     23            case PID_IP: // Пакет относится к протоколу IP
      24              IP_Receive(frame);
      25              break;
-     26            case PID_NP: 
+     26            case PID_NP: // Пакет относится к протоколу соседей
      27              NP_Receive(frame);
      28              break;
-     29            default:
-     30              return; // Пакет удалит ethernet
-     31            };
-     32            
-     33            TB_Receive(frame);  
-     34          };
-     35          
-     36          void RP_Send_GW(struct frame *frame){
+     29            case PID_AUTH: // Пакет относится к протоколу авторизации
+     30              AUTH_ETH_Receive(frame);
+     31              break;
+     32            default:
+     33              return; // Пакет удалит ethernet
+     34            };
+     35            
+     36            TB_Receive(frame);  
      37          };
      38          
-     39          void RP_Send(struct frame *frame){
+     39          void RP_Send_GW(struct frame *frame){
      40          };
      41          
-     42          void RP_SendRT_GW(struct frame *frame){
+     42          void RP_Send(struct frame *frame){
      43          };
      44          
-     45          void RP_SendRT_RT(struct frame *frame){
+     45          void RP_SendRT_GW(struct frame *frame){
      46          };
+     47          
+     48          void RP_SendRT_RT(struct frame *frame){
+     49          };
 E:\Neocore\Hardware\Stack_core_src\rtc.c
       1          #include "action_manager.h"
       2          #include "model.h"
@@ -2776,239 +2807,266 @@ E:\Neocore\Hardware\STACK_CORE_SRC\sync.c
      50            retransmite = 0;
      51          };
      52          
-     53          static void Cold_Start(void){
-     54          };
-     55          
-     56          static inline bool validate_sync(struct sync *sync){
-     57            bool valid = 
-     58              (sync->magic == MAGIC) &&
-     59              (sync->panid == MODEL.SYNC.panid);
-     60            return valid;
-     61          }
+     53          void SY_restart(){
+     54            MODEL.SYNC.next_sync_send = 0;
+     55            MODEL.SYNC.next_time_recv = 0;
+     56            MODEL.SYNC.last_time_recv = 0;
+     57            retransmite = 0;
+     58          }
+     59          
+     60          static void Cold_Start(void){
+     61          };
      62          
-     63          static inline void accept_sync_data(struct sync *sync){
-     64            MODEL.RTC.rtc = sync->rtc;
-     65          };
-     66          
-     67          static inline void syncronize_timer(struct frame *frame){
-     68            nwtime_t now = AT_time();
-     69            // Время прошедшее с момента получения пакета
-     70            // RI_Send корректриует время, чтобы SFD был передан в SEND_TIME
-     71            // Поэтому нам корректировать ненужно
-     72            nwtime_t passed = AT_interval(now, frame->meta.TIMESTAMP);  
-     73            AT_set_time(SYNC_TIME + passed);
-     74            MODEL.SYNC.sync_err = SYNC_TIME - frame->meta.TIMESTAMP;
-     75            LOG_ON("Sync err %d", MODEL.SYNC.sync_err);
-     76          };
-     77          
-     78          static inline void mode_1_receive_process(void){
-     79            LOW(PIN1);
-     80            struct frame *fr = recv_sync();
-     81            if (!fr)
-     82              return;
-     83            
-     84            struct sync *sync = (struct sync*)(fr->payload);
-     85            if (!validate_sync(sync)){
-     86              FR_delete(fr);
-     87              return;
-     88            }
-     89            syncronize_timer(fr);
-     90            accept_sync_data(sync);
-     91            FR_delete(fr);
-     92            LOG_ON("Sichronize sync RSSI = %d", fr->meta.RSSI_SIG);
-     93            retransmite = RETRANSMITE_TRY;
-     94            MODEL.SYNC.next_time_recv = MODEL.RTC.uptime + SEND_PERIOD;
-     95            MODEL.SYNC.last_time_recv = MODEL.RTC.uptime;   
-     96            HIGH(PIN1);
-     97          }
-     98          
-     99          static inline bool _throw_dice(void){
-    100            return  ((rand() % 100) <= PROBABILIT) ? true : false;
-    101          };
-    102          
-    103          static inline void mode_1_retransmition_process(void){
-    104            retransmite--;
-    105            if (!_throw_dice())
-    106              return;
-    107            send_sync();
-    108            retransmite = 0;
-    109          }
-    110          
-    111          static void mode_1_process(){
-    112           // Прием, ретрансляция, синхронизация   
-    113            if ( MODEL.RTC.uptime >= MODEL.SYNC.next_time_recv)
-    114              mode_1_receive_process();
-    115            else if(retransmite)
-    116              mode_1_retransmition_process();
-    117            
-    118            if (MODEL.RTC.uptime - MODEL.SYNC.last_time_recv > UNSYNC_TIME){
-    119              MODEL.SYNC.synced = false;
-    120              MODEL.SYNC.mode = 0;
-    121              MODEL.TM.MODE = 0;
-    122              LOG_ON("unsynced");
-    123            }
-    124          }
-    125          
-    126          static void mode_2_process(){
-    127            // Периодическое вещание
-    128            if ( MODEL.RTC.uptime < MODEL.SYNC.next_sync_send)
-    129              return;
-    130            MODEL.SYNC.next_sync_send = MODEL.RTC.uptime + SEND_PERIOD;
-    131            LOW(PIN1);
-    132            send_sync();
-    133            HIGH(PIN1);
-    134          }
-    135          
-    136          static void Hot_Start(void){
-    137            if (MODEL.TM.timeslot != SYNC_TS)
-    138              return;
-    139            switch(MODEL.SYNC.mode){
-    140              case MODE_0: break;
-    141              case MODE_1: mode_1_process(); break;
-    142              case MODE_2: mode_2_process(); break;
-    143              default:
-    144              HALT(FLASH_STR("Wrong mode"));
-    145            }
-    146          };
-    147          
-    148          static struct frame* recv_sync(void){
-    149            if(!RI_SetChannel(MODEL.SYNC.sync_channel))
-    150              HALT(FLASH_STR("Wrong channel"));
-    151            struct frame *frame;
-    152            
-    153            AT_wait(SYNC_TIME - NEG_RECV_OFFSET);
-    154            ustime_t recv_time = NWTIME_TO_US(NEG_RECV_OFFSET + POS_RECV_OFFSET);
-    155            TRY{
-    156              frame = RI_Receive(recv_time);
-    157              if (!frame)
-    158                THROW(1);
-    159              if (frame->len != sizeof(struct sync))
-    160                THROW(2);
-    161              AES_StreamCoder(false, frame->payload, frame->payload, frame->len);
-    162              return frame;
-    163            }
-    164            CATCH(1){
+     63          static inline bool validate_sync(struct sync *sync){
+     64            bool valid = 
+     65              (sync->magic == MAGIC) &&
+     66              (sync->panid == MODEL.SYNC.panid);
+     67            return valid;
+     68          }
+     69          
+     70          static inline void accept_sync_data(struct sync *sync){
+     71            MODEL.RTC.rtc = sync->rtc;
+     72          };
+     73          
+     74          static inline void syncronize_timer(struct frame *frame){
+     75            nwtime_t now = AT_time();
+     76            // Время прошедшее с момента получения пакета
+     77            // RI_Send корректриует время, чтобы SFD был передан в SEND_TIME
+     78            // Поэтому нам корректировать ненужно
+     79            nwtime_t passed = AT_interval(now, frame->meta.TIMESTAMP);  
+     80            AT_set_time(SYNC_TIME + passed);
+     81            MODEL.SYNC.sync_err = SYNC_TIME - frame->meta.TIMESTAMP;
+     82            LOG_ON("Sync err %d", MODEL.SYNC.sync_err);
+     83          };
+     84          
+     85          static inline void mode_1_receive_process(void){
+     86            LOW(PIN1);
+     87            struct frame *fr = recv_sync();
+     88            if (!fr)
+     89              return;
+     90            
+     91            struct sync *sync = (struct sync*)(fr->payload);
+     92            if (!validate_sync(sync)){
+     93              FR_delete(fr);
+     94              return;
+     95            }
+     96            syncronize_timer(fr);
+     97            accept_sync_data(sync);
+     98            FR_delete(fr);
+     99            LOG_ON("Sichronize sync RSSI = %d", fr->meta.RSSI_SIG);
+    100            retransmite = RETRANSMITE_TRY;
+    101            MODEL.SYNC.next_time_recv = MODEL.RTC.uptime + SEND_PERIOD;
+    102            MODEL.SYNC.last_time_recv = MODEL.RTC.uptime;   
+    103            HIGH(PIN1);
+    104          }
+    105          
+    106          static inline bool _throw_dice(void){
+    107            return  ((rand() % 100) <= PROBABILIT) ? true : false;
+    108          };
+    109          
+    110          static inline void mode_1_retransmition_process(void){
+    111            retransmite--;
+    112            if (!_throw_dice())
+    113              return;
+    114            send_sync();
+    115            retransmite = 0;
+    116          }
+    117          
+    118          static void mode_1_process(){
+    119           // Прием, ретрансляция, синхронизация   
+    120            if ( MODEL.RTC.uptime >= MODEL.SYNC.next_time_recv)
+    121              mode_1_receive_process();
+    122            else if(retransmite)
+    123              mode_1_retransmition_process();
+    124            
+    125            if (MODEL.RTC.uptime - MODEL.SYNC.last_time_recv > UNSYNC_TIME){
+    126              MODEL.SYNC.synced = false;
+    127              MODEL.SYNC.mode = 0;
+    128              MODEL.TM.MODE = 0;
+    129              LOG_ON("unsynced");
+    130            }
+    131          }
+    132          
+    133          /**
+    134          * brief Сканирование энергии в канале
+    135          *
+    136          * Работает только в режиме шлюза.
+    137          */
+    138          static void energy_scan(){
+    139            static channel_t scan_channel = CH11;
+    140            int8_t rssi_sig;
+    141            
+    142            RI_Measure_POW(scan_channel, 8000, &rssi_sig);
+    143            // Сохраняем пиковые значения
+    144            if (rssi_sig > MODEL.PWR_SCAN.energy[scan_channel - 11])
+    145              MODEL.PWR_SCAN.energy[scan_channel - 11] = rssi_sig;
+    146            
+    147            scan_channel++;
+    148            if (scan_channel > CH28)
+    149              scan_channel = CH11;
+    150          };
+    151          
+    152          static void mode_2_process(){
+    153            // Периодическое вещание
+    154            if ( MODEL.RTC.uptime < MODEL.SYNC.next_sync_send){
+    155              energy_scan();
+    156              return;
+    157            }
+    158            MODEL.SYNC.next_sync_send = MODEL.RTC.uptime + SEND_PERIOD;
+    159            LOW(PIN1);
+    160            send_sync();
+    161            HIGH(PIN1);
+    162          }
+    163          
+    164          static void Hot_Start(void){
+    165            if (MODEL.TM.timeslot != SYNC_TS)
+    166              return;
+    167            switch(MODEL.SYNC.mode){
+    168              case MODE_0: break;
+    169              case MODE_1: mode_1_process(); break;
+    170              case MODE_2: mode_2_process(); break;
+    171              default:
+    172              HALT("Wrong mode");
+    173            }
+    174          };
+    175          
+    176          static struct frame* recv_sync(void){
+    177            if(!RI_SetChannel(MODEL.SYNC.sync_channel))
+    178              HALT("Wrong channel");
+    179            struct frame *frame;
+    180            
+    181            AT_wait(SYNC_TIME - NEG_RECV_OFFSET);
+    182            ustime_t recv_time = NWTIME_TO_US(NEG_RECV_OFFSET + POS_RECV_OFFSET);
+    183            TRY{
+    184              frame = RI_Receive(recv_time);
+    185              if (!frame)
+    186                THROW(1);
+    187              if (frame->len != sizeof(struct sync))
+    188                THROW(2);
+    189              AES_StreamCoder(false, frame->payload, frame->payload, frame->len);
+    190              return frame;
+    191            }
+    192            CATCH(1){
                    ^
 Warning[Pe111]: statement is unreachable
           detected during compilation of secondary translation unit
                     "E:\Neocore\Hardware\STACK_CORE_SRC\sync.c"
-    165              return NULL;
-    166            }
-    167            CATCH(2){
+    193              return NULL;
+    194            }
+    195            CATCH(2){
                    ^
 Warning[Pe111]: statement is unreachable
           detected during compilation of secondary translation unit
                     "E:\Neocore\Hardware\STACK_CORE_SRC\sync.c"
-    168              FR_delete(frame);
-    169              return NULL;
-    170            }
-    171            ETRY;
+    196              FR_delete(frame);
+    197              return NULL;
+    198            }
+    199            ETRY;
                    ^
 Warning[Pe111]: statement is unreachable
           detected during compilation of secondary translation unit
                     "E:\Neocore\Hardware\STACK_CORE_SRC\sync.c"
-    172            return frame;
-    173          }
-    174          
-    175          static bool send_sync(void){
-    176            struct sync sync;
-    177            sync.sys_ch = MODEL.SYNC.sys_channel;
-    178            sync.tx_power = MODEL.RADIO.power_tx;
-    179            sync.panid = MODEL.SYNC.panid;
-    180            sync.rtc = MODEL.RTC.rtc;
-    181            sync.magic = MAGIC;
-    182            
-    183            struct frame *fr = FR_create();
-    184            ASSERT(fr);
-    185            FR_add_header(fr, &sync, sizeof(struct sync));
-    186            
-    187            fr->meta.SEND_TIME = (nwtime_t)SYNC_TIME;
-    188            AES_StreamCoder(true, fr->payload, fr->payload, fr->len);
-    189            
-    190            bool set_ch_res = RI_SetChannel(MODEL.SYNC.sync_channel);
-    191            ASSERT(set_ch_res);
-    192            bool res = RI_Send(fr);
-    193            FR_delete(fr);
-    194            LOG_ON("SYNC sended, res = %d", res);
-    195            return res;
-    196          }
-    197          
-    198          static struct frame* network_recv_sync(ustime_t timeout){
-    199            if(!RI_SetChannel(MODEL.SYNC.sync_channel))
-    200              HALT(FLASH_STR("Wrong channel"));
-    201            
-    202            struct frame *frame = NULL;
-    203            TRY{
-    204              frame = RI_Receive(timeout);
-    205              if (!frame)
-    206                THROW(1);
-    207              if (frame->len != sizeof(struct sync))
-    208                THROW(2);
-    209              AES_StreamCoder(false, frame->payload, frame->payload, frame->len);
-    210              return frame;
-    211            }
-    212            CATCH(1){
+    200            return frame;
+    201          }
+    202          
+    203          static bool send_sync(void){
+    204            struct sync sync;
+    205            sync.sys_ch = MODEL.SYNC.sys_channel;
+    206            sync.tx_power = MODEL.RADIO.power_tx;
+    207            sync.panid = MODEL.SYNC.panid;
+    208            sync.rtc = MODEL.RTC.rtc;
+    209            sync.magic = MAGIC;
+    210            
+    211            struct frame *fr = FR_create();
+    212            ASSERT(fr);
+    213            FR_add_header(fr, &sync, sizeof(struct sync));
+    214            
+    215            AES_StreamCoder(true, fr->payload, fr->payload, fr->len);
+    216            
+    217            bool set_ch_res = RI_SetChannel(MODEL.SYNC.sync_channel);
+    218            ASSERT(set_ch_res);
+    219            bool res = RI_Send_time(fr, (nwtime_t)SYNC_TIME);
+    220            FR_delete(fr);
+    221            LOG_ON("SYNC sended, res = %d", res);
+    222            return res;
+    223          }
+    224          
+    225          static struct frame* network_recv_sync(ustime_t timeout){
+    226            if(!RI_SetChannel(MODEL.SYNC.sync_channel))
+    227              HALT("Wrong channel");
+    228            
+    229            struct frame *frame = NULL;
+    230            TRY{
+    231              frame = RI_Receive(timeout);
+    232              if (!frame)
+    233                THROW(1);
+    234              if (frame->len != sizeof(struct sync))
+    235                THROW(2);
+    236              AES_StreamCoder(false, frame->payload, frame->payload, frame->len);
+    237              return frame;
+    238            }
+    239            CATCH(1){
                    ^
 Warning[Pe111]: statement is unreachable
           detected during compilation of secondary translation unit
                     "E:\Neocore\Hardware\STACK_CORE_SRC\sync.c"
-    213              return NULL;
-    214            }
-    215            CATCH(2){
+    240              return NULL;
+    241            }
+    242            CATCH(2){
                    ^
 Warning[Pe111]: statement is unreachable
           detected during compilation of secondary translation unit
                     "E:\Neocore\Hardware\STACK_CORE_SRC\sync.c"
-    216              FR_delete(frame);
-    217              return NULL;
-    218            }
-    219            ETRY;
+    243              FR_delete(frame);
+    244              return NULL;
+    245            }
+    246            ETRY;
                    ^
 Warning[Pe111]: statement is unreachable
           detected during compilation of secondary translation unit
                     "E:\Neocore\Hardware\STACK_CORE_SRC\sync.c"
-    220            return frame;
-    221          }
-    222          
-    223          bool network_sync(ustime_t timeout){  
-    224            stamp_t now = UST_now();
-    225            struct frame *frame;
-    226            struct sync *sync;
-    227            
-    228            TRY{
-    229              while(true){
-    230                if(UST_time_over(now, timeout))
-    231                   THROW(1);
-    232                
-    233                frame = network_recv_sync(timeout);
-    234                if (!frame)
-    235                   continue;
-    236                
-    237                sync = (struct sync*)frame->payload;
-    238                if (sync->magic != MAGIC){
-    239                  FR_delete(frame);
-    240                  continue;
-    241                }
-    242               
-    243                syncronize_timer(frame);
-    244                
-    245                MODEL.SYNC.synced = true;
-    246                MODEL.SYNC.sys_channel = sync->sys_ch;
-    247                MODEL.SYNC.panid = sync->panid;
-    248                MODEL.RADIO.power_tx = sync->tx_power;
-    249                MODEL.RTC.rtc = sync->rtc;
-    250                
-    251                retransmite = RETRANSMITE_TRY;
-    252                MODEL.SYNC.next_time_recv = MODEL.RTC.uptime +  SEND_PERIOD ;
-    253                MODEL.SYNC.last_time_recv = MODEL.RTC.uptime;     
-    254                break;
-    255              }
-    256            }
-    257            CATCH(1){
-    258              FR_delete(frame);
-    259              return false; // timeout
-    260            }
-    261            FINALLY{
+    247            return frame;
+    248          }
+    249          
+    250          bool network_sync(ustime_t timeout){  
+    251            stamp_t now = UST_now();
+    252            struct frame *frame;
+    253            struct sync *sync;
+    254            
+    255            TRY{
+    256              while(true){
+    257                if(UST_time_over(now, timeout))
+    258                   THROW(1);
+    259                
+    260                frame = network_recv_sync(timeout);
+    261                if (!frame)
+    262                   continue;
+    263                
+    264                sync = (struct sync*)frame->payload;
+    265                if (sync->magic != MAGIC){
+    266                  FR_delete(frame);
+    267                  continue;
+    268                }
+    269               
+    270                syncronize_timer(frame);
+    271                
+    272                MODEL.SYNC.synced = true;
+    273                MODEL.SYNC.sys_channel = sync->sys_ch;
+    274                MODEL.SYNC.panid = sync->panid;
+    275                MODEL.RADIO.power_tx = sync->tx_power;
+    276                MODEL.RTC.rtc = sync->rtc;
+    277                
+    278                retransmite = RETRANSMITE_TRY;
+    279                MODEL.SYNC.next_time_recv = MODEL.RTC.uptime +  SEND_PERIOD ;
+    280                MODEL.SYNC.last_time_recv = MODEL.RTC.uptime;     
+    281                break;
+    282              }
+    283            }
+    284            CATCH(1){
+    285              FR_delete(frame);
+    286              return false; // timeout
+    287            }
+    288            FINALLY{
                    ^
 Warning[Pe111]: statement is unreachable
           detected during compilation of secondary translation unit
@@ -3020,6 +3078,13 @@ Warning[Pe111]: statement is unreachable
           "SW_Init" was declared but never referenced
           detected during compilation of secondary translation unit
                     "E:\Neocore\Hardware\STACK_CORE_SRC\alarm_timer.c"
+
+  static struct frame* get_frame(void){
+                       ^
+"E:\Neocore\Hardware\PRG Node\main.c",13  Warning[Pe177]: function "get_frame"
+          was declared but never referenced
+          detected during compilation of secondary translation unit
+                    "E:\Neocore\Hardware\PRG Node\main.c"
 
   static unsigned long LAST_TIME_CARD_RECIEVED;
                        ^
@@ -3034,11 +3099,11 @@ Warning[Pe111]: statement is unreachable
           "ROUTE_TABLE" was declared but never referenced
           detected during compilation of secondary translation unit
                     "E:\Neocore\Hardware\PRG Node\route.c"
-    262              FR_delete(frame);
-    263            }
-    264            ETRY;
-    265            return true;  
-    266          }
+    289              FR_delete(frame);
+    290            }
+    291            ETRY;
+    292            return true;  
+    293          }
 E:\Neocore\Hardware\STACK_CORE_SRC\time_manager.c
       1          #include "time_manager.h"
       2          #include "model.h"
@@ -3046,95 +3111,95 @@ E:\Neocore\Hardware\STACK_CORE_SRC\time_manager.c
       4          #include "debug.h"
       5          #include "cpu.h"
       6          #include "macros.h"
-      7          
-      8          /**
-      9          @file
-     10          */
-     11          
-     12          #define MAX_TIME_SLOTS 50
-     13          
-     14          #define ACTIVE_INTERVAL (nwtime_t)327 // 9.979 мс
-     15          #define SLEEP_INTERVAL (nwtime_t)327  // 9.979 мс
-     16          #define UNACCOUNTED 68 // Остаток времени после 50ого интервала.
-     17          #define FULL_INTERVAL (ACTIVE_INTERVAL + SLEEP_INTERVAL)
-     18          #define SLOT_TO_NWTIME(slot) ((nwtime_t)((slot) * FULL_INTERVAL)) 
-     19          #define NWTIME_TO_SLOT(nwtime) ((timeslot_t)((time)/FULL_INTERVAL))
-     20           
-     21          //!< Список задач менеджера. Индекс - номер слота, значение-действие
-     22          static char ALARMS[MAX_TIME_SLOTS];
-     23          
+      7          #include "LLC.h"
+      8          
+      9          /**
+     10          @file
+     11          */
+     12          
+     13          #define MAX_TIME_SLOTS 50
+     14          
+     15          #define ACTIVE_INTERVAL (nwtime_t)327 // 9.979 мс
+     16          #define SLEEP_INTERVAL (nwtime_t)327  // 9.979 мс
+     17          #define UNACCOUNTED 68 // Остаток времени после 50ого интервала.
+     18          #define FULL_INTERVAL (ACTIVE_INTERVAL + SLEEP_INTERVAL)
+     19          #define SLOT_TO_NWTIME(slot) ((nwtime_t)((slot) * FULL_INTERVAL)) 
+     20          #define NWTIME_TO_SLOT(nwtime) ((timeslot_t)((time)/FULL_INTERVAL))
+     21           
+     22          //!< Список задач менеджера. Индекс - номер слота, значение-действие
+     23          static char ALARMS[MAX_TIME_SLOTS];
      24          
-     25          void TM_SetAlarm(timeslot_t slot, char alarm){
-     26            ASSERT(slot < MAX_TIME_SLOTS);
-     27            ALARMS[slot] |= alarm;
-     28          }
-     29          
-     30          void TM_ClrAlarm(timeslot_t slot, char alarm){
-     31            ASSERT(slot < MAX_TIME_SLOTS);
-     32            ALARMS[slot] &= ~alarm;
-     33          }
-     34          
-     35          static inline timeslot_t _inc_timeslot(timeslot_t slot){
-     36            slot++;
-     37            return (slot >= MAX_TIME_SLOTS) ? 0 : slot;
-     38          }
-     39          
-     40          static inline timeslot_t _find_next_active(timeslot_t slot){
-     41            slot = _inc_timeslot(slot);
-     42            while (slot && !ALARMS[slot])
-     43              slot = _inc_timeslot(slot);
-     44            return slot;
-     45          }
-     46          
-     47          static void scheulder_next_alarm(nwtime_t time){
-     48            timeslot_t slot = NWTIME_TO_SLOT(time);
-     49            slot = _find_next_active(slot);
-     50            AT_set_alarm(SLOT_TO_NWTIME(slot));
-     51          }
-     52          
-     53          void TM_IRQ(nwtime_t time){
-     54            if (MODEL.TM.MODE == 0){
-     55              AT_enable(false);
-     56              return;
-     57            }
-     58            
-     59            ATOMIC_BLOCK_RESTORE{     
-     60              MODEL.TM.timeslot = NWTIME_TO_SLOT(time);
-     61              MODEL.TM.time = time;
-     62              MODEL.TM.alarm = ALARMS[ MODEL.TM.timeslot];
-     63              scheulder_next_alarm(time);
-     64              AM_Hot_start();
-     65              AM_Cold_start();
-     66            };
-     67          }
-     68          
-     69          static inline void mcu_sleep(void){
-     70            SLEEPCMD = 2; // Режим PM2
-     71            PCON = 1;
-     72          }
-     73          
-     74          static inline void _clr_all(void){
-     75            for_each_type(char, ALARMS, i)
-     76              *i = 0;
-     77          }
-     78          
-     79          static void init(void){
-     80            _clr_all();
-     81            scheulder_next_alarm(0);
-     82            AT_enable(true);
-     83          }
-     84          
-     85          static void start_mode_1(void){
-     86            AM_IRQ_Init();
-     87            init();
-     88            while (true){
-     89              mcu_sleep();
-     90              if (MODEL.TM.MODE == 0){
-     91                AT_enable(false);
-     92                break;
-     93              }
-     94              
-     95              AM_Callback();    
+     25          
+     26          void TM_SetAlarm(timeslot_t slot, char alarm){
+     27            ASSERT(slot < MAX_TIME_SLOTS);
+     28            ALARMS[slot] |= alarm;
+     29          }
+     30          
+     31          void TM_ClrAlarm(timeslot_t slot, char alarm){
+     32            ASSERT(slot < MAX_TIME_SLOTS);
+     33            ALARMS[slot] &= ~alarm;
+     34          }
+     35          
+     36          static inline timeslot_t _inc_timeslot(timeslot_t slot){
+     37            slot++;
+     38            return (slot >= MAX_TIME_SLOTS) ? 0 : slot;
+     39          }
+     40          
+     41          static inline timeslot_t _find_next_active(timeslot_t slot){
+     42            slot = _inc_timeslot(slot);
+     43            while (slot && !ALARMS[slot])
+     44              slot = _inc_timeslot(slot);
+     45            return slot;
+     46          }
+     47          
+     48          static void scheulder_next_alarm(nwtime_t time){
+     49            timeslot_t slot = NWTIME_TO_SLOT(time);
+     50            slot = _find_next_active(slot);
+     51            AT_set_alarm(SLOT_TO_NWTIME(slot));
+     52          }
+     53          
+     54          void TM_IRQ(nwtime_t time){
+     55            if (MODEL.TM.MODE == 0){
+     56              AT_enable(false);
+     57              return;
+     58            }
+     59            
+     60            ATOMIC_BLOCK_RESTORE{     
+     61              MODEL.TM.timeslot = NWTIME_TO_SLOT(time);
+     62              MODEL.TM.time = time;
+     63              MODEL.TM.alarm = ALARMS[ MODEL.TM.timeslot];
+     64              scheulder_next_alarm(time);
+     65              AM_Hot_start();
+     66              AM_Cold_start();
+     67            };
+     68          }
+     69          
+     70          static inline void mcu_sleep(void){
+     71            SLEEPCMD = 2; // Режим PM2
+     72            PCON = 1;
+     73          }
+     74          
+     75          static inline void _clr_all(void){
+     76            for_each_type(char, ALARMS, i)
+     77              *i = 0;
+     78          }
+     79          
+     80          static void init(void){
+     81            _clr_all();
+     82            scheulder_next_alarm(0);
+     83            AT_enable(true);
+     84          }
+     85          
+     86          static void start_mode_1(void){
+     87            AM_IRQ_Init();
+     88            init();
+     89            while (true){
+     90              mcu_sleep();
+     91              if (MODEL.TM.MODE == 0){
+     92                AT_enable(false);
+     93                break;
+     94              }
+     95            AM_Callback();       
      96            }  
      97          }
      98          
@@ -3144,19 +3209,21 @@ E:\Neocore\Hardware\STACK_CORE_SRC\time_manager.c
     102          }
     103          
     104          void Neocore_start(void){
-    105            switch (MODEL.TM.MODE){
-    106            case 0:
-    107              return;
-    108            case 1:
-    109              start_mode_1();
-    110              break;
-    111            case 2:
-    112              start_mode_2();
-    113              break;
-    114            default: 
-    115              HALT(FLASH_STR("Incorrect MODEL.TM.MODE"));
-    116            }
-    117          }
+    105            FR_restart(); // Уничтожает все пакеты и mem_slot.
+    106            LLC_restart(); // Убираем все пакеты на передачу
+    107            switch (MODEL.TM.MODE){
+    108            case 0:
+    109              return;
+    110            case 1:
+    111              start_mode_1();
+    112              break;
+    113            case 2:
+    114              start_mode_2();
+    115              break;
+    116            default: 
+    117              HALT("Incorrect MODEL.TM.MODE");
+    118            }
+    119          }
 E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
       1          #include "ioCC2530.h"
       2          #include "ustimer.h"
@@ -3233,5 +3300,1202 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
      73                                    US_TO_TICKS(ACCURATE_VAL_US);
      74          };
 
-Errors: 13
-Warnings: 22
+   Maximum stack usage in bytes:
+
+   ISTACK XSTACK Function
+   ------ ------ --------
+      1     74   AES_CCMDecrypt
+        0     68   -> CBCMAC_buf_encrypt
+        0     72   -> CTR_enc_decrypt
+        0     70   -> generateAuthData
+        0     70   -> memcpy
+        0     70   -> memset
+      1     58   AES_CCMEncrypt
+        0     52   -> CBCMAC_buf_encrypt
+        0     56   -> CTR_enc_decrypt
+        0     54   -> generateAuthData
+        0     54   -> memcpy
+        0     54   -> memset
+      0    106   AES_StreamCoder
+        0     43   -> memcpy
+        0     43   -> memset
+      0     12   AM_Callback
+        0     10   -> DBG_CORE_HALT
+        0     10   -> printf_P
+        0     12   -> printf_P
+      0     21   AM_Cold_start
+        0     10   -> DBG_CORE_HALT
+        0     10   -> printf_P
+        0     12   -> printf_P
+      0     22   AM_HW_Init
+        0     10   -> DBG_CORE_HALT
+        0     10   -> printf_P
+        0     12   -> printf_P
+      0     21   AM_Hot_start
+        0     10   -> DBG_CORE_HALT
+        0     10   -> printf_P
+        0     12   -> printf_P
+      0     12   AM_IRQ_Init
+        0     10   -> DBG_CORE_HALT
+        0     10   -> printf_P
+        0     12   -> printf_P
+      0     22   AM_SW_Init
+        0     10   -> DBG_CORE_HALT
+        0     10   -> printf_P
+        0     12   -> printf_P
+      0     22   AM_set_callback
+        0     10   -> DBG_CORE_HALT
+        0     10   -> printf_P
+        0     12   -> printf_P
+      0     18   AT_enable
+        0      9   -> IRQEnable
+        0      9   -> __cli
+      0     14   AT_interval
+      0     28   AT_set_alarm
+        0     12   -> DBG_CORE_HALT
+        0     12   -> IRQEnable
+        0     12   -> calcCompareTime
+        0     12   -> loadTimerCompare
+        0     12   -> printf_P
+        0     14   -> printf_P
+      0     30   AT_set_time
+        0     14   -> AT_set_alarm
+        0     14   -> DBG_CORE_HALT
+        0     14   -> ReadTimer
+        0     14   -> isIRQEnable
+        0     14   -> printf_P
+        0     16   -> printf_P
+      0     83   AT_time
+        0     16   -> ReadTimer
+      0     77   AT_wait
+        0     12   -> DBG_CORE_HALT
+        0     12   -> printf_P
+        0     14   -> printf_P
+      0     23   AUTH_ETH_Receive
+        0     12   -> DBG_CORE_HALT
+        0     12   -> FR_del_header
+        0     12   -> printf_P
+        0     14   -> printf_P
+        0     12   -> receiveCMD_Request
+        0     12   -> receiveCMD_Response
+      2     10   AUTH_ETH_TimeAlloc
+        2      0   -> AUTH_request
+      2     39   AUTH_request
+        0     37   -> DBG_CORE_HALT
+        0     37   -> FR_add_header
+        0     37   -> FR_create
+        0     37   -> eth_send
+        0     37   -> printf_P
+        0     39   -> printf_P
+      0    118   CBCMAC_buf_encrypt
+        0     50   -> memcpy
+        0     50   -> memset
+      0     12   CF_init
+        0     12   -> memcpy
+      0    111   CTR_enc_decrypt
+        0     39   -> memcpy
+        0     39   -> memset
+      0      0   Cold_Start
+      0      0   Cold_Start
+      0      0   Cold_Start
+      2      0   Cold_Start
+        2      0   -> scheduler_rx
+        2      0   -> scheduler_tx
+      0      0   DBG_CORE_FAULT
+      0     63   DBG_CORE_HALT
+      0     24   DelayCalibrate
+        0     20   -> UST_delay
+        0     20   -> UST_now
+        0     24   -> _interval
+      1     56   FR_add_header
+        0     19   -> MEM_memcpy
+        0     19   -> mem_move
+      2      0   FR_available
+        2      0   -> SL_available
+      2      0   FR_busy
+        2      0   -> SL_busy
+      2     37   FR_create
+        2      0   -> SL_alloc
+      1     30   FR_del_header
+        0     18   -> MEM_memcpy
+        0     18   -> MEM_memset
+      0     82   FR_delete
+        0      9   -> SL_free
+      0     19   FR_find_rx
+        0      9   -> SL_find_rx
+      0     19   FR_find_tx
+        0      9   -> SL_find_tx
+      0      9   FR_is_rx
+        0      9   -> SL_is_rx
+      0      9   FR_is_tx
+        0      9   -> SL_is_tx
+      2     10   FR_restart
+        2      0   -> SW_restart
+      2      0   FR_rx_frames
+        2      0   -> SL_rx_slots
+      0     21   FR_set_rx
+        0      9   -> SL_set_rx
+      0     19   FR_set_tx
+        0      9   -> SL_set_tx
+      2      0   FR_tx_frames
+        2      0   -> SL_tx_slots
+      2      0   HP_Init
+        2      0   -> AM_set_callback
+      2      0   HP_callback
+        2      0   -> ethernet_process
+      2      0   HW_Init
+        2      0   -> IRQEnable
+      2     84   HW_Init
+        2     84   -> MEM_memcpy
+      2      0   HW_Init
+        2      0   -> uart_init
+      0      0   HW_Init
+      0      0   HW_Init
+      3      1   HW_Init
+      2      0   HW_Init
+        2      0   -> DelayCalibrate
+      0      0   HW_Init
+      0      0   Hot_Start
+      0      9   Hot_Start
+        0      9   -> receive
+        0      9   -> transmite
+      0     12   Hot_Start
+      0     12   Hot_Start
+        0     10   -> DBG_CORE_HALT
+        0     10   -> mode_1_process
+        0     10   -> mode_2_process
+        0     10   -> printf_P
+        0     12   -> printf_P
+      0      9   IP_Receive
+      0     15   IRQEnable
+      2      0   IRQ_Init
+      0      0   IRQ_Init
+      0     28   LLC_add_tx_frame
+        0     10   -> AES_StreamCoder
+        0     10   -> DBG_CORE_HALT
+        0     10   -> FR_set_tx
+        0     10   -> printf_P
+        0     12   -> printf_P
+      0     12   LLC_close_slot
+        0     10   -> DBG_CORE_HALT
+        0     10   -> printf_P
+        0     12   -> printf_P
+      1     22   LLC_open_slot
+        0     10   -> DBG_CORE_HALT
+        0     10   -> printf_P
+        0     12   -> printf_P
+      2     10   LLC_restart
+        2      0   -> SW_Init
+      2     61   LoadTXData
+      1     23   MAC_Receive
+        0     12   -> AES_StreamCoder
+        0     12   -> FR_set_rx
+        0     12   -> _recv_frame
+        0     12   -> _send_ack
+        0     12   -> printf_P
+        0     14   -> printf_P
+      0     23   MAC_Send
+        0      9   -> FR_delete
+        0      9   -> _recv_ack
+        0      9   -> _send_frame
+      3     84   MEM_memcpy
+      3     18   MEM_memset
+      0     18   NP_Receive
+        0      9   -> frame_filter_card
+        0      9   -> frame_filter_cmd_req
+        0      9   -> process_card
+        0      9   -> process_cmd_req
+      0     12   Neocore_start
+        0     10   -> DBG_CORE_HALT
+        0     10   -> FR_restart
+        0     10   -> LLC_restart
+        0     10   -> printf_P
+        0     12   -> printf_P
+        0     10   -> start_mode_1
+        0     10   -> start_mode_2
+      1     29   RI_Measure_POW
+        0     14   -> UST_delay
+      1    103   RI_Receive
+        0     36   -> DBG_CORE_HALT
+        0     36   -> FR_add_header
+        0     36   -> FR_create
+        0     38   -> RecvData
+        0     40   -> UST_interval
+        0     36   -> UST_now
+        0     36   -> UnLoadRXData
+        0     36   -> pre_config
+        0     36   -> printf_P
+        0     38   -> printf_P
+      0     47   RI_Send
+        0     30   -> DBG_CORE_HALT
+        0     30   -> SendData
+        0     34   -> UST_interval
+        0     30   -> UST_now
+        0     30   -> pre_config
+        0     30   -> printf_P
+        0     32   -> printf_P
+      0     57   RI_Send_time
+        0     32   -> DBG_CORE_HALT
+        0     32   -> SendData
+        0     36   -> UST_interval
+        0     32   -> UST_now
+        0     32   -> pre_config
+        0     32   -> printf_P
+        0     34   -> printf_P
+      2     63   RI_SetChannel
+      0     19   RP_Receive
+        0      9   -> AUTH_ETH_Receive
+        0      9   -> IP_Receive
+        0      9   -> NP_Receive
+        0      9   -> TB_Receive
+      0      0   RP_Send
+      0      0   RP_SendRT_GW
+      0      0   RP_SendRT_RT
+      0      0   RP_Send_GW
+      2     22   ReadTimer
+      0    109   RecvData
+        0     67   -> AT_time
+        0     67   -> UST_now
+        0     71   -> UST_time_over
+      0     15   SL_alloc
+        0     15   -> MEM_memset
+        0     15   -> __cli
+      0     12   SL_available
+        0     10   -> DBG_CORE_HALT
+        0     10   -> printf_P
+        0     12   -> printf_P
+      0     12   SL_busy
+        0     10   -> DBG_CORE_HALT
+        0     10   -> printf_P
+        0     12   -> printf_P
+      2      9   SL_find_rx
+      2      9   SL_find_tx
+      0     18   SL_free
+        0      9   -> __cli
+        0      9   -> _free
+      2      9   SL_is_rx
+      2      9   SL_is_tx
+      2      0   SL_rx_slots
+      0     18   SL_set_rx
+        0      9   -> __cli
+      0     18   SL_set_tx
+        0      9   -> __cli
+      2      0   SL_tx_slots
+      2      0   SL_zone_check
+      0      0   SW_Init
+      0      0   SW_Init
+      2      0   SW_Init
+      0      0   SW_Init
+      2      0   SW_Init
+        2      0   -> random_core_init
+      2      0   SW_Init
+      0     13   SW_Init
+        0     13   -> MEM_memset
+      0      0   SW_Init
+      2      0   SW_Init
+      2      0   SW_restart
+        2      0   -> SW_Init
+      2      0   SY_restart
+      0     93   SendData
+        0     61   -> AT_time
+        0     61   -> AT_wait
+        0     61   -> LoadTXData
+      0      9   TB_Receive
+      0     26   TM_ClrAlarm
+        0     10   -> DBG_CORE_HALT
+        0     10   -> printf_P
+        0     12   -> printf_P
+      0     24   TM_IRQ
+        0      9   -> AM_Cold_start
+        0      9   -> AM_Hot_start
+        0      9   -> AT_enable
+        0      9   -> __cli
+        0      9   -> scheulder_next_alarm
+      0     22   TM_SetAlarm
+        0     10   -> DBG_CORE_HALT
+        0     10   -> printf_P
+        0     12   -> printf_P
+      0     15   TimerCompareInterrupt
+        0     15   -> AT_time
+        0     15   -> IRQEnable
+        0     15   -> TM_IRQ
+      0     52   UST_delay
+        0     32   -> UST_now
+      0     64   UST_interval
+      3     77   UST_now
+      0    105   UST_time_over
+        0     28   -> UST_interval
+        0     24   -> UST_now
+      3     36   UnLoadRXData
+      0      9   __cli
+      0     15   __cli
+      0      9   __cli
+      2      0   _clr_all
+      0     18   _find_next_active
+        0      9   -> _inc_timeslot
+      2      9   _free
+      0      9   _inc_timeslot
+      0     48   _interval
+      0      9   _recv_ack
+      0     30   _recv_frame
+        0     16   -> AT_time
+        0     16   -> DBG_CORE_HALT
+        0     16   -> RI_Receive
+        0     16   -> RI_SetChannel
+        0     16   -> printf_P
+        0     18   -> printf_P
+      1     25   _send_ack
+        0     13   -> FR_add_header
+        0     13   -> FR_create
+        0     13   -> FR_delete
+        0     13   -> RI_Send
+        0     13   -> xor_calc
+      0     23   _send_frame
+        0     12   -> DBG_CORE_HALT
+        0     12   -> RI_Send
+        0     12   -> RI_SetChannel
+        0     12   -> UST_delay
+        0     12   -> printf_P
+        0     14   -> printf_P
+      0     10   _throw_dice
+        0     10   -> rand
+      0     23   accept_sync_data
+      0      9   bits_count
+      2     34   calcCompareTime
+        0     22   -> ReadTimer
+      0     17   calc_weight
+      0     12   callback
+        0     10   -> LLC_open_slot
+        0     10   -> ethernet_process
+        0     10   -> printf_P
+        0     12   -> printf_P
+      1     27   energy_scan
+        0     15   -> RI_Measure_POW
+      1     55   eth_send
+        0     16   -> DBG_CORE_HALT
+        0     16   -> FR_add_header
+        0     16   -> LLC_add_tx_frame
+        0     16   -> printf_P
+        0     18   -> printf_P
+      0     28   ethernet_process
+        0     10   -> AUTH_ETH_TimeAlloc
+        0     10   -> FR_delete
+        0     10   -> FR_find_rx
+        0     10   -> parse_frame
+        0     10   -> printf_P
+        0     12   -> printf_P
+        0     18   -> printf_P
+      1     19   fill_meta_data
+      2     17   find_free_index
+      2     12   find_index
+      0     24   frame_filter
+        0     12   -> printf_P
+        0     14   -> printf_P
+      2      9   frame_filter_card
+      2      9   frame_filter_cmd_req
+      0     88   generateAuthData
+        0     18   -> memcpy
+      2      9   getRNDByte
+      2      0   init
+        2      0   -> AT_enable
+        2      0   -> _clr_all
+        2      0   -> scheulder_next_alarm
+      0     31   insert_record
+        0     17   -> calc_weight
+        0     17   -> find_free_index
+        0     17   -> printf_P
+        0     19   -> printf_P
+        0     17   -> update_record
+      0     14   isIRQEnable
+      0     28   loadTimerCompare
+      0      2   main
+        0      0   -> AM_SW_Init
+        0      0   -> Neocore_start
+        0      0   -> network_sync
+        0      0   -> pre_init
+        0      0   -> printf_P
+        0      2   -> printf_P
+      0      0   mcu_sleep
+      1     28   mem_move
+      2     24   mode_1_process
+        0     12   -> mode_1_receive_process
+        0     12   -> mode_1_retransmition_process
+        0     12   -> printf_P
+        0     14   -> printf_P
+      0     28   mode_1_receive_process
+        0     14   -> FR_delete
+        0     14   -> accept_sync_data
+        0     14   -> printf_P
+        0     16   -> printf_P
+        0     14   -> recv_sync
+        0     14   -> syncronize_timer
+        0     14   -> validate_sync
+      2     12   mode_1_retransmition_process
+        2      0   -> _throw_dice
+        2      0   -> send_sync
+      0     22   mode_2_process
+        0     12   -> energy_scan
+        0     12   -> send_sync
+      0    138   network_recv_sync
+        0     63   -> AES_StreamCoder
+        0     63   -> DBG_CORE_HALT
+        0     63   -> FR_delete
+        0     63   -> RI_Receive
+        0     63   -> RI_SetChannel
+        0     63   -> printf_P
+        0     65   -> printf_P
+      0     77   network_sync
+        0     73   -> FR_delete
+        0     73   -> UST_now
+        0     77   -> UST_time_over
+        0     73   -> network_recv_sync
+        0     73   -> syncronize_timer
+      0     22   parse_frame
+        0     10   -> FR_del_header
+        0     10   -> RP_Receive
+        0     10   -> fill_meta_data
+        0     10   -> frame_filter
+        0     10   -> printf_P
+        0     12   -> printf_P
+      2     36   pre_config
+        2      0   -> setFreq
+      0     12   pre_init
+        0     10   -> AM_HW_Init
+        0     10   -> AM_SW_Init
+        0     10   -> AM_set_callback
+        0     10   -> printf_P
+        0     12   -> printf_P
+      0     23   process_card
+        0     12   -> find_index
+        0     12   -> insert_record
+        0     12   -> printf_P
+        0     14   -> printf_P
+        0     12   -> update_record
+      0     23   process_cmd_req
+        0     12   -> printf_P
+        0     14   -> printf_P
+        0     12   -> send_card
+      0      0   putchar
+      0      9   random_core_init
+        0      9   -> pre_config
+        0      9   -> rand
+        0      9   -> readRandom
+        0      9   -> srand
+      0     18   readRandom
+        0      9   -> bits_count
+        0      9   -> getRNDByte
+      0     18   receive
+        0      9   -> MAC_Receive
+      0     24   receiveCMD_Request
+        0     10   -> printf_P
+        0     12   -> printf_P
+      1     26   receiveCMD_Response
+        0     12   -> printf_P
+        0     14   -> printf_P
+      0     79   recv_sync
+        0     63   -> AES_StreamCoder
+        0     63   -> AT_wait
+        0     63   -> DBG_CORE_HALT
+        0     63   -> FR_delete
+        0     63   -> RI_Receive
+        0     63   -> RI_SetChannel
+        0     63   -> printf_P
+        0     65   -> printf_P
+      0     12   scheduler_rx
+        0     10   -> DBG_CORE_HALT
+        0     10   -> TM_ClrAlarm
+        0     10   -> TM_SetAlarm
+        0     10   -> printf_P
+        0     12   -> printf_P
+      0     12   scheduler_tx
+        0     10   -> DBG_CORE_HALT
+        0     10   -> FR_find_tx
+        0     10   -> TM_SetAlarm
+        0     10   -> printf_P
+        0     12   -> printf_P
+      0     18   scheulder_next_alarm
+        0      9   -> AT_set_alarm
+        0      9   -> _find_next_active
+      0     12   send_card
+      1     35   send_sync
+        0     21   -> AES_StreamCoder
+        0     21   -> DBG_CORE_HALT
+        0     21   -> FR_add_header
+        0     21   -> FR_create
+        0     21   -> FR_delete
+        0     21   -> RI_Send_time
+        0     21   -> RI_SetChannel
+        0     21   -> printf_P
+        0     23   -> printf_P
+      1     13   setFreq
+        0     11   -> DBG_CORE_HALT
+        0     11   -> printf_P
+        0     13   -> printf_P
+      2     10   start_mode_1
+        2      0   -> AM_Callback
+        2      0   -> AM_IRQ_Init
+        2      0   -> AT_enable
+        2      0   -> init
+        2      0   -> mcu_sleep
+      2     10   start_mode_2
+        2      0   -> AM_IRQ_Init
+        2      0   -> init
+      0     89   syncronize_timer
+        0     14   -> AT_interval
+        0     14   -> AT_set_time
+        0     14   -> AT_time
+        0     14   -> printf_P
+        0     16   -> printf_P
+      0     25   transmite
+        0     14   -> DBG_CORE_HALT
+        0     14   -> MAC_Send
+        0     14   -> TM_ClrAlarm
+        0     14   -> printf_P
+        0     16   -> printf_P
+      0      0   uart_init
+      1     29   update_record
+        0     12   -> calc_weight
+      0     26   validate_sync
+      0     22   xor_calc
+
+
+   Segment part sizes:
+
+   Bytes  Function/Label
+   -----  --------------
+      33  ?<Constant "(ch >= MIN_CH) && (ch...">
+       3  ?<Constant "->">
+       3  ?<Constant "->">_1
+       3  ?<Constant "->">_10
+       3  ?<Constant "->">_11
+       3  ?<Constant "->">_2
+       3  ?<Constant "->">_3
+       3  ?<Constant "->">_4
+       3  ?<Constant "->">_5
+       3  ?<Constant "->">_6
+       3  ?<Constant "->">_7
+       3  ?<Constant "->">_8
+       3  ?<Constant "->">_9
+       5  ?<Constant ":%d:">
+       5  ?<Constant ":%d:">_1
+       5  ?<Constant ":%d:">_10
+       5  ?<Constant ":%d:">_11
+       5  ?<Constant ":%d:">_2
+       5  ?<Constant ":%d:">_3
+       5  ?<Constant ":%d:">_4
+       5  ?<Constant ":%d:">_5
+       5  ?<Constant ":%d:">_6
+       5  ?<Constant ":%d:">_7
+       5  ?<Constant ":%d:">_8
+       5  ?<Constant ":%d:">_9
+      23  ?<Constant "ACTIONSLOTS[0].rx == 0">
+      29  ?<Constant "AUTH REQ received and...">
+      19  ?<Constant "AUTH req add to tx">
+      18  ?<Constant "AUTH_ETH Response">
+      25  ?<Constant "AUTH_ETH frame filltered">
+      23  ?<Constant "AUTH_ETH receive frame">
+      33  ?<Constant "AUTH_ETH request filt...">
+      18  ?<Constant "Access depricated">
+      16  ?<Constant "Attempts exired">
+      21  ?<Constant "Better card inserted">
+       9  ?<Constant "CALLBACK">
+      12  ?<Constant "CCA/ACK err">
+      22  ?<Constant "CMD reques processed.">
+      32  ?<Constant "COLD_MOD[i]->Cold_Sta...">
+      15  ?<Constant "Card inserted.">
+      26  ?<Constant "Card is bad. not inse...">
+      18  ?<Constant "Delete eth header">
+      34  ?<Constant "ETH. LEN:%d, TS:%d, C...">
+       6  ?<Constant "Error">
+      17  ?<Constant "Extract response">
+      14  ?<Constant "Fill metadata">
+      22  ?<Constant "Filtered ETH_LAY_SIZE">
+      21  ?<Constant "Filtered ETH_VER. %d">
+      19  ?<Constant "Filtered node addr">
+      15  ?<Constant "Filtered panid">
+       9  ?<Constant "Find rx!">
+      31  ?<Constant "Frame AUTH_ETH_RESP w...">
+      13  ?<Constant "Frame Filter">
+      30  ?<Constant "HOT_MOD[i]->Hot_Start...">
+      27  ?<Constant "HW_MOD[i]->HW_Init !=...">
+      16  ?<Constant "Hardware inited">
+      29  ?<Constant "IRQ_MOD[i]->IRQ_Init ...">
+      24  ?<Constant "Incorrect MODEL.TM.MODE">
+      24  ?<Constant "Node auth ok! ipaddr=%d">
+      13  ?<Constant "Node started">
+      15  ?<Constant "Route protocol">
+      13  ?<Constant "START RESYNC">
+      27  ?<Constant "SW_MOD[i]->SW_Init !=...">
+      22  ?<Constant "SYNC sended, res = %d">
+      13  ?<Constant "Send success">
+      26  ?<Constant "Sichronize sync RSSI ...">
+      12  ?<Constant "Sync err %d">
+       7  ?<Constant "Synced">
+      17  ?<Constant "Unrecognized cmd">
+      12  ?<Constant "Update card">
+      14  ?<Constant "Wrong channel">
+      14  ?<Constant "Wrong channel">_1
+      11  ?<Constant "Wrong mode">
+       3  ?<Constant "\r\n">
+       3  ?<Constant "\r\n">_1
+       3  ?<Constant "\r\n">_2
+       3  ?<Constant "\r\n">_3
+       3  ?<Constant "\r\n">_4
+       3  ?<Constant "\r\n">_5
+       3  ?<Constant "\r\n">_6
+      17  ?<Constant "action_manager.c">
+       6  ?<Constant "add_h">
+      20  ?<Constant "alarm <= MAX_NWTIME">
+      14  ?<Constant "alarm_timer.c">
+      11  ?<Constant "auth_eth.c">
+      14  ?<Constant "callback exit">
+      29  ?<Constant "ch >= MIN_CH && ch <=...">
+      11  ?<Constant "ethernet.c">
+       3  ?<Constant "fn">
+      11  ?<Constant "fr != NULL">
+       3  ?<Constant "fr">
+       6  ?<Constant "frame">
+       6  ?<Constant "frame">_1
+       6  ?<Constant "llc.c">
+       6  ?<Constant "mac.c">
+       7  ?<Constant "main.c">
+      12  ?<Constant "mem_slots.c">
+       8  ?<Constant "neigh.c">
+       5  ?<Constant "push">
+       8  ?<Constant "radio.c">
+       4  ?<Constant "res">
+       4  ?<Constant "res">_1
+      11  ?<Constant "set_ch_res">
+      22  ?<Constant "slot < MAX_TIME_SLOTS">
+      29  ?<Constant "slot_busy <= SLOT_POO...">
+       7  ?<Constant "sync.c">
+      19  ?<Constant "time <= MAX_NWTIME">
+      15  ?<Constant "time_manager.c">
+      26  ?<Constant "ts >= 1 && ts < MAX_S...">
+      23  ?<Constant "tx_frame->meta.TS != 0">
+       9  ?<Constant "unsynced">
+       4  ?<Constant {(char *)0, 0, 0}>
+       4  ?<Constant {(char *)0, 150, 0}>
+       4  ?<Constant {(char *)0, 150, 0}>_1
+       5  ?<Constant {(char *)MODEL.AES.CCM_IV, (char *)
+       5  ?<Constant {(char *)MODEL.AES.CCM_KEY, (char *
+       5  ?<Constant {(char *)MODEL.AES.STREAM_IV, (char
+       5  ?<Constant {(char *)MODEL.AES.STREAM_KEY, (cha
+      16  ?<Constant {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+      16  ?<Constant {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,_1
+      16  ?<Constant {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,_2
+      16  ?<Constant {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,_3
+      10  ?<Initializer for AT_MODULE>
+      10  ?<Initializer for CODER_MODULE>
+       6  ?<Initializer for COLD_MOD>
+      10  ?<Initializer for CPU_MODULE>
+      10  ?<Initializer for DBG_MODULE>
+      10  ?<Initializer for DMA_MODULE>
+      10  ?<Initializer for FR_MODULE>
+       8  ?<Initializer for HOT_MOD>
+      16  ?<Initializer for HW_MOD>
+       4  ?<Initializer for IRQ_MOD>
+      10  ?<Initializer for LED_MODULE>
+      10  ?<Initializer for LLC_MODULE>
+      10  ?<Initializer for MAC_MODULE>
+      10  ?<Initializer for MD_MODULE>
+      10  ?<Initializer for MS_MODULE>
+      10  ?<Initializer for RADIO_MODULE>
+      10  ?<Initializer for RTC_MODULE>
+      14  ?<Initializer for SW_MOD>
+      10  ?<Initializer for SYNC_MODULE>
+      10  ?<Initializer for UST_MODULE>
+      16  ?<Initializer for default_iv>
+      16  ?<Initializer for default_key>
+       1  ?<Initializer for first>
+       1  ?<Initializer for scan_channel>
+     150  ACTIONSLOTS
+     482  AES_CCMDecrypt
+       6  AES_CCMDecrypt::?relay
+     452  AES_CCMEncrypt
+       6  AES_CCMEncrypt::?relay
+     632  AES_StreamCoder
+       6  AES_StreamCoder::?relay
+      50  ALARMS
+      90  AM_Callback
+       6  AM_Callback::?relay
+     197  AM_Cold_start
+       6  AM_Cold_start::?relay
+     185  AM_HW_Init
+       6  AM_HW_Init::?relay
+     197  AM_Hot_start
+       6  AM_Hot_start::?relay
+     193  AM_IRQ_Init
+       6  AM_IRQ_Init::?relay
+     189  AM_SW_Init
+       6  AM_SW_Init::?relay
+      80  AM_set_callback
+       6  AM_set_callback::?relay
+      10  AT_MODULE
+      43  AT_enable
+       6  AT_enable::?relay
+      34  AT_interval
+       6  AT_interval::?relay
+     129  AT_set_alarm
+       6  AT_set_alarm::?relay
+     143  AT_set_time
+       6  AT_set_time::?relay
+      55  AT_time
+       6  AT_time::?relay
+     177  AT_wait
+       6  AT_wait::?relay
+     353  AUTH_ETH_Receive
+       6  AUTH_ETH_Receive::?relay
+      20  AUTH_ETH_TimeAlloc
+       6  AUTH_ETH_TimeAlloc::?relay
+     458  AUTH_request
+       6  AUTH_request::?relay
+       2  CALLBACK
+     469  CBCMAC_buf_encrypt
+       6  CBCMAC_buf_encrypt::?relay
+     100  CF_init
+       6  CF_init::?relay
+       1  CLKCONCMD
+       1  CLKCONSTA
+      10  CODER_MODULE
+       6  COLD_MOD
+       4  COMPARE_TIME
+      45  CONFIG
+      10  CPU_MODULE
+     608  CTR_enc_decrypt
+       6  CTR_enc_decrypt::?relay
+       3  Cold_Start
+       3  Cold_Start
+       3  Cold_Start
+      23  Cold_Start
+       6  Cold_Start::?relay
+       6  Cold_Start::?relay
+       6  Cold_Start::?relay
+       6  Cold_Start::?relay
+       2  DBG_CORE_FAULT
+       6  DBG_CORE_FAULT::?relay
+       2  DBG_CORE_HALT
+       6  DBG_CORE_HALT::?relay
+      10  DBG_MODULE
+       4  DELAY_CALIBRATE_TICS
+       1  DMA0CFGH
+       1  DMA0CFGL
+       1  DMA1CFGH
+       1  DMA1CFGL
+       1  DMAARM
+       1  DMAREQ
+      40  DMA_CH
+      10  DMA_MODULE
+     125  DelayCalibrate
+       6  DelayCalibrate::?relay
+       1  ENCCS
+      10  FR_MODULE
+     181  FR_add_header
+       6  FR_add_header::?relay
+      14  FR_available
+       6  FR_available::?relay
+      14  FR_busy
+       6  FR_busy::?relay
+      14  FR_create
+       6  FR_create::?relay
+     185  FR_del_header
+       6  FR_del_header::?relay
+      21  FR_delete
+       6  FR_delete::?relay
+      21  FR_find_rx
+       6  FR_find_rx::?relay
+      21  FR_find_tx
+       6  FR_find_tx::?relay
+      21  FR_is_rx
+       6  FR_is_rx::?relay
+      21  FR_is_tx
+       6  FR_is_tx::?relay
+      14  FR_restart
+       6  FR_restart::?relay
+      14  FR_rx_frames
+       6  FR_rx_frames::?relay
+      21  FR_set_rx
+       6  FR_set_rx::?relay
+      21  FR_set_tx
+       6  FR_set_tx::?relay
+      14  FR_tx_frames
+       6  FR_tx_frames::?relay
+       8  HOT_MOD
+      18  HP_Init
+       6  HP_Init::?relay
+      14  HP_callback
+       6  HP_callback::?relay
+       3  HW_Init
+      17  HW_Init
+      19  HW_Init
+      23  HW_Init
+      37  HW_Init
+      44  HW_Init
+      63  HW_Init
+     409  HW_Init
+       6  HW_Init::?relay
+       6  HW_Init::?relay
+       6  HW_Init::?relay
+       6  HW_Init::?relay
+       6  HW_Init::?relay
+       6  HW_Init::?relay
+       6  HW_Init::?relay
+       6  HW_Init::?relay
+      16  HW_MOD
+       3  Hot_Start
+      41  Hot_Start
+      48  Hot_Start
+      87  Hot_Start
+       6  Hot_Start::?relay
+       6  Hot_Start::?relay
+       6  Hot_Start::?relay
+       6  Hot_Start::?relay
+       3  IP_Receive
+       6  IP_Receive::?relay
+      17  IRQEnable
+       6  IRQEnable::?relay
+       3  IRQ_Init
+      52  IRQ_Init
+       6  IRQ_Init::?relay
+       6  IRQ_Init::?relay
+       4  IRQ_MOD
+       4  LAST_TIME_CARD_RECIEVED
+      10  LED_MODULE
+      10  LLC_MODULE
+     105  LLC_add_tx_frame
+       6  LLC_add_tx_frame::?relay
+     113  LLC_close_slot
+       6  LLC_close_slot::?relay
+     184  LLC_open_slot
+       6  LLC_open_slot::?relay
+      14  LLC_restart
+       6  LLC_restart::?relay
+      54  LoadTXData
+       6  LoadTXData::?relay
+      10  MAC_MODULE
+     153  MAC_Receive
+       6  MAC_Receive::?relay
+     120  MAC_Send
+       6  MAC_Send::?relay
+       4  MAC_TIMER_MAX
+      10  MD_MODULE
+     116  MEM_memcpy
+       6  MEM_memcpy::?relay
+      79  MEM_memset
+       6  MEM_memset::?relay
+     196  MODEL
+      10  MS_MODULE
+     300  NB_TABLE
+      73  NP_Receive
+       6  NP_Receive::?relay
+      87  Neocore_start
+       6  Neocore_start::?relay
+       1  P0SEL
+       1  P1DIR
+       1  PCON
+       1  PERCFG
+      10  RADIO_MODULE
+       1  RFD
+       1  RFIRQF0
+       1  RFIRQF1
+       1  RFST
+      96  RI_Measure_POW
+       6  RI_Measure_POW::?relay
+     595  RI_Receive
+       6  RI_Receive::?relay
+     259  RI_Send
+       6  RI_Send::?relay
+     275  RI_Send_time
+       6  RI_Send_time::?relay
+      32  RI_SetChannel
+       6  RI_SetChannel::?relay
+      69  RP_Receive
+       6  RP_Receive::?relay
+       3  RP_Send
+       6  RP_Send::?relay
+       3  RP_SendRT_GW
+       6  RP_SendRT_GW::?relay
+       3  RP_SendRT_RT
+       6  RP_SendRT_RT::?relay
+       3  RP_Send_GW
+       6  RP_Send_GW::?relay
+      10  RTC_MODULE
+     128  RXBUFF
+      59  ReadTimer
+       6  ReadTimer::?relay
+     203  RecvData
+       6  RecvData::?relay
+       1  SLEEPCMD
+       1  SLEEPSTA
+    3060  SLOT_POOL
+     175  SL_alloc
+       6  SL_alloc::?relay
+      99  SL_available
+       6  SL_available::?relay
+      90  SL_busy
+       6  SL_busy::?relay
+     129  SL_find_rx
+       6  SL_find_rx::?relay
+     129  SL_find_tx
+       6  SL_find_tx::?relay
+      49  SL_free
+       6  SL_free::?relay
+      24  SL_is_rx
+       6  SL_is_rx::?relay
+      24  SL_is_tx
+       6  SL_is_tx::?relay
+      56  SL_rx_slots
+       6  SL_rx_slots::?relay
+      52  SL_set_rx
+       6  SL_set_rx::?relay
+      52  SL_set_tx
+       6  SL_set_tx::?relay
+      56  SL_tx_slots
+       6  SL_tx_slots::?relay
+      76  SL_zone_check
+       6  SL_zone_check::?relay
+       1  ST0
+       1  ST1
+       1  ST2
+       1  STLOAD
+       3  SW_Init
+       3  SW_Init
+       3  SW_Init
+       3  SW_Init
+      52  SW_Init
+      62  SW_Init
+      83  SW_Init
+     114  SW_Init
+     133  SW_Init
+       6  SW_Init::?relay
+       6  SW_Init::?relay
+       6  SW_Init::?relay
+       6  SW_Init::?relay
+       6  SW_Init::?relay
+       6  SW_Init::?relay
+       6  SW_Init::?relay
+       6  SW_Init::?relay
+       6  SW_Init::?relay
+      14  SW_MOD
+      14  SW_restart
+       6  SW_restart::?relay
+      10  SYNC_MODULE
+      71  SY_restart
+       6  SY_restart::?relay
+     243  SendData
+       6  SendData::?relay
+       1  T2CTRL
+       1  T2M0
+       1  T2M1
+       1  T2MOVF0
+       1  T2MOVF1
+       3  TB_Receive
+       6  TB_Receive::?relay
+      94  TM_ClrAlarm
+       6  TM_ClrAlarm::?relay
+     110  TM_IRQ
+       6  TM_IRQ::?relay
+      91  TM_SetAlarm
+       6  TM_SetAlarm::?relay
+       2  TOFFSET
+      37  TimerCompareInterrupt
+       3  TimerCompareInterrupt::??INTVEC 43
+       1  U0BAUD
+       1  U0CSR
+       1  U0DBUF
+       1  U0GCR
+      10  UST_MODULE
+     191  UST_delay
+       6  UST_delay::?relay
+     141  UST_interval
+       6  UST_interval::?relay
+      79  UST_now
+       6  UST_now::?relay
+     108  UST_time_over
+       6  UST_time_over::?relay
+      44  UnLoadRXData
+       6  UnLoadRXData::?relay
+       1  _A_IEN0
+       1  _A_IRCON
+       1  _A_P1
+       4  __Constant_1
+       4  __Constant_19833891
+       4  __Constant_1e
+       4  __Constant_1f4
+       4  __Constant_1f40
+       4  __Constant_20
+       4  __Constant_396
+       4  __Constant_3d
+       4  __Constant_7fff
+       4  __Constant_8000
+       4  __Constant_9c4
+       4  __Constant_a
+       4  __Constant_f4240
+       4  __Constant_ffff8000
+       4  __Constant_ffffc180
+       4  __Constant_ffffff
+       7  __cli
+       7  __cli
+       7  __cli
+       6  __cli::?relay
+       6  __cli::?relay
+       6  __cli::?relay
+      34  _clr_all
+       6  _clr_all::?relay
+      50  _find_next_active
+       6  _find_next_active::?relay
+      56  _free
+       6  _free::?relay
+      18  _inc_timeslot
+       6  _inc_timeslot::?relay
+     127  _interval
+       6  _interval::?relay
+       4  _recv_ack
+       6  _recv_ack::?relay
+     121  _recv_frame
+       6  _recv_frame::?relay
+      81  _send_ack
+       6  _send_ack::?relay
+     108  _send_frame
+       6  _send_frame::?relay
+      52  _throw_dice
+       6  _throw_dice::?relay
+      26  accept_sync_data
+       6  accept_sync_data::?relay
+      34  bits_count
+       6  bits_count::?relay
+     162  buf
+     189  calcCompareTime
+       6  calcCompareTime::?relay
+       5  calc_weight
+       6  calc_weight::?relay
+      93  callback
+       6  callback::?relay
+      16  default_iv
+      16  default_key
+     148  energy_scan
+       6  energy_scan::?relay
+     248  eth_send
+       6  eth_send::?relay
+     270  ethernet_process
+       6  ethernet_process::?relay
+     100  fill_meta_data
+       6  fill_meta_data::?relay
+      70  find_free_index
+       6  find_free_index::?relay
+     137  find_index
+       6  find_index::?relay
+       1  first
+     371  frame_filter
+       6  frame_filter::?relay
+      25  frame_filter_card
+       6  frame_filter_card::?relay
+      22  frame_filter_cmd_req
+       6  frame_filter_cmd_req::?relay
+     241  generateAuthData
+       6  generateAuthData::?relay
+      53  getRNDByte
+       6  getRNDByte::?relay
+      26  init
+       6  init::?relay
+     428  insert_record
+       6  insert_record::?relay
+       5  isIRQEnable
+       6  isIRQEnable::?relay
+       4  last_request
+      70  loadTimerCompare
+       6  loadTimerCompare::?relay
+     219  main
+       6  main::?relay
+       9  mcu_sleep
+       6  mcu_sleep::?relay
+      72  mem_move
+       6  mem_move::?relay
+     152  mode_1_process
+       6  mode_1_process::?relay
+     220  mode_1_receive_process
+       6  mode_1_receive_process::?relay
+      32  mode_1_retransmition_process
+       6  mode_1_retransmition_process::?relay
+      64  mode_2_process
+       6  mode_2_process::?relay
+     236  network_recv_sync
+       6  network_recv_sync::?relay
+     406  network_sync
+       6  network_sync::?relay
+     281  parse_frame
+       6  parse_frame::?relay
+      27  pre_config
+       6  pre_config::?relay
+      93  pre_init
+       6  pre_init::?relay
+     127  process_card
+       6  process_card::?relay
+      91  process_cmd_req
+       6  process_cmd_req::?relay
+      10  putchar
+      78  random_core_init
+       6  random_core_init::?relay
+      54  readRandom
+       6  readRandom::?relay
+      55  receive
+       6  receive::?relay
+      78  receiveCMD_Request
+       6  receiveCMD_Request::?relay
+     573  receiveCMD_Response
+       6  receiveCMD_Response::?relay
+     243  recv_sync
+       6  recv_sync::?relay
+       4  ret_val
+       1  retransmite
+       1  scan_channel
+     135  scheduler_rx
+       6  scheduler_rx::?relay
+     263  scheduler_tx
+       6  scheduler_tx::?relay
+      65  scheulder_next_alarm
+       6  scheulder_next_alarm::?relay
+       3  send_card
+       6  send_card::?relay
+     371  send_sync
+       6  send_sync::?relay
+     120  setFreq
+       6  setFreq::?relay
+       2  slot_busy
+      38  start_mode_1
+       6  start_mode_1::?relay
+      17  start_mode_2
+       6  start_mode_2::?relay
+     162  syncronize_timer
+       6  syncronize_timer::?relay
+     476  transmite
+       6  transmite::?relay
+      23  uart_init
+       6  uart_init::?relay
+     325  update_record
+       6  update_record::?relay
+       4  val
+      59  validate_sync
+       6  validate_sync::?relay
+      51  xor_calc
+       6  xor_calc::?relay
+     628  -- Other
+
+ 
+ 20 750 bytes in segment BANKED_CODE
+  1 116 bytes in segment BANK_RELAYS
+  2 240 bytes in segment CODE_C
+      3 bytes in segment INTVEC
+     47 bytes in segment NEAR_CODE
+     35 bytes in segment SFR_AN
+    232 bytes in segment XDATA_I
+    232 bytes in segment XDATA_ID
+  4 162 bytes in segment XDATA_Z
+ 
+  3 571 bytes of CODE     memory (+ 67 bytes shared)
+      0 bytes of DATA     memory (+ 35 bytes shared)
+ 20 750 bytes of HUGECODE memory
+  4 394 bytes of XDATA    memory
+
+Errors: none
+Warnings: 14

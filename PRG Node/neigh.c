@@ -1,6 +1,6 @@
 #include "model.h"
 #include "debug.h"
-#include "buffer.h"
+#include "protocol_defs.h"
 
 #define NB_TABLE_ITEMS 20
 #define MAX_OPEN_SLOTS 2
@@ -78,7 +78,7 @@ static uint8_t calc_weight(struct frame_card *card){
 
 static void update_record(struct frame *frame, uint8_t index){
   struct frame_card *card = (struct frame_card*)frame->payload;
-  re_memcpy(&NB_TABLE[index].card, card, NB_FRAME_CARD_SIZE);
+//re_memcpy(&NB_TABLE[index].card, card, NB_FRAME_CARD_SIZE);
   NB_TABLE[index].update_time = MODEL.RTC.uptime;
   uint8_t weight = calc_weight(card);
   NB_TABLE[index].weight = weight;
@@ -161,56 +161,56 @@ static void process_card(struct frame *frame){
 }
 
 static void send_card(void){
-  struct frame_card card;
-
-  int etx = NP_GetETX();
-  
-  // Выходим если ETX не определен
-  if (etx == -1){
-    // Раз нет ETX то продлим время отправки карты
-    uint32_t now = MODEL.RTC.uptime();
-    NEXT_CARD_SEND_TIME = now + NEIGHBOR_CARD_SEND_INTERVAL + 
-      rand() % NEIGHBOR_CARD_SEND_INTERVAL_DEV;
-    LOG_ON("ETX not defind. Card not sended.")
-    return;
-  }
-
-  card.ETX = etx;
-
-  // Проверим что у нас есть открытые слоты
-  bool opened = false;
-  for (uint8_t i = 0; i < MAX_OPEN_SLOTS; i++){
-  if (CONFIG.ts_slots[i] !=0 )
-    if (CONFIG.ch_slots[i] !=0){
-      opened = true;
-      break;
-    }
-  }
-
- 
-  if (!opened){
-    uint32_t now = TIC_GetUptime();
-    NEXT_CARD_SEND_TIME = now + NEIGHBOR_CARD_SEND_INTERVAL + 
-      rand() % NEIGHBOR_CARD_SEND_INTERVAL_DEV;
-    LOG_ON("Slots not opened. Card not sended.")
-    return;
-  }
-
-  for (uint8_t i = 0; i < MAX_OPEN_SLOTS; i++){
-    card.ts_slots[i] = CONFIG.ts_slots[i];
-    card.ch_slots[i] = CONFIG.ch_slots[i];
-  }
-
-  frame_s *fr = frame_create();
-  frame_addHeader(fr, &card, NB_FRAME_CARD_SIZE);
-  fr->meta.PID = PID_NP;
-  fr->meta.NDST = 0xffff;
-  fr->meta.NSRC = CONFIG.node_adr; 
-  fr->meta.TS = 0;
-  fr->meta.CH = CONFIG.sys_channel;
-  fr->meta.TX_METHOD = BROADCAST;
-  RP_Send(fr);
-  LOG_ON("NP Card sended");
+//  struct frame_card card;
+//
+//  int etx = NP_GetETX();
+//  
+//  // Выходим если ETX не определен
+//  if (etx == -1){
+//    // Раз нет ETX то продлим время отправки карты
+//    uint32_t now = MODEL.RTC.uptime();
+//    NEXT_CARD_SEND_TIME = now + NEIGHBOR_CARD_SEND_INTERVAL + 
+//      rand() % NEIGHBOR_CARD_SEND_INTERVAL_DEV;
+//    LOG_ON("ETX not defind. Card not sended.")
+//    return;
+//  }
+//
+//  card.ETX = etx;
+//
+//  // Проверим что у нас есть открытые слоты
+//  bool opened = false;
+//  for (uint8_t i = 0; i < MAX_OPEN_SLOTS; i++){
+//  if (CONFIG.ts_slots[i] !=0 )
+//    if (CONFIG.ch_slots[i] !=0){
+//      opened = true;
+//      break;
+//    }
+//  }
+//
+// 
+//  if (!opened){
+//    uint32_t now = TIC_GetUptime();
+//    NEXT_CARD_SEND_TIME = now + NEIGHBOR_CARD_SEND_INTERVAL + 
+//      rand() % NEIGHBOR_CARD_SEND_INTERVAL_DEV;
+//    LOG_ON("Slots not opened. Card not sended.")
+//    return;
+//  }
+//
+//  for (uint8_t i = 0; i < MAX_OPEN_SLOTS; i++){
+//    card.ts_slots[i] = CONFIG.ts_slots[i];
+//    card.ch_slots[i] = CONFIG.ch_slots[i];
+//  }
+//
+//  frame_s *fr = frame_create();
+//  frame_addHeader(fr, &card, NB_FRAME_CARD_SIZE);
+//  fr->meta.PID = PID_NP;
+//  fr->meta.NDST = 0xffff;
+//  fr->meta.NSRC = MODEL.node_adr; 
+//  fr->meta.TS = 0;
+//  fr->meta.CH = CONFIG.sys_channel;
+//  fr->meta.TX_METHOD = BROADCAST;
+//  RP_Send(fr);
+//  LOG_ON("NP Card sended");
 }
 
 

@@ -92,8 +92,7 @@ static void start_mode_1(void){
       AT_enable(false);
       break;
     }
-    
-    AM_Callback();    
+  AM_Callback();       
   }  
 }
 

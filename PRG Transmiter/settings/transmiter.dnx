@@ -12,7 +12,7 @@
         <ByteLimit>50</ByteLimit>
     </Stack>
     <DebugChecksum>
-        <Checksum>3303918869</Checksum>
+        <Checksum>4160668753</Checksum>
     </DebugChecksum>
     <CodeCoverage>
         <Enabled>_ 0</Enabled>
@@ -78,9 +78,6 @@
         <regBase0>XSP16 10</regBase0>
         <regBase1>SP 10</regBase1>
     </Registers>
-    <struct_types>
-        <Fmt0>struct SYNC-sync_channel	3	0</Fmt0>
-    </struct_types>
     <LogFile>
         <LoggingEnabled>_ 0</LoggingEnabled>
         <LogFile>_ ""</LogFile>

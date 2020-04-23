@@ -1,6 +1,5 @@
 #include "model.h"
 #include "debug.h"
-#include "buffer.h"
 #include "action_manager.h"
 #include "ethernet.h"
 

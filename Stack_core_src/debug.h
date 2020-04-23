@@ -2,7 +2,7 @@
 #include "global.h"
 #include "ioCC2530.h"
 #include "stdio.h"
-#include "pgmspace.h"
+#include <pgmspace.h>
 
 extern void DBG_CORE_HALT(void);
 extern void DBG_CORE_FAULT(void);
@@ -12,6 +12,7 @@ extern void DBG_CORE_FAULT(void);
     printf_P(__FILE__);\
     printf_P(":%d:",__LINE__);\
     printf_P(__FUNCTION__);\
+    printf_P("->");\
     printf_P(__VA_ARGS__); \
     printf_P("\r\n"); \
       }
@@ -20,6 +21,7 @@ extern void DBG_CORE_FAULT(void);
       printf_P(__FILE__);\
       printf_P(":%d:",__LINE__);\
       printf_P(__FUNCTION__);\
+      printf_P("->");\
       printf_P(#cond);\
       DBG_CORE_HALT();\
     }\

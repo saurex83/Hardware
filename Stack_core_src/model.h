@@ -67,8 +67,27 @@ typedef struct {
       } DEBUG_RX;  
     #endif      
         } RADIO;
-        struct SYNC_MODEL SYNC;
+      
+      struct {
+        char mode;
+        bool synced;
+        channel_t sys_channel;
+        channel_t sync_channel;
+        int sync_err;
+        unsigned long next_sync_send;
+        unsigned long next_time_recv;
+        unsigned long last_time_recv;
+        char panid;
+      } SYNC;
+      
+      struct {
+        bool auth_ok; // Получили ответ от шлюза
+        bool access_ok;
+      } AUTH;
+    
         unsigned int node_adr;
+        char node_mac[8];
+        char node_param[16];
 } MODEL_s;
 
 

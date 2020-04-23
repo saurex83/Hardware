@@ -11,14 +11,14 @@ static void pre_init(void){
   AM_HW_Init();
   AM_SW_Init();
   LOG_ON("Hardware inited");
-  MODEL.SYNC.mode = 2;
-  MODEL.TM.MODE = 2;
+ // MODEL.SYNC.mode = 2;
+ // MODEL.TM.MODE = 0;
 }
 
 void main(void){
   pre_init();
-  MODEL.TM.MODE = 2;
-  Neocore_start();
+ // MODEL.TM.MODE = 0;
+ // Neocore_start();
   com_uart_init();
   parse_uart_stream();
   

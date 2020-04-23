@@ -1,3 +1,4 @@
+#pragma once
 #include "frame.h"
 
 void RP_Receive(struct frame *frame);

@@ -5,10 +5,10 @@
 #include "sync.h"
 #include "action_manager.h"
 #include "frame.h"
-#include "buffer.h"
 #include "model.h"
 #include "radio.h"
 #include "llc.h"
+#include "ethernet.h"
 
 static struct frame* get_frame(void){
   struct frame *frame = FR_create(); 
@@ -20,21 +20,20 @@ static struct frame* get_frame(void){
   return frame;
 }
 
+/** brief Функция вызывается после приема пакетов
+* Здесь происходит обработка протоколов верхнего уровня
+*/
 static void callback(void){
-  if (!(MODEL.RTC.rtc % 5))
-    return;
-  
-  int tx_num = BF_tx_busy();
-  
-  if (tx_num){
-    //LOG_ON("tx frames in buff %d", tx_num);
-    return;  
+  static bool first=true;
+  if (first){
+    LLC_open_slot(1, MODEL.SYNC.sys_channel);
+    first = false;
   }
-  
-  struct frame *frame = get_frame();
-  LLC_add_tx_frame(frame);
-  LOG_ON("TX FRAME PUSH");
+  ethernet_process();
+//  LLC_add_tx_frame(frame);
+ LOG_ON("callback exit");
 }
+
 //TODO alarm manager вызывает из прерывания TM_IRQ
 //в TM_IRQ засоряется стек прерывания
 static void pre_init(void){
@@ -45,6 +44,7 @@ static void pre_init(void){
   MODEL.TM.MODE = 1;
   AM_set_callback(callback);
 }
+
 // TODO добавить в buffer.c размер RX и TX очереди
 void main(void){
   pre_init();

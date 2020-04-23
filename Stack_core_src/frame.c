@@ -28,6 +28,11 @@ bool FR_delete(struct frame *frame){
   return SL_free((char*)frame);
 }
 
+static void mem_move(char *dst, char *src, char len){
+  for (int i = len - 1; i >= 0; i--)
+    dst[i] = src[i];
+};
+
 bool FR_add_header(struct frame* frame ,void *head, char len){
   int new_len = frame->len + len;
   if (!(new_len < MAX_PAYLOAD_SIZE))
@@ -35,7 +40,7 @@ bool FR_add_header(struct frame* frame ,void *head, char len){
   
   // Сдвинем данные на размер вставки при необходимости
   if (frame->len != 0)
-    MEMCPY(&frame->payload[len], frame->payload, len);
+    mem_move(&frame->payload[len], frame->payload, frame->len);
   
   // Скопируем новые данные
   MEMCPY(frame->payload, head, len);
@@ -43,16 +48,16 @@ bool FR_add_header(struct frame* frame ,void *head, char len){
   return true;
 };
 
+
 bool FR_del_header(struct frame* frame, char len){
   if (len == 0 || len > frame->len )
     return false;
-  MEMCPY(frame->payload, &frame->payload[len], len);
+  frame->len = frame->len - len;
+  MEMCPY(frame->payload, &frame->payload[len], frame->len);
   
   #ifdef FRAME_FOOTER_DEL
-  MEMSET(&frame->payload[len], 0, len);
+  MEMSET(&frame->payload[frame->len], 0, len);
   #endif
-  
-  frame->len = frame->len - len;;
   return true;
 }
 

@@ -20,7 +20,8 @@ bool cmd_0x05(uint8_t *cmd, uint8_t size)
   CHECK_NETWORK_NOT_SEEDING();
    
   cmd_args_s *args = (cmd_args_s*)cmd; // Извлекаем аргументы
-  memcpy(MODEL.AES.STREAM_IV,  args->KEY, 16);   
+  
+  memcpy(MODEL.AES.STREAM_KEY,  args->KEY, 16);   
  
   LOG_ON("CMD 0x05. KEY loaded");
   cmd_answer(ATYPE_CMD_OK, NULL, 0);
