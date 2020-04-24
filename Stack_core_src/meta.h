@@ -16,6 +16,8 @@ struct meta{
    char PID;
    unsigned int NDST;
    unsigned int NSRC;
+   unsigned char NSRC_TS;
+   unsigned char NSRC_CH;
    char ETX;
    unsigned int FDST;
    unsigned int FSRC;

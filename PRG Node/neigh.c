@@ -1,237 +1,414 @@
 #include "model.h"
 #include "debug.h"
 #include "protocol_defs.h"
+#include "ethernet.h"
 
-#define NB_TABLE_ITEMS 20
-#define MAX_OPEN_SLOTS 2
-#define REQ_CMD  0
-#define NB_FRAME_CARD_SIZE sizeof(struct frame_card)
-#define NB_FRAME_REQ_SIZE sizeof(struct frame_req)
-#define NB_TABLE_SIZE sizeof(struct table)
+#define NB_ITEMS 10
+#define TIME_TO_LIVE 10 // в минутах
+#define CARD_SEND_PERIOD 60 // в секундах
+#define COMM_NODE_UPDATE_PERIOD 60//в секундах
+#define CRIT_WEIGHT 10  // Критический вес узла для смены
 
-#warning GW may open lot of slots
-// Шлюз имеет предопределенные временные слоты и каналы?
-struct frame_card{ // Информационная карточка узла
-    char ts_slots[MAX_OPEN_SLOTS]; // Временые слоты приема пакетов
-    char ch_slots[MAX_OPEN_SLOTS]; // Частоты приема пакетов
-    char ETX; // 0 - шлюз, 1 - одна передача до шлюза
-}__attribute__((packed));
-
-struct frame_req{ //Запрос от другого узла
-  uint8_t cmd_req; // 0 - запрос информации
-}__attribute__((packed));
-
-
-struct table{
-  unsigned int node_addr; // Адрес узла
+struct np_record {
+  char LIVE_TIME; //Время в минутах
+  bool RA;
   signed char RSSI_SIG;
-  signed char LIQ;
-  char weight; // Качество узла от 0 до 255. 0 - плохо
-  struct frame_card card; // Информация об узле
-  unsigned long update_time; // Время обновления записи
-  bool record_active; // Запись действительна 
-} ;
+  char LIQ;
+  char TS_SLOT;
+  char CH_SLOT;
+  char ETX;
+  unsigned int ADDR;
+};
 
-static struct table NB_TABLE[NB_TABLE_ITEMS];
-static unsigned long LAST_TIME_CARD_RECIEVED;
+struct NP_CARD{
+  char TS;
+  char CH;
+  char ETX;
+} __attribute__((packed));
 
-static int find_index(struct frame *frame){
-  // Попробуем найти пакет
-  for (uint8_t i = 0; i < NB_TABLE_ITEMS; i++)
-    if (NB_TABLE[i].node_addr == frame->meta.NSRC)
-      if (NB_TABLE[i].record_active)
-        return i;
-  return -1;
-}
+enum {NP_CMD_CARD = 0, NP_CMD_CARD_REQ = 1} NP_CMD_ENUM;
 
-/**
+static struct np_record NB_TABLE[NB_ITEMS];
+// Указатель на лучший узел для связи
+static struct np_record *COMM_NODE_PTR = NULL;
+// Время последнего обновления указателя
+static unsigned long LAST_UPDATE_TIME_COMM_NODE = 0;
 
-@brief Ищем свободное место
 
-@return -1 
-
+/** brief Отправим карточку узла
 */
-
-static int find_free_index(){
-  for (uint8_t i = 0; i < NB_TABLE_ITEMS; i++)
-    if (!NB_TABLE[i].record_active)
-      return i;
-  return -1;
-}
-
-/**
-@brief Вычисляет вес карты
-@return 0 - плохо, 255 отлично
-*/
-static uint8_t calc_weight(struct frame_card *card){
-  // Сравнивает две карты по ETX, LIQ(пока не доступно), RSSI
-  // ПОДУМАТЬ. При маршрутизаии от шлюза сохраняются маршруты до соседей
-  // Если нет соседа ( выкинули его) то маршрут разрушится
-  return 0;
-}
-
-/**
-
-@brief Обновление карточки по индексу
-
-*/
-
-static void update_record(struct frame *frame, uint8_t index){
-  struct frame_card *card = (struct frame_card*)frame->payload;
-//re_memcpy(&NB_TABLE[index].card, card, NB_FRAME_CARD_SIZE);
-  NB_TABLE[index].update_time = MODEL.RTC.uptime;
-  uint8_t weight = calc_weight(card);
-  NB_TABLE[index].weight = weight;
-  NB_TABLE[index].node_addr = frame->meta.NSRC;
-  NB_TABLE[index].record_active = true;
-  NB_TABLE[index].RSSI_SIG = frame->meta.RSSI_SIG;
-  NB_TABLE[index].LIQ = frame->meta.LIQ;
-}
-
-static void insert_record(struct frame *frame){
-  int index = find_free_index();
-  struct frame_card *card = (struct frame_card*)frame->payload;
-  uint8_t weight = calc_weight(card);
-  if (index != -1){ // Нашли место, запихиваем карточку
-    update_record(frame,index);
-    LOG_ON("Card inserted.")
+static void send_node_card(){
+  // Мы не может послать карту так как не знаем свой ETX
+  if (!COMM_NODE_PTR)
     return;
-  }
+    
+  struct NP_CARD card;
+  card.TS = MODEL.node_TS;
+  card.CH = MODEL.node_CH;
+  card.ETX = MODEL.node_ETX;
   
-  uint8_t bad_index, bad_weight = 255;
-  bool found = false;
+  struct frame fr;
+  FR_add_header(&fr, (char*)&card, sizeof(struct NP_CARD));
+  char cmd = NP_CMD_CARD;
+  FR_add_header(&fr, &cmd, sizeof(cmd));
+  
+  fr.meta.NDST = 0xffff;
+  fr.meta.NSRC = MODEL.node_adr;
+  fr.meta.PID = PID_NP;
+  eth_send(&fr);
+  
+};
 
-  // Свободных мест нет. Ищем самую плохую запись
-  for (uint8_t i = 0; i < NB_TABLE_ITEMS; i++)
-    if (NB_TABLE[i].record_active){
-      if (NB_TABLE[i].weight < bad_weight){
-        bad_weight = NB_TABLE[i].weight ;
-        bad_index = i;
-        found = true;
-       }
-    }
+static int index_by_addr(unsigned int addr){
+  int ret = -1;
+  for (int  i = 0; i < NB_ITEMS; i++)
+    if (NB_TABLE[i].RA && NB_TABLE[i].ADDR == addr){
+      ret = i;
+      break;
+    };
+  return ret;
+};
 
-  if (!found){ // Если нету записей.
-    LOG_ON("Card is bad. not inserted")
+static int free_index(){
+  int ret = -1;
+  for (int  i = 0; i < NB_ITEMS; i++)
+    if (!NB_TABLE[i].RA){
+      ret = i;
+      break;
+    };
+  return ret;
+};
+
+/** brief Добавим или обновим карточку в таблице
+*/
+static void add_card(struct frame *frame){
+
+  if (frame->len != sizeof(struct NP_CARD))
     return;
-  }
-  if (weight > bad_weight){ //// Карточка лучше чем самая плохая в таблице
-    LOG_ON("Better card inserted")
-    update_record(frame, bad_index);
-  }
-}
+  
+  struct NP_CARD *card = (struct NP_CARD*)frame->payload;
+  // Проверим присланные параметры
+  bool filter = true;
+  filter &= card->TS >= 2 && card->TS <= 49;
+  filter &= card->CH >=CH11 && card->CH <= CH27;
+  filter &= card->ETX < 250;
+  if (!filter)
+    return;
+  
+  int idx;
+  
+  // Ищем запись по адресу или свободный индекс
+  idx = index_by_addr(frame->meta.NSRC);
+  if (idx < 0)
+    idx = free_index();
+ 
+  // Не получиться вставить запись
+  if (idx < 0)
+    return;
+  
+  // Обнавляем таблицу
+  NB_TABLE[idx].LIVE_TIME = TIME_TO_LIVE;
+  NB_TABLE[idx].ADDR = frame->meta.NSRC;
+  NB_TABLE[idx].RA = true;
+  NB_TABLE[idx].RSSI_SIG = frame->meta.RSSI_SIG;
+  NB_TABLE[idx].LIQ = frame->meta.LIQ;
+  NB_TABLE[idx].TS_SLOT = card->TS;
+  NB_TABLE[idx].CH_SLOT = card->CH;
+  NB_TABLE[idx].ETX = card->ETX;
 
-static bool frame_filter_card(struct frame *frame){ 
-  // Фильтр 1: по размеру кадра
-  if (frame->len < NB_FRAME_CARD_SIZE)
-    return false;
-  // struct frame_card *card = (struct frame_card*)frame->payload;
-  // TODO Тут интелектуалные фильтры по содержимому
-  // Желательно проверять что именно нам прислали и являются
-  // ли данные корректными
-  return true;
-}
-
-static bool frame_filter_cmd_req(struct frame *frame){
-  // Фильтр 1: по размеру кадра
-  if (frame->len < NB_FRAME_REQ_SIZE)
-    return false;
-  // TODO проверить доступные команды
-  //struct frame_req *cmd_req = (struct frame_req*)frame->payload;
-  return true;
-}
-/**
-
-@brief Обработка принятой карты 
-
-*/
-
-static void process_card(struct frame *frame){
-  int index = find_index(frame);
-
-  if (index == -1) // Если нет записи об этом узле, вставим
-    insert_record(frame);
-  else{ // Если запись есть, то обновим 
-    LOG_ON("Update card")
-    update_record(frame, index);
-  }
-  // Обновим время получения последней карточки
-  // мне не важно вставили или нет, главное что они регулярно приходят
-  LAST_TIME_CARD_RECIEVED = MODEL.RTC.uptime;
-}
-
-static void send_card(void){
-//  struct frame_card card;
-//
-//  int etx = NP_GetETX();
-//  
-//  // Выходим если ETX не определен
-//  if (etx == -1){
-//    // Раз нет ETX то продлим время отправки карты
-//    uint32_t now = MODEL.RTC.uptime();
-//    NEXT_CARD_SEND_TIME = now + NEIGHBOR_CARD_SEND_INTERVAL + 
-//      rand() % NEIGHBOR_CARD_SEND_INTERVAL_DEV;
-//    LOG_ON("ETX not defind. Card not sended.")
-//    return;
-//  }
-//
-//  card.ETX = etx;
-//
-//  // Проверим что у нас есть открытые слоты
-//  bool opened = false;
-//  for (uint8_t i = 0; i < MAX_OPEN_SLOTS; i++){
-//  if (CONFIG.ts_slots[i] !=0 )
-//    if (CONFIG.ch_slots[i] !=0){
-//      opened = true;
-//      break;
-//    }
-//  }
-//
-// 
-//  if (!opened){
-//    uint32_t now = TIC_GetUptime();
-//    NEXT_CARD_SEND_TIME = now + NEIGHBOR_CARD_SEND_INTERVAL + 
-//      rand() % NEIGHBOR_CARD_SEND_INTERVAL_DEV;
-//    LOG_ON("Slots not opened. Card not sended.")
-//    return;
-//  }
-//
-//  for (uint8_t i = 0; i < MAX_OPEN_SLOTS; i++){
-//    card.ts_slots[i] = CONFIG.ts_slots[i];
-//    card.ch_slots[i] = CONFIG.ch_slots[i];
-//  }
-//
-//  frame_s *fr = frame_create();
-//  frame_addHeader(fr, &card, NB_FRAME_CARD_SIZE);
-//  fr->meta.PID = PID_NP;
-//  fr->meta.NDST = 0xffff;
-//  fr->meta.NSRC = MODEL.node_adr; 
-//  fr->meta.TS = 0;
-//  fr->meta.CH = CONFIG.sys_channel;
-//  fr->meta.TX_METHOD = BROADCAST;
-//  RP_Send(fr);
-//  LOG_ON("NP Card sended");
-}
-
-
-/**
-@brief Обработка принятой команды
-*/
-static void process_cmd_req(struct frame *frame){
-  struct frame_req *cmd_req = (struct frame_req*)frame->payload;  
-
-  // Запрос информации об узле
-  if (cmd_req->cmd_req == REQ_CMD)
-    send_card();
-  LOG_ON("CMD reques processed.")
-}
+};
 
 void NP_Receive(struct frame *frame){
-  if (frame->meta.NSRC == 0xffff)
+  // Если ущел не синхронизирован выходим
+  if (!MODEL.SYNC.synced)
     return;
   
-  if (frame_filter_card(frame))
-      process_card(frame);
-  else if (frame_filter_cmd_req(frame))
-      process_cmd_req(frame);
+  // Если нам отказали в доступе
+  if (MODEL.AUTH.auth_ok && !MODEL.AUTH.access_ok)
+    return;
+  
+  if (frame->len == 0)
+    return;
+  
+  // Извлечем номер команды
+  char cmd = frame->payload[0];
+  bool res = FR_del_header(frame, 1);
+  ASSERT(res);
+  
+  bool all_ok = MODEL.AUTH.auth_ok && MODEL.AUTH.access_ok;
+  switch (cmd){
+    case NP_CMD_CARD:
+      add_card(frame);
+      return;
+    case NP_CMD_CARD_REQ:
+      if (!all_ok)
+        return;
+      send_node_card();
+      break;
+    default:
+    LOG_ON("Invalid NP_CMD");
+  };
 }
+
+/** brief Периодическа рассылка карты узла
+*/
+static void periodic_card_send(){
+  static unsigned long last_card_send_time = 0;
+  unsigned long now = MODEL.RTC.uptime;
+  
+  // Ждем что пройдем как завершения периода рассылки
+  if ((now - last_card_send_time) < CARD_SEND_PERIOD)
+    return;
+   
+  last_card_send_time = now;
+  send_node_card();
+};
+
+/** brief Анализ таблицы и уменьшении времени жизни записи
+*/
+static void analyse_table(){
+  static unsigned long last_analyse_time = 0;
+  unsigned long now = MODEL.RTC.uptime;
+  
+  // Ждем что пройдем как минимум 1 минута с последнего анализа
+  if ((now - last_analyse_time) < 60)
+    return;
+  
+  last_analyse_time = now;
+  
+  // Теперь уменьшим время жизни записям и удалим при необходимости
+  for (int  i = 0; i < NB_ITEMS; i++){
+    // Пропускаем пустые записи
+    if (!NB_TABLE[i].RA)
+      continue;
+    
+    // Уменьшаем время жизни
+    if (NB_TABLE[i].LIVE_TIME > 0)
+      NB_TABLE[i].LIVE_TIME--;
+    
+    // Помечаем запись свободной по истечению времени жизни
+    if (NB_TABLE[i].LIVE_TIME == 0)
+      NB_TABLE[i].RA = false;    
+  };
+};
+
+/** brief Поиск шлюза среди соседей
+* 
+* Выбор шлюза для связи является лучшим вариантом, поэтому 
+* допускаеться уровень связи желтого уровня
+*/
+static int find_lvl_0_node(){
+  int idx = -1;
+  signed char rssi = -80;
+  char etx = 0;
+  
+  bool filter;
+  for (int  i = 0; i < NB_ITEMS; i++){
+    // Пропускаем пустые записи
+    if (!NB_TABLE[i].RA)
+      continue;
+    filter = true;
+    filter &= NB_TABLE[i].RSSI_SIG >= -rssi;
+    filter &= NB_TABLE[i].ETX <= etx;
+    if (filter){
+      rssi = NB_TABLE[i].RSSI_SIG;
+      etx = NB_TABLE[i].ETX;
+      idx = i;
+    };
+  };
+  return idx;
+};
+
+
+/** brief Поиск соседа для связи по строгим правилам
+* Выбирает узел с минимальным ETX и RSSI с устойчивой связью.
+* При равных значениях ETX выбирается узел с максимальным RSSI
+*/
+static int find_lvl_1_node(){
+  int idx = -1;
+  signed char rssi = -50;
+  char etx = 255;
+  
+  bool filter;
+  for (int  i = 0; i < NB_ITEMS; i++){
+    // Пропускаем пустые записи
+    if (!NB_TABLE[i].RA)
+      continue;
+    filter = true;
+    filter &= NB_TABLE[i].RSSI_SIG >= -rssi;
+    filter &= NB_TABLE[i].ETX <= etx;
+    if (filter){
+      rssi = NB_TABLE[i].RSSI_SIG;
+      etx = NB_TABLE[i].ETX;
+      idx = i;
+    };
+  };
+  return idx;
+};
+
+/** brief Поиск соседа для связи по строгим правилам
+* Выбирает узел с минимальным ETX и RSSI с неустойчевой связью.
+* При равных значениях ETX выбирается узел с максимальным RSSI
+*/
+static int find_lvl_2_node(){
+  int idx = -1;
+  signed char rssi = -80;
+  char etx = 255;
+  
+  bool filter;
+  for (int  i = 0; i < NB_ITEMS; i++){
+    // Пропускаем пустые записи
+    if (!NB_TABLE[i].RA)
+      continue;
+    filter = true;
+    filter &= NB_TABLE[i].RSSI_SIG >= -rssi;
+    filter &= NB_TABLE[i].ETX <= etx;
+    if (filter){
+      rssi = NB_TABLE[i].RSSI_SIG;
+      etx = NB_TABLE[i].ETX;
+      idx = i;
+    };
+  };
+  return idx;
+};
+
+/** brief Поиск соседа для связи по строгим правилам
+* Выбирает узел с минимальным ETX и RSSI с плохой связью.
+* При равных значениях ETX выбирается узел с максимальным RSSI
+*/
+static int find_lvl_3_node(){
+  int idx = -1;
+  signed char rssi = -120;
+  char etx = 255;
+  
+  bool filter;
+  for (int  i = 0; i < NB_ITEMS; i++){
+    // Пропускаем пустые записи
+    if (!NB_TABLE[i].RA)
+      continue;
+    filter = true;
+    filter &= NB_TABLE[i].RSSI_SIG >= -rssi;
+    filter &= NB_TABLE[i].ETX <= etx;
+    if (filter){
+      rssi = NB_TABLE[i].RSSI_SIG;
+      etx = NB_TABLE[i].ETX;
+      idx = i;
+    };
+  };
+  return idx;
+};
+
+/** brief Решает требуется ли замена узла
+*/
+static bool is_need_change_comm_node(struct np_record *node){
+  // Нашли сами себя
+  if (node == COMM_NODE_PTR)
+    return false;
+  
+  // Мы нашли шлюз с примелемой связью
+  if (node->ETX == 0)
+    if (node->RSSI_SIG >= -80)
+      return true;
+
+  // Мы нашли узел с лучшим ETX
+  if (COMM_NODE_PTR->ETX > node->ETX)
+    if (node->RSSI_SIG >= -80)
+      return true;
+
+  // Мы нашли узел с таким же ETX
+  // Анализируем по уровню сигнала
+  if (COMM_NODE_PTR->ETX == node->ETX)
+    // Лучшее враг хорошего ))
+    if (COMM_NODE_PTR->RSSI_SIG >= - 70)
+      return false;
+    
+    if (COMM_NODE_PTR->RSSI_SIG >= - 90)
+      if (node->RSSI_SIG > COMM_NODE_PTR->RSSI_SIG + 5)
+        return true;  
+  
+  return false;
+};
+
+/** brief Выбираем и следим за указатель на узел связи с шлюзом
+*/
+static void comm_node_choise(){
+  unsigned long now = MODEL.RTC.uptime;
+  
+  // Проверим активна запись на которую указывает
+  if (COMM_NODE_PTR)
+    if (!COMM_NODE_PTR->RA)
+      COMM_NODE_PTR = NULL;
+  
+  // Если узел уже выбран, то обнавляем с некоторым периодом
+  if (COMM_NODE_PTR){ 
+    if ((now - LAST_UPDATE_TIME_COMM_NODE) < COMM_NODE_UPDATE_PERIOD)
+      return;
+    LAST_UPDATE_TIME_COMM_NODE = now;
+  };
+  
+  
+  // Есть ли у нас хоть один сосед
+  bool table_free = true;
+  for (int  i = 0; i < NB_ITEMS; i++)
+    if (NB_TABLE[i].RA){
+      table_free = false;
+      break;
+    };
+ 
+  // Заканчиваем работу если соседей нет
+  if (table_free)
+    return;
+  
+  // Начинаем выбирать соседей для связи
+  int idx;
+  if (idx = find_lvl_0_node() < 0)
+    if (idx = find_lvl_1_node() < 0);
+      if (idx = find_lvl_2_node() < 0);
+        if (idx = find_lvl_3_node() <0)
+          return; // Этого быть не должно
+      
+  
+  // Если раньше небыло никакого узла связи, 
+  // то выберим тот который нашли. Обновим время и уходим.
+  if (!COMM_NODE_PTR){
+    COMM_NODE_PTR = &NB_TABLE[idx];
+    LAST_UPDATE_TIME_COMM_NODE = now;
+    MODEL.node_ETX = COMM_NODE_PTR->ETX + 1;
+    return;
+  };
+
+  // Теперь нужно решить стоит ли менять узел связи.
+  if (is_need_change_comm_node(&NB_TABLE[idx])){
+    COMM_NODE_PTR = &NB_TABLE[idx];
+    LAST_UPDATE_TIME_COMM_NODE = now;
+    MODEL.node_ETX = COMM_NODE_PTR->ETX + 1;
+    return;
+  }
+
+    
+};
+
+void NP_TimeAlloc(){
+  // Если узел не синхронизирован выходим
+  if (!MODEL.SYNC.synced)
+    return;
+  
+  // Если мы прошли авторизацию и получили доступ
+  if (MODEL.AUTH.auth_ok && MODEL.AUTH.access_ok){
+    periodic_card_send();
+    analyse_table();
+    comm_node_choise();
+    return;
+  }
+  
+  // Если мы не прошли процедуру авторизации
+  if (!MODEL.AUTH.auth_ok){
+    analyse_table();
+    comm_node_choise();
+    return;
+  };
+  
+  // Если нам отказали в доступе
+  if (MODEL.AUTH.auth_ok && !MODEL.AUTH.access_ok)
+    return;
+};

@@ -88,6 +88,9 @@ typedef struct {
         unsigned int node_adr;
         char node_mac[8];
         char node_param[16];
+        char node_TS; // Канал связи с узлом
+        char node_CH; // Канал связи с узлом
+        char node_ETX;
 } MODEL_s;
 
 

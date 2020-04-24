@@ -55,6 +55,8 @@ void main(void){
     MODEL.TM.MODE = 1;
     while (!network_sync(1000000U));
     LOG_ON("Synced");
+    MODEL.node_TS = 5;
+    MODEL.node_CH =14;
     Neocore_start();
     AM_SW_Init();
     LOG_ON("START RESYNC");

@@ -17,6 +17,11 @@ struct route_record{
 
 static struct route_record ROUTE_TABLE[ROUTE_TABLE_ITEMS];
 
+
+
+void RP_TimeAlloc(){
+};
+
 void RP_Receive(struct frame *frame){
   #warning update route tables
   switch (frame->meta.PID){

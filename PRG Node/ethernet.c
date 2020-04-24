@@ -2,6 +2,7 @@
 #include "debug.h"
 #include "route.h"
 #include "auth_eth.h"
+#include "neigh.h"
 #include "llc.h"
 
 #define ETH_LAY_SIZE sizeof(struct ETH_LAY)
@@ -19,17 +20,38 @@ struct ETH_LAY{
   char NETID;
   unsigned int NDST;
   unsigned int NSRC;
+  char NSRC_TS;
+  char NSRC_CH;
+  char XOR;
 } __attribute__((packed));
+
+static char calc_xor(struct ETH_LAY *eth){
+  char xor_val = 0x57;
+  char *ptr = (char*)eth;
+  
+  // Ксорим все кроме последнего байта структуы. он XOR
+  for (int i = 0; i < sizeof(struct ETH_LAY) - 1; i++)
+    xor_val ^=ptr[i];
+  
+  return xor_val;
+};
 
 static bool frame_filter(struct frame *frame){
   struct ETH_LAY *eth_header = (struct ETH_LAY*)frame->payload;
-
-  // Фильтр 1: по размеру кадра
+  
+  // Фильтр 0: по размеру кадра
   if (frame->len < ETH_LAY_SIZE){
     LOG_ON("Filtered ETH_LAY_SIZE");
     return false;
   }
-    
+  
+  // Фильтр 1: по XOR
+  char xor_val = calc_xor(eth_header);
+  if (xor_val != eth_header->XOR){
+    LOG_ON("Filtered XOR");
+    return false;
+  };
+  
   // Фильтр 2: по версии протокола
   if (eth_header->ETH_T.bits.ETH_VER != HEADER_ETH_VER){
     LOG_ON("Filtered ETH_VER. %d",eth_header->ETH_T.bits.ETH_VER );
@@ -41,8 +63,23 @@ static bool frame_filter(struct frame *frame){
     LOG_ON("Filtered panid");
     return false;
   }
-
-  // Фильтр 4: по адресу получателю
+  
+  bool from_gw = (eth_header->NSRC_CH == 0xff) &&
+                 (eth_header->NSRC_TS == 0xff);
+  if (!from_gw){
+    // Фильтр 4: по каналу отправителя
+    if (eth_header->NSRC_CH  < CH11 || eth_header->NSRC_CH  > CH28){
+      LOG_ON("Filtered NSRC_CH");
+      return false;
+    }
+    // Фильтр 5: по таймслоту отправителя
+    if (eth_header->NSRC_TS  < 1 || eth_header->NSRC_TS  > 49){
+      LOG_ON("Filtered NSRC_TS");
+      return false;
+    }
+  };
+  
+  // Фильтр 6: по адресу получателю
   if (eth_header->NDST != 0xffff )
     if (eth_header->NDST != MODEL.node_adr){
       LOG_ON("Filtered node addr");
@@ -57,6 +94,8 @@ static inline void fill_meta_data(struct frame *frame){
   frame->meta.NDST = eth_header->NDST;
   frame->meta.NSRC = eth_header->NSRC;
   frame->meta.PID = eth_header->ETH_T.bits.PID;  
+  frame->meta.NSRC_TS = eth_header->NSRC_TS;
+  frame->meta.NSRC_CH = eth_header->NSRC_CH;
 }
 
 static void parse_frame(struct frame *frame){
@@ -91,7 +130,11 @@ void ethernet_process(void){
     frame = FR_find_rx(frame);
   };
   LOG_OFF("Stop search rx");
+  
+  // Выделение свободного времени
   AUTH_ETH_TimeAlloc();
+  NP_TimeAlloc();
+  RP_TimeAlloc();
 };
 
 void eth_send(struct frame *frame){
@@ -101,6 +144,9 @@ void eth_send(struct frame *frame){
   eth_header.NETID = MODEL.SYNC.panid;
   eth_header.NDST = frame->meta.NDST;
   eth_header.NSRC = frame->meta.NSRC;
+  eth_header.NSRC_CH = MODEL.node_CH;
+  eth_header.NSRC_TS = MODEL.node_TS;
+  eth_header.XOR = calc_xor(&eth_header);
   
   bool res;
   res = FR_add_header(frame, &eth_header,
