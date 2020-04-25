@@ -41,26 +41,26 @@ static bool frame_filter(struct frame *frame){
   
   // Фильтр 0: по размеру кадра
   if (frame->len < ETH_LAY_SIZE){
-    LOG_ON("Filtered ETH_LAY_SIZE");
+    LOG_OFF("Filtered ETH_LAY_SIZE");
     return false;
   }
   
   // Фильтр 1: по XOR
   char xor_val = calc_xor(eth_header);
   if (xor_val != eth_header->XOR){
-    LOG_ON("Filtered XOR");
+    LOG_OFF("Filtered XOR");
     return false;
   };
   
   // Фильтр 2: по версии протокола
   if (eth_header->ETH_T.bits.ETH_VER != HEADER_ETH_VER){
-    LOG_ON("Filtered ETH_VER. %d",eth_header->ETH_T.bits.ETH_VER );
+    LOG_OFF("Filtered ETH_VER. %d",eth_header->ETH_T.bits.ETH_VER );
     return false;
   }
 
   // Фильтр 3: по идентификатору сети
   if (eth_header->NETID!= MODEL.SYNC.panid){
-    LOG_ON("Filtered panid");
+    LOG_OFF("Filtered panid");
     return false;
   }
   
@@ -69,12 +69,12 @@ static bool frame_filter(struct frame *frame){
   if (!from_gw){
     // Фильтр 4: по каналу отправителя
     if (eth_header->NSRC_CH  < CH11 || eth_header->NSRC_CH  > CH28){
-      LOG_ON("Filtered NSRC_CH");
+      LOG_OFF("Filtered NSRC_CH");
       return false;
     }
     // Фильтр 5: по таймслоту отправителя
     if (eth_header->NSRC_TS  < 1 || eth_header->NSRC_TS  > 49){
-      LOG_ON("Filtered NSRC_TS");
+      LOG_OFF("Filtered NSRC_TS");
       return false;
     }
   };
@@ -82,7 +82,7 @@ static bool frame_filter(struct frame *frame){
   // Фильтр 6: по адресу получателю
   if (eth_header->NDST != 0xffff )
     if (eth_header->NDST != MODEL.node_adr){
-      LOG_ON("Filtered node addr");
+      LOG_OFF("Filtered node addr");
       return false;
     }
   return true;
@@ -100,15 +100,15 @@ static inline void fill_meta_data(struct frame *frame){
 
 static void parse_frame(struct frame *frame){
   // Разбор пакета
-  LOG_ON("Frame Filter");
+  LOG_OFF("Frame Filter");
   if (!frame_filter(frame))
     return;
   
-  LOG_ON("Fill metadata");
+  LOG_OFF("Fill metadata");
   fill_meta_data(frame);
-  LOG_ON("Delete eth header");
+  LOG_OFF("Delete eth header");
   FR_del_header(frame, ETH_LAY_SIZE);
-  LOG_ON("Route protocol");
+  LOG_OFF("Route protocol");
   RP_Receive(frame);  
 }
 
@@ -122,7 +122,7 @@ void ethernet_process(void){
   frame = FR_find_rx(frame); 
   LOG_OFF("Start search rx");
   while (frame){
-    LOG_ON("Find rx!");
+    LOG_OFF("Find rx!");
     LOG_ON("ETH. LEN:%d, TS:%d, CH:%d, PID:%d", frame->len,
            frame->meta.TS, frame->meta.CH, frame->meta.PID);
     parse_frame(frame);

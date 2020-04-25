@@ -30,6 +30,7 @@ static void SW_Init(void){
   MODEL.AUTH.auth_ok = false;
   MODEL.AUTH.access_ok = false;
   
+  MODEL.NEIGH.comm_node_found = false;
 }; 
 
 

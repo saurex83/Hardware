@@ -175,7 +175,7 @@
                 </option>
                 <option>
                     <name>General Xdata Stack Size</name>
-                    <state>0x200</state>
+                    <state>0x300</state>
                 </option>
                 <option>
                     <name>General Ext Stack Size</name>
@@ -490,7 +490,7 @@
                 </option>
                 <option>
                     <name>CCOptLevel</name>
-                    <state>0</state>
+                    <state>1</state>
                 </option>
                 <option>
                     <name>CCOptStrategy</name>
@@ -499,7 +499,7 @@
                 </option>
                 <option>
                     <name>CCOptLevelSlave</name>
-                    <state>0</state>
+                    <state>1</state>
                 </option>
                 <option>
                     <name>CompilerMisraRules04</name>
@@ -2229,10 +2229,19 @@
     <group>
         <name>high protocol</name>
         <file>
+            <name>$PROJ_DIR$\..\Stack_core_src\alarm_timer.h</name>
+        </file>
+        <file>
             <name>$PROJ_DIR$\auth_eth.c</name>
         </file>
         <file>
             <name>$PROJ_DIR$\auth_eth.h</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\auth_ip.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\auth_ip.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\balancer.c</name>
@@ -2296,9 +2305,6 @@
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\alarm_timer.c</name>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\..\Stack_core_src\alarm_timer.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\Stack_core_src\basic.h</name>

@@ -85,6 +85,10 @@ typedef struct {
         bool access_ok;
       } AUTH;
     
+      struct {
+        bool comm_node_found;
+      } NEIGH;
+      
         unsigned int node_adr;
         char node_mac[8];
         char node_param[16];

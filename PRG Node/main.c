@@ -31,7 +31,7 @@ static void callback(void){
   }
   ethernet_process();
 //  LLC_add_tx_frame(frame);
- LOG_ON("callback exit");
+ LOG_OFF("callback exit");
 }
 
 //TODO alarm manager вызывает из прерывания TM_IRQ

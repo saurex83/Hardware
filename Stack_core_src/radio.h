@@ -15,8 +15,8 @@ typedef char power_t;
 enum CHANNAL_e
 {
   CH11 = 11, CH12 = 12, CH13 = 13, CH14 = 14, CH15 = 15, CH16 = 16,
-  CH17 = 17, CH18 = 18, CH19 = 19, CH20 = 21, CH22 = 22, CH23 = 23, 
-  CH24 = 24, CH25 = 25, CH26 = 26, CH27 = 27, CH28 = 28
+  CH17 = 17, CH18 = 18, CH19 = 19, CH20 = 20, CH21 = 21, CH22 = 22,
+  CH23 = 23, CH24 = 24, CH25 = 25, CH26 = 26, CH27 = 27, CH28 = 28
 };
 
 /*!

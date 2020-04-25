@@ -79,7 +79,7 @@ static inline void syncronize_timer(struct frame *frame){
   nwtime_t passed = AT_interval(now, frame->meta.TIMESTAMP);  
   AT_set_time(SYNC_TIME + passed);
   MODEL.SYNC.sync_err = SYNC_TIME - frame->meta.TIMESTAMP;
-  LOG_ON("Sync err %d", MODEL.SYNC.sync_err);
+  LOG_OFF("Sync err %d", MODEL.SYNC.sync_err);
 };
 
 static inline void mode_1_receive_process(void){
@@ -96,7 +96,7 @@ static inline void mode_1_receive_process(void){
   syncronize_timer(fr);
   accept_sync_data(sync);
   FR_delete(fr);
-  LOG_ON("Sichronize sync RSSI = %d", fr->meta.RSSI_SIG);
+  LOG_OFF("Sichronize sync RSSI = %d", fr->meta.RSSI_SIG);
   retransmite = RETRANSMITE_TRY;
   MODEL.SYNC.next_time_recv = MODEL.RTC.uptime + SEND_PERIOD;
   MODEL.SYNC.last_time_recv = MODEL.RTC.uptime;   
@@ -218,7 +218,7 @@ static bool send_sync(void){
   ASSERT(set_ch_res);
   bool res = RI_Send_time(fr, (nwtime_t)SYNC_TIME);
   FR_delete(fr);
-  LOG_ON("SYNC sended, res = %d", res);
+  LOG_OFF("SYNC sended, res = %d", res);
   return res;
 }
 
