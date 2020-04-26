@@ -3,8 +3,14 @@
 #include "frame.h"
 #include "ethernet.h"
 #include "protocol_defs.h"
+#include "stdlib.h"
+#include "llc.h"
+#include "route.h"
+#include "mem_utils.h"
 
 #define REQUEST_INTERVAL 30
+#define AUTH_RESP_GW_INTERVAL 5
+
 static unsigned long last_request = 0;
 
 static void AUTH_request();
@@ -27,6 +33,24 @@ struct AUTH_ETH_RESP{
   unsigned int ipaddr;
   char param[16];
 } __attribute__((packed));
+
+struct auth_req{
+  bool RA;
+  struct AUTH_ETH_REQ req;
+};
+
+struct auth_res{
+  bool RA;
+  struct AUTH_ETH_RESP res;
+};
+
+// Таблица хранит запросы от других узлов на подключение
+#define AUTH_NODE_REQ_SIZE 5
+static struct auth_req AUTH_NODE_REQ[5];
+
+// Таблица хранит ответы шлюза на подключения для других узлов
+#define AUTH_NODE_RESP_SIZE 5
+static struct auth_res AUTH_NODE_RESP[5];
 
 void AUTH_ETH_Receive(struct frame *frame){
   LOG_ON("AUTH_ETH receive frame");
@@ -61,6 +85,20 @@ void AUTH_ETH_Receive(struct frame *frame){
     LOG_ON("Unrecognized cmd");
     break;
   };
+};
+
+/** brief Выбирает и устанавлиет канал коммуникации для узла
+*
+* Частотный канал  [CH11..CH27] выбор из 17 каналов
+* Временой канал [2..39] выбор из 38 временых слотов
+*/
+static void setNodeCHTS(){
+  char ch = 11 + rand()%17;
+  char ts = 2 + rand()%38;
+  MODEL.node_TS = ts;
+  MODEL.node_CH = ch;
+  LLC_open_slot(ts, ch);
+  LOG_ON("Node choose TS=%d, CH=%d", ts, ch);
 };
 
 /** brief Обработка ответа об авторизации
@@ -106,28 +144,218 @@ static void receiveCMD_Response(struct frame* frame){
     MODEL.node_param[i] = resp->param[i];
   
   MODEL.node_adr = resp->ipaddr;
+  setNodeCHTS();
   LOG_ON("Node auth ok! ipaddr=%d", MODEL.node_adr);
+};
+
+
+static bool mac_cmp(char *mac1, char *mac2){
+  for (char i = 0; i < 8; i++)
+    if (mac1[i] != mac2[i])
+      return false;
+  return true;
+};
+
+/** brief Добавляем в таблицу ответ от шлюза об авторизации узла
+* Данные заносятся в таблицу и будут ретранслированы как 
+* AUTH_NODE_RESP. 
+*/
+void set_AUTH_NODE_RESP(struct frame* frame){
+  // Протокол AUTH_IP ничего не знает о структурах запросов,
+  // он выполняет функцию транспортного уровня. payload
+  // содержит ответ шлюза
+  struct AUTH_ETH_RESP *res = (struct AUTH_ETH_RESP*)frame->payload;
+  
+  if (frame->len != sizeof(struct AUTH_ETH_RESP)){
+    LOG_ON("AUTH_IP resp from gw have wrong size= %d",
+           sizeof(struct AUTH_ETH_RESP));
+    return;
+  };
+
+  // Проверим что такого ответа еще нет по мак адресу
+  int idx = -1;
+  for (int i = 0; i < AUTH_NODE_RESP_SIZE; i++){
+    // Пропускаем пустые записи
+    if (!AUTH_NODE_RESP[i].RA)
+      continue;
+    
+    // Если нашли запись с таким же мак адрессом
+    if (mac_cmp(AUTH_NODE_RESP[i].res.mac, res->mac)){
+      idx = i;
+      break;
+    };
+  };
+
+  // Не нашли запись. Ищем свободное место
+  // Записи с таким же мак адресом нету. Найдем свободное место
+  if (idx < 0){
+    for (int i = 0; i < AUTH_NODE_RESP_SIZE; i++)
+      if (!AUTH_NODE_RESP[i].RA){
+        idx = i;
+        break;
+      };
+  };
+  
+  if (idx < 0){
+    LOG_ON("No free space in AUTH_NODE_RESP_SIZE");
+    return;
+  };
+  
+  // Добавляем запись
+  AUTH_NODE_RESP[idx].RA = true;
+  MEMCPY((char*)&AUTH_NODE_RESP[idx].res, (char*)res, 
+         sizeof(struct AUTH_ETH_RESP));
+  
+  LOG_ON("AUTH REQ from some node add AUTH_NODE_REQ");
+};
+
+/** brief Подготавливает и возвращает кадр с данными запроса
+*/
+struct frame* get_AUTH_NODE_REQ(){
+  int idx = -1;
+  // Ищем первую активную запись в таблице
+  for (int i = 0; i < AUTH_NODE_REQ_SIZE; i++)
+    if (AUTH_NODE_REQ[i].RA){
+      idx = i;
+      break;
+    };
+  
+  // Ничего не нашли
+  if (idx < -1)
+    return NULL;
+
+  struct frame *fr = FR_create();
+  ASSERT(fr);
+  
+  //Добавим данные запроса
+  bool res = FR_add_header(fr, 
+             (char*)(&AUTH_NODE_REQ[idx].req),
+              sizeof(struct AUTH_ETH_REQ));
+  ASSERT(res);
+  
+  // Освобождаем запись
+  AUTH_NODE_REQ[idx].RA = false;
+  return fr;
 };
 
 /** brief Обработка запроса авторизации
 * Запрос обрабатывается если данный узел авторизован  
 */
 static void receiveCMD_Request(struct frame* frame){
-  if (MODEL.AUTH.auth_ok == false)
+  bool condition = MODEL.AUTH.auth_ok && MODEL.AUTH.access_ok &&
+    MODEL.SYNC.synced && MODEL.NEIGH.comm_node_found;
+  if (!condition){
+    LOG_ON("Cant handel auth req");
     return;
+  };
+  
+  // Сначала убедимся что этот узел уже не в списке запросов
+  // проверим mac. Если узел существует то обновим запись о нем
+  // вдруг что то изменилось
+  struct AUTH_ETH_REQ *req = (struct AUTH_ETH_REQ*)frame->payload;
+  
+  int idx = -1;
+  for (int i = 0; i < AUTH_NODE_REQ_SIZE; i++){
+    // Пропускаем пустые записи
+    if (!AUTH_NODE_REQ[i].RA)
+      continue;
+    
+    // Если нашли запись с таким же мак адрессом
+    if (mac_cmp(AUTH_NODE_REQ[i].req.mac, req->mac)){
+      idx = i;
+      break;
+    };
+  };
+  
+  // Записи с таким же мак адресом нету. Найдем свободное место
+  if (idx < 0){
+    for (int i = 0; i < AUTH_NODE_REQ_SIZE; i++)
+      if (!AUTH_NODE_REQ[i].RA){
+        idx = i;
+        break;
+      };
+  };
+  
+  if (idx < 0){
+    LOG_ON("No free space in AUTH_NODE_REQ");
+    return;
+  };
+  
+  // Добавляем запись
+  AUTH_NODE_REQ[idx].RA = true;
+  MEMCPY((char*)&AUTH_NODE_REQ[idx].req, (char*)req, 
+         sizeof(struct AUTH_ETH_REQ));
   
   // TODO Сохранить запрос в таблице и добавить геттер запросов.
   // Авторизация уровня IP будет опрашивать таблицу и
   // общаться со шлюзом по этому вопросу.
-  LOG_ON("AUTH REQ received and droped");
+  LOG_ON("AUTH REQ from some node add AUTH_NODE_REQ");
+};
+
+/** brief Передача ответа на авторизацию, полученую от шлюза
+* запросившему узлу.
+*/
+static void AUTH_resend_RESP_from_gw(){
+  static unsigned long int last = 0;
+  if ((MODEL.RTC.uptime - last) < AUTH_RESP_GW_INTERVAL)
+    return;
+  // Обновляем время
+  last = MODEL.RTC.uptime;
+  
+  // Ищем ответ шлюза
+  int idx = -1;
+  for (int i = 0; i < AUTH_NODE_RESP_SIZE; i++){
+    if (AUTH_NODE_RESP[i].RA){
+      idx = i;
+      break;
+    };
+  };
+  
+  // Таблица пуста
+  if (idx < 0) 
+    return;
+  
+  // Нашли пакет для передачи
+  // Создаем ответ
+  struct frame* frame = FR_create();
+  
+  // Добавляем в пакет данные
+  bool res;
+  res = FR_add_header(frame, (char*)&AUTH_NODE_RESP[idx].res,
+                      sizeof(struct AUTH_ETH_RESP));
+  ASSERT(res);
+  
+  // Добавляем в загловок тип ответа
+  char cmd = AUTH_CMD_RESP;
+  res = FR_add_header(frame, &cmd, sizeof(cmd));
+  ASSERT(res);
+  
+  // Добавляем параметры передачи
+  frame->meta.TS = 1;
+  frame->meta.CH = MODEL.SYNC.sys_channel;
+  frame->meta.PID = PID_AUTH;  
+  frame->meta.NSRC = MODEL.node_adr;
+  frame->meta.NDST = 0xffff;
+  RP_Send(frame);
+  
+  AUTH_NODE_RESP[idx].RA = false;
+  LOG_ON("AUTH gw response sended");
 };
 
 void AUTH_ETH_TimeAlloc(){
-   // Выходим если узел авторизован
-  if (MODEL.AUTH.auth_ok == true)
-     return;
+    // Если узел еще не авторизован, но синхронизирован и 
+  // найден ближайший сосед для передачи, то отправляем запрос
+  // авторизации
+  if (!MODEL.AUTH.auth_ok && MODEL.SYNC.synced &&
+      MODEL.NEIGH.comm_node_found)   
+        AUTH_request();
   
-   AUTH_request(); 
+  // Если мы авторизированы, синхронизированы, есть сосед для
+  // передачи данных и доступ нам разрешен, то будем ретранслировать
+  // ответы от шлюза на запросы подключения.
+  if (MODEL.AUTH.auth_ok && MODEL.SYNC.synced &&
+      MODEL.NEIGH.comm_node_found && MODEL.AUTH.access_ok)    
+   AUTH_resend_RESP_from_gw();
 };
 
 static void AUTH_request(){
@@ -153,12 +381,7 @@ static void AUTH_request(){
   res = FR_add_header(frame, &cmd, sizeof(cmd));
   ASSERT(res);
   
-  frame->meta.TS = 1;
-  frame->meta.CH = MODEL.SYNC.sys_channel;
   frame->meta.PID = PID_AUTH;
-  frame->meta.NDST = 0xffff;
-  frame->meta.NSRC = 0;
- 
-  eth_send(frame); 
+  RP_Send_COMM(frame);
   LOG_ON("AUTH req add to tx");
 };

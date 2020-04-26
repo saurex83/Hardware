@@ -22,7 +22,6 @@ struct route_record{
 
 static struct route_record ROUTE_TABLE[ROUTE_TABLE_ITEMS];
 
-
 void RP_Init(){
   // Очистим таблицу соседей
   MEMSET((char*)ROUTE_TABLE, 0, sizeof(ROUTE_TABLE));
@@ -80,6 +79,33 @@ void RP_Receive(struct frame *frame){
   };
   
   TB_Receive(frame);  
+};
+
+/** brief Отправить пакет лучшему соседу
+*/
+void RP_Send_COMM(struct frame *frame){
+  bool condition = MODEL.SYNC.synced && MODEL.NEIGH.comm_node_found;
+  if (!condition){
+    FR_delete(frame);
+    LOG_ON("Cant send.");
+    return;
+  };  
+  
+  char ts;
+  char ch;
+  unsigned int addr;
+  bool res = comm_node_info(&addr, &ts, &ch);
+  if (!res){
+    FR_delete(frame);
+    LOG_ON("Problem with comm_node_info");
+  };
+  
+  frame->meta.TS = ts;
+  frame->meta.CH = ch;
+  frame->meta.NDST = addr;
+  frame->meta.NSRC = MODEL.node_adr;
+  eth_send(frame);
+  LOG_ON("Sended to COMM node");  
 };
 
 void RP_Send_GW(struct frame *frame){

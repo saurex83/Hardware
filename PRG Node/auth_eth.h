@@ -5,3 +5,5 @@
 
 void AUTH_ETH_Receive(struct frame *frame);
 void AUTH_ETH_TimeAlloc();
+struct frame* get_AUTH_NODE_REQ();
+void set_AUTH_NODE_RESP(struct frame* frame);

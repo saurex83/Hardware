@@ -13,8 +13,8 @@
 #define PERIOD_REQ_TIME 120 // Интервал запроса карточек
 
 struct gw_vec{
-  char ch;
   char ts;
+  char ch;
 };
 
 #define GW_VECTOR_SIZE 10

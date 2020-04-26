@@ -7,3 +7,4 @@ void RP_Send_GW(struct frame *frame);
 void RP_Send(struct frame *frame);
 void RP_SendRT_GW(struct frame *frame);
 void RP_SendRT_RT(struct frame *frame);
+void RP_Send_COMM(struct frame *frame);

@@ -106,7 +106,7 @@
             <file>$PROJ_DIR$\..\STACK_CORE_SRC\mem_slots.c</file>
             <file>$PROJ_DIR$\..\STACK_CORE_SRC\mem_slots.h</file>
             <file>$PROJ_DIR$\..\STACK_CORE_SRC\mem_utils.c</file>
-            <file>$PROJ_DIR$\..\Stack_core_src\mem_utils.h</file>
+            <file>$PROJ_DIR$\..\STACK_CORE_SRC\mem_utils.h</file>
             <file>$PROJ_DIR$\..\Stack_core_src\meta.h</file>
             <file>$PROJ_DIR$\..\STACK_CORE_SRC\model.c</file>
             <file>$PROJ_DIR$\..\Stack_core_src\model.h</file>
@@ -182,6 +182,7 @@
             <file>$TOOLKIT_DIR$\inc\clib\stddef.h</file>
             <file>$PROJ_DIR$\Debug\Obj\auth_ip.pbi</file>
             <file>$PROJ_DIR$\Debug\List\neigh.lst</file>
+            <file>$PROJ_DIR$\Debug\List\auth_ip.lst</file>
             <file>$PROJ_DIR$\..\PRG TRANSMITER\cmd_0x04.c</file>
             <file>$PROJ_DIR$\auth_ip.c</file>
             <file>$PROJ_DIR$\..\PRG TRANSMITER\cmd_0x05.c</file>
@@ -221,7 +222,7 @@
             <inputs>
                 <tool>
                     <name>XLINK</name>
-                    <file> 128 43 40 163 167 154 39 162 155 41 125 18 156 26 157 1 34 30 146 32 13 20 158 135 159 143 3 160 25 161 0 190</file>
+                    <file> 128 43 40 163 167 182 154 39 162 155 41 125 18 156 26 157 1 34 30 146 32 13 20 158 135 159 143 3 160 25 161 0 191</file>
                 </tool>
             </inputs>
         </file>
@@ -285,20 +286,10 @@
                     <file> 5</file>
                 </tool>
                 <tool>
-                    <name>ICC8051</name>
-                    <file> 176 158</file>
-                </tool>
-                <tool>
                     <name>__cstat</name>
                     <file> 133</file>
                 </tool>
             </outputs>
-            <inputs>
-                <tool>
-                    <name>ICC8051</name>
-                    <file> 104 71 73 185 88 102 115 111 78 165 117 89 108 113 84 132 186 187 184 193 63 58 183 101</file>
-                </tool>
-            </inputs>
         </file>
         <file>
             <name>$PROJ_DIR$\route.c</name>
@@ -308,20 +299,10 @@
                     <file> 121</file>
                 </tool>
                 <tool>
-                    <name>ICC8051</name>
-                    <file> 191 159</file>
-                </tool>
-                <tool>
                     <name>__cstat</name>
                     <file> 122</file>
                 </tool>
             </outputs>
-            <inputs>
-                <tool>
-                    <name>ICC8051</name>
-                    <file> 104 71 73 185 88 102 115 111 78 165 117 89 108 113 84 132 186 187 184 193 63 60 62 54 192 58 101</file>
-                </tool>
-            </inputs>
         </file>
         <file>
             <name>$PROJ_DIR$\tcp.c</name>
@@ -344,10 +325,20 @@
                     <file> 141</file>
                 </tool>
                 <tool>
+                    <name>ICC8051</name>
+                    <file> 189 161</file>
+                </tool>
+                <tool>
                     <name>__cstat</name>
                     <file> 19</file>
                 </tool>
             </outputs>
+            <inputs>
+                <tool>
+                    <name>ICC8051</name>
+                    <file> 69 88 102 73 186 115 84 89 108 165 117 132 187 188 185 194 63 60</file>
+                </tool>
+            </inputs>
         </file>
         <file>
             <name>$PROJ_DIR$\..\STACK_CORE_SRC\action_manager.c</name>
@@ -358,7 +349,7 @@
                 </tool>
                 <tool>
                     <name>ICC8051</name>
-                    <file> 7 43 40 163 167 181 154 39 162 155 41 125 18 156 26 157 1 34 30 146 32 13 20 158 135 159 143 3 160 25 161 0</file>
+                    <file> 7 43 40 163 167 182 154 39 162 155 41 125 18 156 26 157 1 34 30 146 32 13 20 158 135 159 143 3 160 25 161 0</file>
                 </tool>
                 <tool>
                     <name>__cstat</name>
@@ -368,7 +359,7 @@
             <inputs>
                 <tool>
                     <name>ICC8051</name>
-                    <file> 71 106 183 184 104 73 185 88 102 115 111 78 165 117 89 108 113 84 132 186 187 193 72 82 118 166 58 63 178 67 53 77 168 86 101 79 74 80 55 81 83 85 57 65 192 62 94 87 99 59 69 194 90 93 174 97 172 96 95 120 98 100 103 61 107 109 64 60 54 110 112 66 114 68 116</file>
+                    <file> 71 106 184 185 104 73 186 88 102 115 111 78 165 117 89 108 113 84 132 187 188 194 72 82 118 166 58 63 94 65 101 179 67 193 60 53 77 168 86 79 74 80 55 81 83 85 57 62 195 87 99 59 69 90 93 174 97 172 96 95 120 98 100 103 61 107 109 64 54 110 112 66 114 68 116</file>
                 </tool>
             </inputs>
         </file>
@@ -654,7 +645,7 @@
                 </tool>
                 <tool>
                     <name>__cstat</name>
-                    <file> 182</file>
+                    <file> 183</file>
                 </tool>
             </outputs>
         </file>
@@ -786,10 +777,6 @@
         <forcedrebuild>
             <name>$PROJ_DIR$\auth_eth.c</name>
             <tool>ICC8051</tool>
-        </forcedrebuild>
-        <forcedrebuild>
-            <name>[MULTI_TOOL]</name>
-            <tool>XLINK</tool>
         </forcedrebuild>
     </configuration>
     <configuration>

@@ -12,7 +12,7 @@
         <ByteLimit>50</ByteLimit>
     </Stack>
     <DebugChecksum>
-        <Checksum>4261802243</Checksum>
+        <Checksum>2023940443</Checksum>
     </DebugChecksum>
     <CodeCoverage>
         <Enabled>_ 0</Enabled>
@@ -76,13 +76,15 @@
     </Simulator>
     <struct_types>
         <Fmt0>struct frame-len	3	0</Fmt0>
-        <Fmt1>struct sync-magic	4	0</Fmt1>
+        <Fmt1>struct gw_vec-ch	3	0</Fmt1>
+        <Fmt2>struct gw_vec-ts	3	0</Fmt2>
+        <Fmt3>struct sync-magic	4	0</Fmt3>
     </struct_types>
     <watch_formats>
         <Fmt0>{W}1:TX_BUFF_FRAME_COUNT	3	0</Fmt0>
     </watch_formats>
     <Breakpoints>
-        <Bp0>_ "STD_CODE" "{$PROJ_DIR$\..\STACK_CORE_SRC\time_manager.c}.112.5" 1 0 0 0 "" 0 ""</Bp0>
+        <Bp0>_ "STD_CODE" "{$PROJ_DIR$\..\STACK_CORE_SRC\time_manager.c}.113.5" 1 0 0 0 "" 0 ""</Bp0>
         <Count>1</Count>
     </Breakpoints>
     <ChipconEmu>

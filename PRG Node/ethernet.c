@@ -4,6 +4,7 @@
 #include "auth_eth.h"
 #include "neigh.h"
 #include "llc.h"
+#include "auth_ip.h"
 
 #define ETH_LAY_SIZE sizeof(struct ETH_LAY)
 
@@ -135,6 +136,7 @@ void ethernet_process(void){
   AUTH_ETH_TimeAlloc();
   NP_TimeAlloc();
   RP_TimeAlloc();
+  AUTH_IP_TimeAlloc();
 };
 
 void eth_send(struct frame *frame){

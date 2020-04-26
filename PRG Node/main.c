@@ -9,6 +9,8 @@
 #include "radio.h"
 #include "llc.h"
 #include "ethernet.h"
+#include "ip.h"
+#include "protocol_defs.h"
 
 static struct frame* get_frame(void){
   struct frame *frame = FR_create(); 
@@ -20,6 +22,26 @@ static struct frame* get_frame(void){
   return frame;
 }
 
+static void send_ip_frame(){
+  bool flt = MODEL.AUTH.auth_ok && MODEL.AUTH.access_ok;
+  if (!flt)
+    return;
+  
+ static unsigned long last_send = 0;
+ unsigned long now = MODEL.RTC.uptime;
+ if ((now - last_send) < 30)
+   return;
+ last_send = now;
+ 
+ 
+ struct frame *frame = FR_create(); 
+  char data[10] = {1,2,3,4,5,6,7,8,9,0};
+  FR_add_header(frame, data, sizeof(data));
+  frame->meta.IPP = IPP_UDP;
+  IP_Send(frame);
+  LOG_ON("IP UDP SENDED!");
+};
+
 /** brief Функция вызывается после приема пакетов
 * Здесь происходит обработка протоколов верхнего уровня
 */
@@ -30,7 +52,9 @@ static void callback(void){
     first = false;
   }
   ethernet_process();
-//  LLC_add_tx_frame(frame);
+  
+  send_ip_frame();
+  //  LLC_add_tx_frame(frame);
  LOG_OFF("callback exit");
 }
 

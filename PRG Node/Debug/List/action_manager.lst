@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# IAR C/C++ Compiler V10.10.1.4655 for 8051               25/Apr/2020  23:05:33
+# IAR C/C++ Compiler V10.10.1.4655 for 8051               26/Apr/2020  22:35:20
 # Copyright 2004-2017 IAR Systems AB.
 # PC-locked license - IAR Embedded Workbench for 8051
 #
@@ -13,7 +13,7 @@
 #                          
 #    Source file        =  E:\Neocore\Hardware\STACK_CORE_SRC\action_manager.c
 #    Command line       =  
-#        -f C:\Users\08A4~1\AppData\Local\Temp\EW86BE.tmp
+#        -f C:\Users\08A4~1\AppData\Local\Temp\EWD815.tmp
 #        (E:\Neocore\Hardware\STACK_CORE_SRC\action_manager.c -lc
 #        "E:\Neocore\Hardware\PRG Node\Debug\List" -o "E:\Neocore\Hardware\PRG
 #        Node\Debug\Obj" -e --debug --core=plain --dptr=16,1 --data_model=large
@@ -317,172 +317,448 @@ E:\Neocore\Hardware\PRG Node\auth_eth.c
       3          #include "frame.h"
       4          #include "ethernet.h"
       5          #include "protocol_defs.h"
-      6          
-      7          #define REQUEST_INTERVAL 30
-      8          static unsigned long last_request = 0;
-      9          
-     10          static void AUTH_request();
-     11          static void receiveCMD_Request(struct frame* frame);
-     12          static void receiveCMD_Response(struct frame* frame);
+      6          #include "stdlib.h"
+      7          #include "llc.h"
+      8          #include "route.h"
+      9          #include "mem_utils.h"
+     10          
+     11          #define REQUEST_INTERVAL 30
+     12          #define AUTH_RESP_GW_INTERVAL 5
      13          
-     14          enum AUTH_ETH_TYPES {AUTH_CMD_REQ = 0, AUTH_CMD_RESP = 1};
+     14          static unsigned long last_request = 0;
      15          
-     16          struct AUTH_ETH_REQ{
-     17            char mac[8]; // Кто делает запрос
-     18            char node_type;
-     19            char node_ver;
-     20            char sensor_types[7];
-     21            char sensor_channels[7];
-     22          } __attribute__((packed));
-     23          
-     24          struct AUTH_ETH_RESP{
-     25            char mac[8]; // Для кого предназначен ответ
-     26            bool access;
-     27            unsigned int ipaddr;
-     28            char param[16];
-     29          } __attribute__((packed));
-     30          
-     31          void AUTH_ETH_Receive(struct frame *frame){
-     32            LOG_ON("AUTH_ETH receive frame");
-     33            // Проверим пакет.
-     34            // Мы можем получить пакет REQ или RESP
-     35            // Нужно типы пакетов разделить по нормальному а не cmd
-     36            // Для этого первым байтом делаем тип команды/данных а потом
-     37            // отрезаем от фрейма
-     38            
-     39            bool filter_rule = (frame->meta.TS == 1) &&
-     40                               (frame->meta.NDST == 0xffff) &&
-     41                               (frame->len > 0);  
-     42            if (!filter_rule){
-     43              LOG_ON("AUTH_ETH frame filltered");
-     44              return;
-     45            }
-     46            
-     47            char cmd = frame->payload[0];
-     48            bool res = FR_del_header(frame, 1);
-     49            ASSERT(res);
-     50            
-     51            switch(cmd){
-     52              case AUTH_CMD_REQ :
-     53                // TODO обработка приема
-     54                receiveCMD_Request(frame);
-     55                break;
-     56            case AUTH_CMD_RESP:
-     57                // TODO обработка приема 
-     58                receiveCMD_Response(frame);
-     59                break;
-     60            default:
-     61              LOG_ON("Unrecognized cmd");
-     62              break;
-     63            };
-     64          };
-     65          
-     66          /** brief Обработка ответа об авторизации
-     67          * Ответ принимается если узел еще не авторизован и пакет
-     68          * предназначени этому узлу
-     69          */
-     70          static void receiveCMD_Response(struct frame* frame){
-     71            LOG_ON("AUTH_ETH Response");
-     72            if (MODEL.AUTH.auth_ok == true)
-     73              return;  
+     16          static void AUTH_request();
+     17          static void receiveCMD_Request(struct frame* frame);
+     18          static void receiveCMD_Response(struct frame* frame);
+     19          
+     20          enum AUTH_ETH_TYPES {AUTH_CMD_REQ = 0, AUTH_CMD_RESP = 1};
+     21          
+     22          struct AUTH_ETH_REQ{
+     23            char mac[8]; // Кто делает запрос
+     24            char node_type;
+     25            char node_ver;
+     26            char sensor_types[7];
+     27            char sensor_channels[7];
+     28          } __attribute__((packed));
+     29          
+     30          struct AUTH_ETH_RESP{
+     31            char mac[8]; // Для кого предназначен ответ
+     32            bool access;
+     33            unsigned int ipaddr;
+     34            char param[16];
+     35          } __attribute__((packed));
+     36          
+     37          struct auth_req{
+     38            bool RA;
+     39            struct AUTH_ETH_REQ req;
+     40          };
+     41          
+     42          struct auth_res{
+     43            bool RA;
+     44            struct AUTH_ETH_RESP res;
+     45          };
+     46          
+     47          // Таблица хранит запросы от других узлов на подключение
+     48          #define AUTH_NODE_REQ_SIZE 5
+     49          static struct auth_req AUTH_NODE_REQ[5];
+     50          
+     51          // Таблица хранит ответы шлюза на подключения для других узлов
+     52          #define AUTH_NODE_RESP_SIZE 5
+     53          static struct auth_res AUTH_NODE_RESP[5];
+     54          
+     55          void AUTH_ETH_Receive(struct frame *frame){
+     56            LOG_ON("AUTH_ETH receive frame");
+     57            // Проверим пакет.
+     58            // Мы можем получить пакет REQ или RESP
+     59            // Нужно типы пакетов разделить по нормальному а не cmd
+     60            // Для этого первым байтом делаем тип команды/данных а потом
+     61            // отрезаем от фрейма
+     62            
+     63            bool filter_rule = (frame->meta.TS == 1) &&
+     64                               (frame->meta.NDST == 0xffff) &&
+     65                               (frame->len > 0);  
+     66            if (!filter_rule){
+     67              LOG_ON("AUTH_ETH frame filltered");
+     68              return;
+     69            }
+     70            
+     71            char cmd = frame->payload[0];
+     72            bool res = FR_del_header(frame, 1);
+     73            ASSERT(res);
      74            
-     75            if (frame-> len != sizeof(struct AUTH_ETH_RESP)){
-     76              LOG_ON("Frame AUTH_ETH_RESP wrong size");
-     77              return;
-     78            };
-     79            LOG_ON("Extract response");
-     80            struct AUTH_ETH_RESP *resp = (struct AUTH_ETH_RESP*)frame->payload;
-     81            
-     82            // Проверим что пакет для нас. Должны совпадать мак адресса
-     83            bool mac_eq = true;
-     84            for (char i = 0; i < 8; i++)
-     85              if (resp->mac[i] != MODEL.node_mac[i]){
-     86                mac_eq = false;
-     87                break;
-     88              };
-     89            
-     90            if (!mac_eq){
-     91              LOG_ON("AUTH_ETH request filtered by mac");
-     92              return;
-     93            }
-     94            
-     95            MODEL.AUTH.auth_ok = true;
-     96            // Пакет для нас. Проверим доступ
-     97            if (!resp->access){
-     98              LOG_ON("Access depricated");
-     99              MODEL.AUTH.access_ok = false;
-    100              return;
-    101            };
-    102            
-    103            MODEL.AUTH.access_ok = true;
-    104            
-    105            for (char i = 0; i < 16 ; i++)
-    106              MODEL.node_param[i] = resp->param[i];
-    107            
-    108            MODEL.node_adr = resp->ipaddr;
-    109            LOG_ON("Node auth ok! ipaddr=%d", MODEL.node_adr);
-    110          };
-    111          
-    112          /** brief Обработка запроса авторизации
-    113          * Запрос обрабатывается если данный узел авторизован  
-    114          */
-    115          static void receiveCMD_Request(struct frame* frame){
-    116            if (MODEL.AUTH.auth_ok == false)
-    117              return;
-    118            
-    119            // TODO Сохранить запрос в таблице и добавить геттер запросов.
-    120            // Авторизация уровня IP будет опрашивать таблицу и
-    121            // общаться со шлюзом по этому вопросу.
-    122            LOG_ON("AUTH REQ received and droped");
-    123          };
-    124          
-    125          void AUTH_ETH_TimeAlloc(){
-    126             // Выходим если узел авторизован
-    127            if (MODEL.AUTH.auth_ok == true)
-    128               return;
-    129            
-    130             AUTH_request(); 
-    131          };
-    132          
-    133          static void AUTH_request(){
-    134            // Еще не наступло время передачи запроса
-    135            if ((MODEL.RTC.uptime - last_request) < REQUEST_INTERVAL)
-    136              return;
-    137            // Обновляем время
-    138            last_request = MODEL.RTC.uptime;
-    139            
-    140            // Создаем запрос
-    141            struct frame* frame = FR_create();
-    142            struct AUTH_ETH_REQ req;
-    143            for (int i = 0; i < 8; i++)
-    144              req.mac[i] = MODEL.node_mac[i];
+     75            switch(cmd){
+     76              case AUTH_CMD_REQ :
+     77                // TODO обработка приема
+     78                receiveCMD_Request(frame);
+     79                break;
+     80            case AUTH_CMD_RESP:
+     81                // TODO обработка приема 
+     82                receiveCMD_Response(frame);
+     83                break;
+     84            default:
+     85              LOG_ON("Unrecognized cmd");
+     86              break;
+     87            };
+     88          };
+     89          
+     90          /** brief Выбирает и устанавлиет канал коммуникации для узла
+     91          *
+     92          * Частотный канал  [CH11..CH27] выбор из 17 каналов
+     93          * Временой канал [2..39] выбор из 38 временых слотов
+     94          */
+     95          static void setNodeCHTS(){
+     96            char ch = 11 + rand()%17;
+     97            char ts = 2 + rand()%38;
+     98            MODEL.node_TS = ts;
+     99            MODEL.node_CH = ch;
+    100            LLC_open_slot(ts, ch);
+    101            LOG_ON("Node choose TS=%d, CH=%d", ts, ch);
+    102          };
+    103          
+    104          /** brief Обработка ответа об авторизации
+    105          * Ответ принимается если узел еще не авторизован и пакет
+    106          * предназначени этому узлу
+    107          */
+    108          static void receiveCMD_Response(struct frame* frame){
+    109            LOG_ON("AUTH_ETH Response");
+    110            if (MODEL.AUTH.auth_ok == true)
+    111              return;  
+    112            
+    113            if (frame-> len != sizeof(struct AUTH_ETH_RESP)){
+    114              LOG_ON("Frame AUTH_ETH_RESP wrong size");
+    115              return;
+    116            };
+    117            LOG_ON("Extract response");
+    118            struct AUTH_ETH_RESP *resp = (struct AUTH_ETH_RESP*)frame->payload;
+    119            
+    120            // Проверим что пакет для нас. Должны совпадать мак адресса
+    121            bool mac_eq = true;
+    122            for (char i = 0; i < 8; i++)
+    123              if (resp->mac[i] != MODEL.node_mac[i]){
+    124                mac_eq = false;
+    125                break;
+    126              };
+    127            
+    128            if (!mac_eq){
+    129              LOG_ON("AUTH_ETH request filtered by mac");
+    130              return;
+    131            }
+    132            
+    133            MODEL.AUTH.auth_ok = true;
+    134            // Пакет для нас. Проверим доступ
+    135            if (!resp->access){
+    136              LOG_ON("Access depricated");
+    137              MODEL.AUTH.access_ok = false;
+    138              return;
+    139            };
+    140            
+    141            MODEL.AUTH.access_ok = true;
+    142            
+    143            for (char i = 0; i < 16 ; i++)
+    144              MODEL.node_param[i] = resp->param[i];
     145            
-    146            req.node_type = NODE_TYPE;
-    147            req.node_ver = NODE_VER;
-    148          
-    149            bool res;
-    150            res = FR_add_header(frame, &req, sizeof(struct AUTH_ETH_REQ));
-    151            ASSERT(res);
-    152            char cmd = AUTH_CMD_REQ;
-    153            res = FR_add_header(frame, &cmd, sizeof(cmd));
-    154            ASSERT(res);
-    155            
-    156            frame->meta.TS = 1;
-    157            frame->meta.CH = MODEL.SYNC.sys_channel;
-    158            frame->meta.PID = PID_AUTH;
-    159            frame->meta.NDST = 0xffff;
-    160            frame->meta.NSRC = 0;
-    161           
-    162            eth_send(frame); 
-    163            LOG_ON("AUTH req add to tx");
-    164          };
+    146            MODEL.node_adr = resp->ipaddr;
+    147            setNodeCHTS();
+    148            LOG_ON("Node auth ok! ipaddr=%d", MODEL.node_adr);
+    149          };
+    150          
+    151          
+    152          static bool mac_cmp(char *mac1, char *mac2){
+    153            for (char i = 0; i < 8; i++)
+    154              if (mac1[i] != mac2[i])
+    155                return false;
+    156            return true;
+    157          };
+    158          
+    159          /** brief Добавляем в таблицу ответ от шлюза об авторизации узла
+    160          * Данные заносятся в таблицу и будут ретранслированы как 
+    161          * AUTH_NODE_RESP. 
+    162          */
+    163          void set_AUTH_NODE_RESP(struct frame* frame){
+    164            // Протокол AUTH_IP ничего не знает о структурах запросов,
+    165            // он выполняет функцию транспортного уровня. payload
+    166            // содержит ответ шлюза
+    167            struct AUTH_ETH_RESP *res = (struct AUTH_ETH_RESP*)frame->payload;
+    168            
+    169            if (frame->len != sizeof(struct AUTH_ETH_RESP)){
+    170              LOG_ON("AUTH_IP resp from gw have wrong size= %d",
+    171                     sizeof(struct AUTH_ETH_RESP));
+    172              return;
+    173            };
+    174          
+    175            // Проверим что такого ответа еще нет по мак адресу
+    176            int idx = -1;
+    177            for (int i = 0; i < AUTH_NODE_RESP_SIZE; i++){
+    178              // Пропускаем пустые записи
+    179              if (!AUTH_NODE_RESP[i].RA)
+    180                continue;
+    181              
+    182              // Если нашли запись с таким же мак адрессом
+    183              if (mac_cmp(AUTH_NODE_RESP[i].res.mac, res->mac)){
+    184                idx = i;
+    185                break;
+    186              };
+    187            };
+    188          
+    189            // Не нашли запись. Ищем свободное место
+    190            // Записи с таким же мак адресом нету. Найдем свободное место
+    191            if (idx < 0){
+    192              for (int i = 0; i < AUTH_NODE_RESP_SIZE; i++)
+    193                if (!AUTH_NODE_RESP[i].RA){
+    194                  idx = i;
+    195                  break;
+    196                };
+    197            };
+    198            
+    199            if (idx < 0){
+    200              LOG_ON("No free space in AUTH_NODE_RESP_SIZE");
+    201              return;
+    202            };
+    203            
+    204            // Добавляем запись
+    205            AUTH_NODE_RESP[idx].RA = true;
+    206            MEMCPY((char*)&AUTH_NODE_RESP[idx].res, (char*)res, 
+    207                   sizeof(struct AUTH_ETH_RESP));
+    208            
+    209            LOG_ON("AUTH REQ from some node add AUTH_NODE_REQ");
+    210          };
+    211          
+    212          /** brief Подготавливает и возвращает кадр с данными запроса
+    213          */
+    214          struct frame* get_AUTH_NODE_REQ(){
+    215            int idx = -1;
+    216            // Ищем первую активную запись в таблице
+    217            for (int i = 0; i < AUTH_NODE_REQ_SIZE; i++)
+    218              if (AUTH_NODE_REQ[i].RA){
+    219                idx = i;
+    220                break;
+    221              };
+    222            
+    223            // Ничего не нашли
+    224            if (idx < -1)
+    225              return NULL;
+    226          
+    227            struct frame *fr = FR_create();
+    228            ASSERT(fr);
+    229            
+    230            //Добавим данные запроса
+    231            bool res = FR_add_header(fr, 
+    232                       (char*)(&AUTH_NODE_REQ[idx].req),
+    233                        sizeof(struct AUTH_ETH_REQ));
+    234            ASSERT(res);
+    235            
+    236            // Освобождаем запись
+    237            AUTH_NODE_REQ[idx].RA = false;
+    238            return fr;
+    239          };
+    240          
+    241          /** brief Обработка запроса авторизации
+    242          * Запрос обрабатывается если данный узел авторизован  
+    243          */
+    244          static void receiveCMD_Request(struct frame* frame){
+    245            bool condition = MODEL.AUTH.auth_ok && MODEL.AUTH.access_ok &&
+    246              MODEL.SYNC.synced && MODEL.NEIGH.comm_node_found;
+    247            if (!condition){
+    248              LOG_ON("Cant handel auth req");
+    249              return;
+    250            };
+    251            
+    252            // Сначала убедимся что этот узел уже не в списке запросов
+    253            // проверим mac. Если узел существует то обновим запись о нем
+    254            // вдруг что то изменилось
+    255            struct AUTH_ETH_REQ *req = (struct AUTH_ETH_REQ*)frame->payload;
+    256            
+    257            int idx = -1;
+    258            for (int i = 0; i < AUTH_NODE_REQ_SIZE; i++){
+    259              // Пропускаем пустые записи
+    260              if (!AUTH_NODE_REQ[i].RA)
+    261                continue;
+    262              
+    263              // Если нашли запись с таким же мак адрессом
+    264              if (mac_cmp(AUTH_NODE_REQ[i].req.mac, req->mac)){
+    265                idx = i;
+    266                break;
+    267              };
+    268            };
+    269            
+    270            // Записи с таким же мак адресом нету. Найдем свободное место
+    271            if (idx < 0){
+    272              for (int i = 0; i < AUTH_NODE_REQ_SIZE; i++)
+    273                if (!AUTH_NODE_REQ[i].RA){
+    274                  idx = i;
+    275                  break;
+    276                };
+    277            };
+    278            
+    279            if (idx < 0){
+    280              LOG_ON("No free space in AUTH_NODE_REQ");
+    281              return;
+    282            };
+    283            
+    284            // Добавляем запись
+    285            AUTH_NODE_REQ[idx].RA = true;
+    286            MEMCPY((char*)&AUTH_NODE_REQ[idx].req, (char*)req, 
+    287                   sizeof(struct AUTH_ETH_REQ));
+    288            
+    289            // TODO Сохранить запрос в таблице и добавить геттер запросов.
+    290            // Авторизация уровня IP будет опрашивать таблицу и
+    291            // общаться со шлюзом по этому вопросу.
+    292            LOG_ON("AUTH REQ from some node add AUTH_NODE_REQ");
+    293          };
+    294          
+    295          /** brief Передача ответа на авторизацию, полученую от шлюза
+    296          * запросившему узлу.
+    297          */
+    298          static void AUTH_resend_RESP_from_gw(){
+    299            static unsigned long int last = 0;
+    300            if ((MODEL.RTC.uptime - last) < AUTH_RESP_GW_INTERVAL)
+    301              return;
+    302            // Обновляем время
+    303            last = MODEL.RTC.uptime;
+    304            
+    305            // Ищем ответ шлюза
+    306            int idx = -1;
+    307            for (int i = 0; i < AUTH_NODE_RESP_SIZE; i++){
+    308              if (AUTH_NODE_RESP[i].RA){
+    309                idx = i;
+    310                break;
+    311              };
+    312            };
+    313            
+    314            // Таблица пуста
+    315            if (idx < 0) 
+    316              return;
+    317            
+    318            // Нашли пакет для передачи
+    319            // Создаем ответ
+    320            struct frame* frame = FR_create();
+    321            
+    322            // Добавляем в пакет данные
+    323            bool res;
+    324            res = FR_add_header(frame, (char*)&AUTH_NODE_RESP[idx].res,
+    325                                sizeof(struct AUTH_ETH_RESP));
+    326            ASSERT(res);
+    327            
+    328            // Добавляем в загловок тип ответа
+    329            char cmd = AUTH_CMD_RESP;
+    330            res = FR_add_header(frame, &cmd, sizeof(cmd));
+    331            ASSERT(res);
+    332            
+    333            // Добавляем параметры передачи
+    334            frame->meta.TS = 1;
+    335            frame->meta.CH = MODEL.SYNC.sys_channel;
+    336            frame->meta.PID = PID_AUTH;  
+    337            frame->meta.NSRC = MODEL.node_adr;
+    338            frame->meta.NDST = 0xffff;
+    339            RP_Send(frame);
+    340            
+    341            AUTH_NODE_RESP[idx].RA = false;
+    342            LOG_ON("AUTH gw response sended");
+    343          };
+    344          
+    345          void AUTH_ETH_TimeAlloc(){
+    346              // Если узел еще не авторизован, но синхронизирован и 
+    347            // найден ближайший сосед для передачи, то отправляем запрос
+    348            // авторизации
+    349            if (!MODEL.AUTH.auth_ok && MODEL.SYNC.synced &&
+    350                MODEL.NEIGH.comm_node_found)   
+    351                  AUTH_request();
+    352            
+    353            // Если мы авторизированы, синхронизированы, есть сосед для
+    354            // передачи данных и доступ нам разрешен, то будем ретранслировать
+    355            // ответы от шлюза на запросы подключения.
+    356            if (MODEL.AUTH.auth_ok && MODEL.SYNC.synced &&
+    357                MODEL.NEIGH.comm_node_found && MODEL.AUTH.access_ok)    
+    358             AUTH_resend_RESP_from_gw();
+    359          };
+    360          
+    361          static void AUTH_request(){
+    362            // Еще не наступло время передачи запроса
+    363            if ((MODEL.RTC.uptime - last_request) < REQUEST_INTERVAL)
+    364              return;
+    365            // Обновляем время
+    366            last_request = MODEL.RTC.uptime;
+    367            
+    368            // Создаем запрос
+    369            struct frame* frame = FR_create();
+    370            struct AUTH_ETH_REQ req;
+    371            for (int i = 0; i < 8; i++)
+    372              req.mac[i] = MODEL.node_mac[i];
+    373            
+    374            req.node_type = NODE_TYPE;
+    375            req.node_ver = NODE_VER;
+    376          
+    377            bool res;
+    378            res = FR_add_header(frame, &req, sizeof(struct AUTH_ETH_REQ));
+    379            ASSERT(res);
+    380            char cmd = AUTH_CMD_REQ;
+    381            res = FR_add_header(frame, &cmd, sizeof(cmd));
+    382            ASSERT(res);
+    383            
+    384            frame->meta.PID = PID_AUTH;
+    385            RP_Send_COMM(frame);
+    386            LOG_ON("AUTH req add to tx");
+    387          };
 E:\Neocore\Hardware\PRG Node\auth_ip.c
       1          #include "tcp.h"
       2          #include "debug.h"
-      3          
-      4          void AUTH_IP_Recive(struct frame *frame){
-      5            LOG_ON("AITH_IP RECEIVE");
-      6          };
+      3          #include "model.h"
+      4          #include "auth_eth.h"
+      5          #include "frame.h"
+      6          #include "ip.h"
+      7          #include "protocol_defs.h"
+      8          
+      9          // Инетрвал отправки запросов авторизации шлюзу в секундах
+     10          #define PERIOD_SEND_IP_REQ 5
+     11          enum AUTH_IP_TYPES {AUTH_CMD_REQ = 0, AUTH_CMD_RESP = 1};
+     12          
+     13          void AUTH_IP_Recive(struct frame *frame){
+     14            // Проверим размер
+     15            if (frame->len == 0){
+     16              LOG_ON("Wrong size");
+     17              return;
+     18            };
+     19            
+     20            // Отрежим команду
+     21            bool res = FR_del_header(frame,1);
+     22            
+     23            // Передадим ответ нижнему уровню. пусть разбирается что к чему
+     24            set_AUTH_NODE_RESP(frame);
+     25            LOG_ON("AUTH_IP gw resp add to auth_eth");
+     26          };
+     27          
+     28          void AUTH_IP_TimeAlloc(){
+     29            // Для работы протокола требуется что бы мы были зарегестрированы в 
+     30            // сети
+     31            bool flt = MODEL.AUTH.auth_ok && MODEL.SYNC.synced &&
+     32                MODEL.NEIGH.comm_node_found && MODEL.AUTH.access_ok;
+     33            
+     34            if (!flt)
+     35              return;
+     36            
+     37            // Мы должны из протокола AUTH_ETH выбирать принятые запросы
+     38            // и переправлять ответы шлюзу. Запросы отправляю с неким периодом
+     39            
+     40            static unsigned long time = 0;
+     41            unsigned long now = MODEL.RTC.uptime;
+     42            if (now - time < PERIOD_SEND_IP_REQ)
+     43              return;
+     44            time = now;
+     45            
+     46            struct frame* fr = get_AUTH_NODE_REQ();
+     47            // Нечего отправлять
+     48            if (!fr)
+     49              return;
+     50            
+     51            // Добавим тип запроса
+     52            char cmd = AUTH_CMD_REQ;
+     53            bool res = FR_add_header(fr, &cmd, sizeof (char));
+     54            ASSERT(res);
+     55            
+     56            fr->meta.IPP = IPP_AUTH;
+     57            IP_Send(fr);
+     58            LOG_ON("AUTH_IP req send to GW");
+     59          };
 E:\Neocore\Hardware\PRG Node\balancer.c
       1          #include "model.h"
       2          #include "debug.h"
@@ -1241,158 +1517,160 @@ E:\Neocore\Hardware\PRG Node\ethernet.c
       4          #include "auth_eth.h"
       5          #include "neigh.h"
       6          #include "llc.h"
-      7          
-      8          #define ETH_LAY_SIZE sizeof(struct ETH_LAY)
-      9          
-     10          struct ETH_LAY{  
-     11            union{
-     12              uint8_t value;
-     13              struct {
-     14                char PID:4;
-     15                char UNUSED:1;
-     16                char ETH_VER:3;
-     17              } bits;
-     18            } ETH_T;
-     19          
-     20            char NETID;
-     21            unsigned int NDST;
-     22            unsigned int NSRC;
-     23            char NSRC_TS;
-     24            char NSRC_CH;
-     25            char XOR;
-     26          } __attribute__((packed));
-     27          
-     28          static char calc_xor(struct ETH_LAY *eth){
-     29            char xor_val = 0x57;
-     30            char *ptr = (char*)eth;
-     31            
-     32            // Ксорим все кроме последнего байта структуы. он XOR
-     33            for (int i = 0; i < sizeof(struct ETH_LAY) - 1; i++)
-     34              xor_val ^=ptr[i];
-     35            
-     36            return xor_val;
-     37          };
-     38          
-     39          static bool frame_filter(struct frame *frame){
-     40            struct ETH_LAY *eth_header = (struct ETH_LAY*)frame->payload;
-     41            
-     42            // Фильтр 0: по размеру кадра
-     43            if (frame->len < ETH_LAY_SIZE){
-     44              LOG_OFF("Filtered ETH_LAY_SIZE");
-     45              return false;
-     46            }
-     47            
-     48            // Фильтр 1: по XOR
-     49            char xor_val = calc_xor(eth_header);
-     50            if (xor_val != eth_header->XOR){
-     51              LOG_OFF("Filtered XOR");
-     52              return false;
-     53            };
-     54            
-     55            // Фильтр 2: по версии протокола
-     56            if (eth_header->ETH_T.bits.ETH_VER != HEADER_ETH_VER){
-     57              LOG_OFF("Filtered ETH_VER. %d",eth_header->ETH_T.bits.ETH_VER );
-     58              return false;
-     59            }
-     60          
-     61            // Фильтр 3: по идентификатору сети
-     62            if (eth_header->NETID!= MODEL.SYNC.panid){
-     63              LOG_OFF("Filtered panid");
-     64              return false;
-     65            }
-     66            
-     67            bool from_gw = (eth_header->NSRC_CH == 0xff) &&
-     68                           (eth_header->NSRC_TS == 0xff);
-     69            if (!from_gw){
-     70              // Фильтр 4: по каналу отправителя
-     71              if (eth_header->NSRC_CH  < CH11 || eth_header->NSRC_CH  > CH28){
-     72                LOG_OFF("Filtered NSRC_CH");
-     73                return false;
-     74              }
-     75              // Фильтр 5: по таймслоту отправителя
-     76              if (eth_header->NSRC_TS  < 1 || eth_header->NSRC_TS  > 49){
-     77                LOG_OFF("Filtered NSRC_TS");
-     78                return false;
-     79              }
-     80            };
-     81            
-     82            // Фильтр 6: по адресу получателю
-     83            if (eth_header->NDST != 0xffff )
-     84              if (eth_header->NDST != MODEL.node_adr){
-     85                LOG_OFF("Filtered node addr");
-     86                return false;
-     87              }
-     88            return true;
-     89          }
-     90          
-     91          static inline void fill_meta_data(struct frame *frame){
-     92            // Заполняем метаданные
-     93            struct ETH_LAY *eth_header = (struct ETH_LAY*)frame->payload;
-     94            frame->meta.NDST = eth_header->NDST;
-     95            frame->meta.NSRC = eth_header->NSRC;
-     96            frame->meta.PID = eth_header->ETH_T.bits.PID;  
-     97            frame->meta.NSRC_TS = eth_header->NSRC_TS;
-     98            frame->meta.NSRC_CH = eth_header->NSRC_CH;
-     99          }
-    100          
-    101          static void parse_frame(struct frame *frame){
-    102            // Разбор пакета
-    103            LOG_OFF("Frame Filter");
-    104            if (!frame_filter(frame))
-    105              return;
-    106            
-    107            LOG_OFF("Fill metadata");
-    108            fill_meta_data(frame);
-    109            LOG_OFF("Delete eth header");
-    110            FR_del_header(frame, ETH_LAY_SIZE);
-    111            LOG_OFF("Route protocol");
-    112            RP_Receive(frame);  
-    113          }
-    114          
-    115          /* brief Обработка принятых пакетов
-    116          * Извлекает пакеты из входящего буфера, разбирает заголовок ETH, фильтрует 
-    117          * пакет и передает их на обработку  протоколу маршрутизации. 
-    118          * После обработки пакет удаляется.
-    119          */
-    120          void ethernet_process(void){
-    121            struct frame* frame = NULL;
-    122            frame = FR_find_rx(frame); 
-    123            LOG_OFF("Start search rx");
-    124            while (frame){
-    125              LOG_OFF("Find rx!");
-    126              LOG_ON("ETH. LEN:%d, TS:%d, CH:%d, PID:%d", frame->len,
-    127                     frame->meta.TS, frame->meta.CH, frame->meta.PID);
-    128              parse_frame(frame);
-    129              FR_delete(frame);
-    130              frame = FR_find_rx(frame);
-    131            };
-    132            LOG_OFF("Stop search rx");
-    133            
-    134            // Выделение свободного времени
-    135            AUTH_ETH_TimeAlloc();
-    136            NP_TimeAlloc();
-    137            RP_TimeAlloc();
-    138          };
-    139          
-    140          void eth_send(struct frame *frame){
-    141            struct ETH_LAY eth_header;
-    142            eth_header.ETH_T.bits.PID = frame->meta.PID ;
-    143            eth_header.ETH_T.bits.ETH_VER =HEADER_ETH_VER;
-    144            eth_header.NETID = MODEL.SYNC.panid;
-    145            eth_header.NDST = frame->meta.NDST;
-    146            eth_header.NSRC = frame->meta.NSRC;
-    147            eth_header.NSRC_CH = MODEL.node_CH;
-    148            eth_header.NSRC_TS = MODEL.node_TS;
-    149            eth_header.XOR = calc_xor(&eth_header);
-    150            
-    151            bool res;
-    152            res = FR_add_header(frame, &eth_header,
-    153                                sizeof(struct ETH_LAY));
-    154            ASSERT(res);
-    155           
-    156            frame->meta.tx_attempts = 5;
-    157            res = LLC_add_tx_frame(frame); 
-    158          };
+      7          #include "auth_ip.h"
+      8          
+      9          #define ETH_LAY_SIZE sizeof(struct ETH_LAY)
+     10          
+     11          struct ETH_LAY{  
+     12            union{
+     13              uint8_t value;
+     14              struct {
+     15                char PID:4;
+     16                char UNUSED:1;
+     17                char ETH_VER:3;
+     18              } bits;
+     19            } ETH_T;
+     20          
+     21            char NETID;
+     22            unsigned int NDST;
+     23            unsigned int NSRC;
+     24            char NSRC_TS;
+     25            char NSRC_CH;
+     26            char XOR;
+     27          } __attribute__((packed));
+     28          
+     29          static char calc_xor(struct ETH_LAY *eth){
+     30            char xor_val = 0x57;
+     31            char *ptr = (char*)eth;
+     32            
+     33            // Ксорим все кроме последнего байта структуы. он XOR
+     34            for (int i = 0; i < sizeof(struct ETH_LAY) - 1; i++)
+     35              xor_val ^=ptr[i];
+     36            
+     37            return xor_val;
+     38          };
+     39          
+     40          static bool frame_filter(struct frame *frame){
+     41            struct ETH_LAY *eth_header = (struct ETH_LAY*)frame->payload;
+     42            
+     43            // Фильтр 0: по размеру кадра
+     44            if (frame->len < ETH_LAY_SIZE){
+     45              LOG_OFF("Filtered ETH_LAY_SIZE");
+     46              return false;
+     47            }
+     48            
+     49            // Фильтр 1: по XOR
+     50            char xor_val = calc_xor(eth_header);
+     51            if (xor_val != eth_header->XOR){
+     52              LOG_OFF("Filtered XOR");
+     53              return false;
+     54            };
+     55            
+     56            // Фильтр 2: по версии протокола
+     57            if (eth_header->ETH_T.bits.ETH_VER != HEADER_ETH_VER){
+     58              LOG_OFF("Filtered ETH_VER. %d",eth_header->ETH_T.bits.ETH_VER );
+     59              return false;
+     60            }
+     61          
+     62            // Фильтр 3: по идентификатору сети
+     63            if (eth_header->NETID!= MODEL.SYNC.panid){
+     64              LOG_OFF("Filtered panid");
+     65              return false;
+     66            }
+     67            
+     68            bool from_gw = (eth_header->NSRC_CH == 0xff) &&
+     69                           (eth_header->NSRC_TS == 0xff);
+     70            if (!from_gw){
+     71              // Фильтр 4: по каналу отправителя
+     72              if (eth_header->NSRC_CH  < CH11 || eth_header->NSRC_CH  > CH28){
+     73                LOG_OFF("Filtered NSRC_CH");
+     74                return false;
+     75              }
+     76              // Фильтр 5: по таймслоту отправителя
+     77              if (eth_header->NSRC_TS  < 1 || eth_header->NSRC_TS  > 49){
+     78                LOG_OFF("Filtered NSRC_TS");
+     79                return false;
+     80              }
+     81            };
+     82            
+     83            // Фильтр 6: по адресу получателю
+     84            if (eth_header->NDST != 0xffff )
+     85              if (eth_header->NDST != MODEL.node_adr){
+     86                LOG_OFF("Filtered node addr");
+     87                return false;
+     88              }
+     89            return true;
+     90          }
+     91          
+     92          static inline void fill_meta_data(struct frame *frame){
+     93            // Заполняем метаданные
+     94            struct ETH_LAY *eth_header = (struct ETH_LAY*)frame->payload;
+     95            frame->meta.NDST = eth_header->NDST;
+     96            frame->meta.NSRC = eth_header->NSRC;
+     97            frame->meta.PID = eth_header->ETH_T.bits.PID;  
+     98            frame->meta.NSRC_TS = eth_header->NSRC_TS;
+     99            frame->meta.NSRC_CH = eth_header->NSRC_CH;
+    100          }
+    101          
+    102          static void parse_frame(struct frame *frame){
+    103            // Разбор пакета
+    104            LOG_OFF("Frame Filter");
+    105            if (!frame_filter(frame))
+    106              return;
+    107            
+    108            LOG_OFF("Fill metadata");
+    109            fill_meta_data(frame);
+    110            LOG_OFF("Delete eth header");
+    111            FR_del_header(frame, ETH_LAY_SIZE);
+    112            LOG_OFF("Route protocol");
+    113            RP_Receive(frame);  
+    114          }
+    115          
+    116          /* brief Обработка принятых пакетов
+    117          * Извлекает пакеты из входящего буфера, разбирает заголовок ETH, фильтрует 
+    118          * пакет и передает их на обработку  протоколу маршрутизации. 
+    119          * После обработки пакет удаляется.
+    120          */
+    121          void ethernet_process(void){
+    122            struct frame* frame = NULL;
+    123            frame = FR_find_rx(frame); 
+    124            LOG_OFF("Start search rx");
+    125            while (frame){
+    126              LOG_OFF("Find rx!");
+    127              LOG_ON("ETH. LEN:%d, TS:%d, CH:%d, PID:%d", frame->len,
+    128                     frame->meta.TS, frame->meta.CH, frame->meta.PID);
+    129              parse_frame(frame);
+    130              FR_delete(frame);
+    131              frame = FR_find_rx(frame);
+    132            };
+    133            LOG_OFF("Stop search rx");
+    134            
+    135            // Выделение свободного времени
+    136            AUTH_ETH_TimeAlloc();
+    137            NP_TimeAlloc();
+    138            RP_TimeAlloc();
+    139            AUTH_IP_TimeAlloc();
+    140          };
+    141          
+    142          void eth_send(struct frame *frame){
+    143            struct ETH_LAY eth_header;
+    144            eth_header.ETH_T.bits.PID = frame->meta.PID ;
+    145            eth_header.ETH_T.bits.ETH_VER =HEADER_ETH_VER;
+    146            eth_header.NETID = MODEL.SYNC.panid;
+    147            eth_header.NDST = frame->meta.NDST;
+    148            eth_header.NSRC = frame->meta.NSRC;
+    149            eth_header.NSRC_CH = MODEL.node_CH;
+    150            eth_header.NSRC_TS = MODEL.node_TS;
+    151            eth_header.XOR = calc_xor(&eth_header);
+    152            
+    153            bool res;
+    154            res = FR_add_header(frame, &eth_header,
+    155                                sizeof(struct ETH_LAY));
+    156            ASSERT(res);
+    157           
+    158            frame->meta.tx_attempts = 5;
+    159            res = LLC_add_tx_frame(frame); 
+    160          };
 E:\Neocore\Hardware\STACK_CORE_SRC\frame.c
       1          #include "action_manager.h"
       2          #include "frame.h"
@@ -1872,59 +2150,83 @@ E:\Neocore\Hardware\PRG Node\main.c
       9          #include "radio.h"
      10          #include "llc.h"
      11          #include "ethernet.h"
-     12          
-     13          static struct frame* get_frame(void){
-     14            struct frame *frame = FR_create(); 
-     15            char data[10] = {1,2,3,4,5,6,7,8,9,0};
-     16            FR_add_header(frame, data, sizeof(data));
-     17            frame->meta.tx_attempts = 3;
-     18            frame->meta.TS = 2;
-     19            frame->meta.CH = CH20;
-     20            return frame;
-     21          }
-     22          
-     23          /** brief Функция вызывается после приема пакетов
-     24          * Здесь происходит обработка протоколов верхнего уровня
-     25          */
-     26          static void callback(void){
-     27            static bool first=true;
-     28            if (first){
-     29              LLC_open_slot(1, MODEL.SYNC.sys_channel);
-     30              first = false;
-     31            }
-     32            ethernet_process();
-     33          //  LLC_add_tx_frame(frame);
-     34           LOG_OFF("callback exit");
-     35          }
-     36          
-     37          //TODO alarm manager вызывает из прерывания TM_IRQ
-     38          //в TM_IRQ засоряется стек прерывания
-     39          static void pre_init(void){
-     40            AM_HW_Init();
-     41            AM_SW_Init();
-     42            LOG_ON("Hardware inited");
-     43            MODEL.SYNC.mode = 1;
-     44            MODEL.TM.MODE = 1;
-     45            AM_set_callback(callback);
-     46          }
-     47          
-     48          // TODO добавить в buffer.c размер RX и TX очереди
-     49          void main(void){
-     50            pre_init();
-     51            LOG_ON("Node started");
-     52            
-     53            while (1){
-     54              MODEL.SYNC.mode = 1;
-     55              MODEL.TM.MODE = 1;
-     56              while (!network_sync(1000000U));
-     57              LOG_ON("Synced");
-     58              MODEL.node_TS = 5;
-     59              MODEL.node_CH =14;
-     60              Neocore_start();
-     61              AM_SW_Init();
-     62              LOG_ON("START RESYNC");
-     63            }
-     64          };
+     12          #include "ip.h"
+     13          #include "protocol_defs.h"
+     14          
+     15          static struct frame* get_frame(void){
+     16            struct frame *frame = FR_create(); 
+     17            char data[10] = {1,2,3,4,5,6,7,8,9,0};
+     18            FR_add_header(frame, data, sizeof(data));
+     19            frame->meta.tx_attempts = 3;
+     20            frame->meta.TS = 2;
+     21            frame->meta.CH = CH20;
+     22            return frame;
+     23          }
+     24          
+     25          static void send_ip_frame(){
+     26            bool flt = MODEL.AUTH.auth_ok && MODEL.AUTH.access_ok;
+     27            if (!flt)
+     28              return;
+     29            
+     30           static unsigned long last_send = 0;
+     31           unsigned long now = MODEL.RTC.uptime;
+     32           if ((now - last_send) < 30)
+     33             return;
+     34           last_send = now;
+     35           
+     36           
+     37           struct frame *frame = FR_create(); 
+     38            char data[10] = {1,2,3,4,5,6,7,8,9,0};
+     39            FR_add_header(frame, data, sizeof(data));
+     40            frame->meta.IPP = IPP_UDP;
+     41            IP_Send(frame);
+     42            LOG_ON("IP UDP SENDED!");
+     43          };
+     44          
+     45          /** brief Функция вызывается после приема пакетов
+     46          * Здесь происходит обработка протоколов верхнего уровня
+     47          */
+     48          static void callback(void){
+     49            static bool first=true;
+     50            if (first){
+     51              LLC_open_slot(1, MODEL.SYNC.sys_channel);
+     52              first = false;
+     53            }
+     54            ethernet_process();
+     55            
+     56            send_ip_frame();
+     57            //  LLC_add_tx_frame(frame);
+     58           LOG_OFF("callback exit");
+     59          }
+     60          
+     61          //TODO alarm manager вызывает из прерывания TM_IRQ
+     62          //в TM_IRQ засоряется стек прерывания
+     63          static void pre_init(void){
+     64            AM_HW_Init();
+     65            AM_SW_Init();
+     66            LOG_ON("Hardware inited");
+     67            MODEL.SYNC.mode = 1;
+     68            MODEL.TM.MODE = 1;
+     69            AM_set_callback(callback);
+     70          }
+     71          
+     72          // TODO добавить в buffer.c размер RX и TX очереди
+     73          void main(void){
+     74            pre_init();
+     75            LOG_ON("Node started");
+     76            
+     77            while (1){
+     78              MODEL.SYNC.mode = 1;
+     79              MODEL.TM.MODE = 1;
+     80              while (!network_sync(1000000U));
+     81              LOG_ON("Synced");
+     82              MODEL.node_TS = 5;
+     83              MODEL.node_CH =14;
+     84              Neocore_start();
+     85              AM_SW_Init();
+     86              LOG_ON("START RESYNC");
+     87            }
+     88          };
 E:\Neocore\Hardware\STACK_CORE_SRC\mem_slots.c
       1          #include "debug.h"
       2          #include "global.h"
@@ -2213,8 +2515,8 @@ E:\Neocore\Hardware\PRG Node\neigh.c
      13          #define PERIOD_REQ_TIME 120 // Интервал запроса карточек
      14          
      15          struct gw_vec{
-     16            char ch;
-     17            char ts;
+     16            char ts;
+     17            char ch;
      18          };
      19          
      20          #define GW_VECTOR_SIZE 10
@@ -3141,78 +3443,78 @@ E:\Neocore\Hardware\PRG Node\route.c
      22          
      23          static struct route_record ROUTE_TABLE[ROUTE_TABLE_ITEMS];
      24          
-     25          
-     26          void RP_Init(){
-     27            // Очистим таблицу соседей
-     28            MEMSET((char*)ROUTE_TABLE, 0, sizeof(ROUTE_TABLE));
-     29          };
-     30          
-     31          static void analyse_route_table(){
-     32            static unsigned long last_analyse_time = 0;
-     33            unsigned long now = MODEL.RTC.uptime;
-     34            
-     35            // Ждем что пройдем как минимум 1 минута с последнего анализа
-     36            if ((now - last_analyse_time) < 60)
-     37              return;
-     38            
-     39            last_analyse_time = now;
-     40            
-     41            LOG_ON("Analyse ROUTE table");
-     42            
-     43            // Теперь уменьшим время жизни записям и удалим при необходимости
-     44            for (int  i = 0; i < ROUTE_TABLE_ITEMS; i++){
-     45              // Пропускаем пустые записи
-     46              if (!ROUTE_TABLE[i].RA)
-     47                continue;
-     48              
-     49              // Уменьшаем время жизни
-     50              if (ROUTE_TABLE[i].live_time > 0)
-     51                ROUTE_TABLE[i].live_time--;
-     52              
-     53              // Помечаем запись свободной по истечению времени жизни
-     54              if (ROUTE_TABLE[i].live_time == 0){
-     55                LOG_ON("Record ROUTE: nsrc %d, fdst %d deleted", 
-     56                       ROUTE_TABLE[i].nsrc, ROUTE_TABLE[i].fsrc);
-     57                ROUTE_TABLE[i].RA = false;    
-     58              }
-     59            };
-     60          };
-     61          
-     62          void RP_TimeAlloc(){
-     63            analyse_route_table();
-     64          };
-     65          
-     66          void RP_Receive(struct frame *frame){
-     67            #warning update route tables
+     25          void RP_Init(){
+     26            // Очистим таблицу соседей
+     27            MEMSET((char*)ROUTE_TABLE, 0, sizeof(ROUTE_TABLE));
+     28          };
+     29          
+     30          static void analyse_route_table(){
+     31            static unsigned long last_analyse_time = 0;
+     32            unsigned long now = MODEL.RTC.uptime;
+     33            
+     34            // Ждем что пройдем как минимум 1 минута с последнего анализа
+     35            if ((now - last_analyse_time) < 60)
+     36              return;
+     37            
+     38            last_analyse_time = now;
+     39            
+     40            LOG_ON("Analyse ROUTE table");
+     41            
+     42            // Теперь уменьшим время жизни записям и удалим при необходимости
+     43            for (int  i = 0; i < ROUTE_TABLE_ITEMS; i++){
+     44              // Пропускаем пустые записи
+     45              if (!ROUTE_TABLE[i].RA)
+     46                continue;
+     47              
+     48              // Уменьшаем время жизни
+     49              if (ROUTE_TABLE[i].live_time > 0)
+     50                ROUTE_TABLE[i].live_time--;
+     51              
+     52              // Помечаем запись свободной по истечению времени жизни
+     53              if (ROUTE_TABLE[i].live_time == 0){
+     54                LOG_ON("Record ROUTE: nsrc %d, fdst %d deleted", 
+     55                       ROUTE_TABLE[i].nsrc, ROUTE_TABLE[i].fsrc);
+     56                ROUTE_TABLE[i].RA = false;    
+     57              }
+     58            };
+     59          };
+     60          
+     61          void RP_TimeAlloc(){
+     62            analyse_route_table();
+     63          };
+     64          
+     65          void RP_Receive(struct frame *frame){
+     66            #warning update route tables
                     ^
 Warning[Pe1105]: #warning directive: update route tables
           detected during compilation of secondary translation unit
                     "E:\Neocore\Hardware\PRG Node\route.c"
-     68            switch (frame->meta.PID){
-     69            case PID_IP: // Пакет относится к протоколу IP
-     70              IP_Receive(frame);
-     71              break;
-     72            case PID_NP: // Пакет относится к протоколу соседей
-     73              NP_Receive(frame);
-     74              break;
-     75            case PID_AUTH: // Пакет относится к протоколу авторизации
-     76              AUTH_ETH_Receive(frame);
-     77              break;
-     78            default:
-     79              return; // Пакет удалит ethernet
-     80            };
-     81            
-     82            TB_Receive(frame);  
-     83          };
-     84          
-     85          void RP_Send_GW(struct frame *frame){
-     86            bool condition = MODEL.AUTH.auth_ok && MODEL.AUTH.access_ok &&
-     87              MODEL.SYNC.synced && MODEL.NEIGH.comm_node_found;
+     67            switch (frame->meta.PID){
+     68            case PID_IP: // Пакет относится к протоколу IP
+     69              IP_Receive(frame);
+     70              break;
+     71            case PID_NP: // Пакет относится к протоколу соседей
+     72              NP_Receive(frame);
+     73              break;
+     74            case PID_AUTH: // Пакет относится к протоколу авторизации
+     75              AUTH_ETH_Receive(frame);
+     76              break;
+     77            default:
+     78              return; // Пакет удалит ethernet
+     79            };
+     80            
+     81            TB_Receive(frame);  
+     82          };
+     83          
+     84          /** brief Отправить пакет лучшему соседу
+     85          */
+     86          void RP_Send_COMM(struct frame *frame){
+     87            bool condition = MODEL.SYNC.synced && MODEL.NEIGH.comm_node_found;
      88            if (!condition){
      89              FR_delete(frame);
      90              LOG_ON("Cant send.");
      91              return;
-     92            };
+     92            };  
      93            
      94            char ts;
      95            char ch;
@@ -3228,124 +3530,150 @@ Warning[Pe1105]: #warning directive: update route tables
     105            frame->meta.NDST = addr;
     106            frame->meta.NSRC = MODEL.node_adr;
     107            eth_send(frame);
-    108            LOG_ON("Sended to GW");  
+    108            LOG_ON("Sended to COMM node");  
     109          };
     110          
-    111          void RP_Send(struct frame *frame){
-    112            eth_send(frame);
-    113            LOG_ON("Sended raw");  
-    114          };
-    115          
-    116          /** brief Ищем номер записи по паре значений
-    117          */
-    118          static int route_find(unsigned int nsrc, unsigned int fsrc){
-    119            for (int i = 0; i < ROUTE_TABLE_ITEMS; i++)
-    120              if (ROUTE_TABLE[i].nsrc == nsrc && ROUTE_TABLE[i].fsrc == fsrc
-    121                  && ROUTE_TABLE[i].RA)
-    122                return i;
-    123            return -1;
-    124          };
-    125          
-    126          static int find_free(){
-    127            for (int i = 0; i < ROUTE_TABLE_ITEMS; i++)
-    128              if (!ROUTE_TABLE[i].RA)
-    129                return i;
-    130            return -1;  
-    131          };
-    132          
-    133          static bool route_update(unsigned int nsrc, unsigned int fsrc,
-    134                                   char nsrc_ts, char nsrc_ch){
-    135            // Ищем запись о маршруте
-    136            int idx = route_find(nsrc, fsrc);
-    137            
-    138            // Если такого маршрут небыло, ищем свободную ячейку
-    139            if (idx < 0)
-    140              idx = find_free();
-    141            
-    142            // Если таблица пуста выходим
-    143            if (idx < 0){
-    144              LOG_ON("Route table full!");
-    145              return false;
-    146            };
-    147            
-    148            ROUTE_TABLE[idx].nsrc = nsrc;
-    149            ROUTE_TABLE[idx].fsrc = fsrc;
-    150            ROUTE_TABLE[idx].live_time= ROUTE_LIVE_TIME;
-    151            ROUTE_TABLE[idx].NSRC_TS = nsrc_ts;
-    152            ROUTE_TABLE[idx].NSRC_CH = nsrc_ch;
-    153            ROUTE_TABLE[idx].RA = true;  
-    154            return true;
-    155          };
-    156          
-    157          /** Пересылка пакета к шлюзу с добавлением маршрута
-    158          */
-    159          void RP_SendRT_GW(struct frame *frame){
-    160            // Информация как был получен пакет и от кого
-    161            unsigned int nsrc = frame->meta.NSRC;
-    162            unsigned int fsrc = frame->meta.FSRC;
-    163            char nsrc_ts = frame->meta.NSRC_TS;
-    164            char nsrc_ch = frame->meta.NSRC_CH;   
-    165            
-    166            // Обновим таблицу маршрутов
-    167            bool res = route_update(nsrc, fsrc, nsrc_ts, nsrc_ch);
-    168            if (res){
-    169              LOG_ON("Route table updated. nsrc=%, fsrc=%d, ts=%d, ch=%d",
-    170                     nsrc, fsrc, nsrc_ts, nsrc_ch);
-    171              return;
+    111          void RP_Send_GW(struct frame *frame){
+    112            bool condition = MODEL.AUTH.auth_ok && MODEL.AUTH.access_ok &&
+    113              MODEL.SYNC.synced && MODEL.NEIGH.comm_node_found;
+    114            if (!condition){
+    115              FR_delete(frame);
+    116              LOG_ON("Cant send.");
+    117              return;
+    118            };
+    119            
+    120            char ts;
+    121            char ch;
+    122            unsigned int addr;
+    123            bool res = comm_node_info(&addr, &ts, &ch);
+    124            if (!res){
+    125              FR_delete(frame);
+    126              LOG_ON("Problem with comm_node_info");
+    127            };
+    128            
+    129            frame->meta.TS = ts;
+    130            frame->meta.CH = ch;
+    131            frame->meta.NDST = addr;
+    132            frame->meta.NSRC = MODEL.node_adr;
+    133            eth_send(frame);
+    134            LOG_ON("Sended to GW");  
+    135          };
+    136          
+    137          void RP_Send(struct frame *frame){
+    138            eth_send(frame);
+    139            LOG_ON("Sended raw");  
+    140          };
+    141          
+    142          /** brief Ищем номер записи по паре значений
+    143          */
+    144          static int route_find(unsigned int nsrc, unsigned int fsrc){
+    145            for (int i = 0; i < ROUTE_TABLE_ITEMS; i++)
+    146              if (ROUTE_TABLE[i].nsrc == nsrc && ROUTE_TABLE[i].fsrc == fsrc
+    147                  && ROUTE_TABLE[i].RA)
+    148                return i;
+    149            return -1;
+    150          };
+    151          
+    152          static int find_free(){
+    153            for (int i = 0; i < ROUTE_TABLE_ITEMS; i++)
+    154              if (!ROUTE_TABLE[i].RA)
+    155                return i;
+    156            return -1;  
+    157          };
+    158          
+    159          static bool route_update(unsigned int nsrc, unsigned int fsrc,
+    160                                   char nsrc_ts, char nsrc_ch){
+    161            // Ищем запись о маршруте
+    162            int idx = route_find(nsrc, fsrc);
+    163            
+    164            // Если такого маршрут небыло, ищем свободную ячейку
+    165            if (idx < 0)
+    166              idx = find_free();
+    167            
+    168            // Если таблица пуста выходим
+    169            if (idx < 0){
+    170              LOG_ON("Route table full!");
+    171              return false;
     172            };
     173            
-    174            LOG_ON("Route table update faild. nsrc=%, fsrc=%d, ts=%d, ch=%d",
-    175                   nsrc, fsrc, nsrc_ts, nsrc_ch);
-    176          };
-    177          
-    178          /** brief Ищем маршрут до fdst
-    179          */
-    180          static int route_find_by_fsrc(unsigned int fsrc){
-    181            for (int i = 0; i < ROUTE_TABLE_ITEMS; i++)
-    182              if (ROUTE_TABLE[i].fsrc == fsrc && ROUTE_TABLE[i].RA)
-    183                return i;
-    184            return -1;
-    185          };
-    186          
-    187          /** brief Передача от шлюза к какому то узлу
-    188          */
-    189          void RP_SendRT_RT(struct frame *frame){
-    190            unsigned int fsrc = frame->meta.FSRC;
-    191            unsigned int fdst = frame->meta.FDST;
-    192            
-    193            if (fsrc != 0){
-    194              LOG_ON("Frame must be sended GW. Drop. fsrc=%d", fsrc);
-    195              FR_delete(frame);
-    196              return;
-    197            };
-    198            
-    199            if (fdst == 0){
-    200              LOG_ON("Frame fdst is 0. Drop.");
-    201              FR_delete(frame);
-    202              return;
-    203            };
-    204            
-    205            if (fdst == 0xffff){
-    206              LOG_ON("Frame fdst is 0xffff. Drop.");
-    207              FR_delete(frame);
-    208              return;
-    209            };
-    210            
-    211            // Ищем через кого раньше был отправлен пакет
-    212            int idx = route_find_by_fsrc(fdst);
-    213            if (idx < 0){
-    214              LOG_ON("Route to node %d not found. Drop.", fdst);
-    215              FR_delete(frame);
-    216              return;
-    217            };
+    174            ROUTE_TABLE[idx].nsrc = nsrc;
+    175            ROUTE_TABLE[idx].fsrc = fsrc;
+    176            ROUTE_TABLE[idx].live_time= ROUTE_LIVE_TIME;
+    177            ROUTE_TABLE[idx].NSRC_TS = nsrc_ts;
+    178            ROUTE_TABLE[idx].NSRC_CH = nsrc_ch;
+    179            ROUTE_TABLE[idx].RA = true;  
+    180            return true;
+    181          };
+    182          
+    183          /** Пересылка пакета к шлюзу с добавлением маршрута
+    184          */
+    185          void RP_SendRT_GW(struct frame *frame){
+    186            // Информация как был получен пакет и от кого
+    187            unsigned int nsrc = frame->meta.NSRC;
+    188            unsigned int fsrc = frame->meta.FSRC;
+    189            char nsrc_ts = frame->meta.NSRC_TS;
+    190            char nsrc_ch = frame->meta.NSRC_CH;   
+    191            
+    192            // Обновим таблицу маршрутов
+    193            bool res = route_update(nsrc, fsrc, nsrc_ts, nsrc_ch);
+    194            if (res){
+    195              LOG_ON("Route table updated. nsrc=%, fsrc=%d, ts=%d, ch=%d",
+    196                     nsrc, fsrc, nsrc_ts, nsrc_ch);
+    197              return;
+    198            };
+    199            
+    200            LOG_ON("Route table update faild. nsrc=%, fsrc=%d, ts=%d, ch=%d",
+    201                   nsrc, fsrc, nsrc_ts, nsrc_ch);
+    202          };
+    203          
+    204          /** brief Ищем маршрут до fdst
+    205          */
+    206          static int route_find_by_fsrc(unsigned int fsrc){
+    207            for (int i = 0; i < ROUTE_TABLE_ITEMS; i++)
+    208              if (ROUTE_TABLE[i].fsrc == fsrc && ROUTE_TABLE[i].RA)
+    209                return i;
+    210            return -1;
+    211          };
+    212          
+    213          /** brief Передача от шлюза к какому то узлу
+    214          */
+    215          void RP_SendRT_RT(struct frame *frame){
+    216            unsigned int fsrc = frame->meta.FSRC;
+    217            unsigned int fdst = frame->meta.FDST;
     218            
-    219            frame->meta.TS = ROUTE_TABLE[idx].NSRC_TS;
-    220            frame->meta.CH = ROUTE_TABLE[idx].NSRC_CH;
-    221            frame->meta.NDST = ROUTE_TABLE[idx].nsrc;
-    222            frame->meta.NSRC = MODEL.node_adr;
-    223            eth_send(frame);
-    224            LOG_ON("Sended to NODE % by route table", ROUTE_TABLE[idx].nsrc); 
-    225          };
+    219            if (fsrc != 0){
+    220              LOG_ON("Frame must be sended GW. Drop. fsrc=%d", fsrc);
+    221              FR_delete(frame);
+    222              return;
+    223            };
+    224            
+    225            if (fdst == 0){
+    226              LOG_ON("Frame fdst is 0. Drop.");
+    227              FR_delete(frame);
+    228              return;
+    229            };
+    230            
+    231            if (fdst == 0xffff){
+    232              LOG_ON("Frame fdst is 0xffff. Drop.");
+    233              FR_delete(frame);
+    234              return;
+    235            };
+    236            
+    237            // Ищем через кого раньше был отправлен пакет
+    238            int idx = route_find_by_fsrc(fdst);
+    239            if (idx < 0){
+    240              LOG_ON("Route to node %d not found. Drop.", fdst);
+    241              FR_delete(frame);
+    242              return;
+    243            };
+    244            
+    245            frame->meta.TS = ROUTE_TABLE[idx].NSRC_TS;
+    246            frame->meta.CH = ROUTE_TABLE[idx].NSRC_CH;
+    247            frame->meta.NDST = ROUTE_TABLE[idx].nsrc;
+    248            frame->meta.NSRC = MODEL.node_adr;
+    249            eth_send(frame);
+    250            LOG_ON("Sended to NODE % by route table", ROUTE_TABLE[idx].nsrc); 
+    251          };
 E:\Neocore\Hardware\Stack_core_src\rtc.c
       1          #include "action_manager.h"
       2          #include "model.h"
@@ -3694,7 +4022,7 @@ Warning[Pe111]: statement is unreachable
 
   static struct frame* get_frame(void){
                        ^
-"E:\Neocore\Hardware\PRG Node\main.c",13  Warning[Pe177]: function "get_frame"
+"E:\Neocore\Hardware\PRG Node\main.c",15  Warning[Pe177]: function "get_frame"
           was declared but never referenced
           detected during compilation of secondary translation unit
                     "E:\Neocore\Hardware\PRG Node\main.c"
@@ -3833,10 +4161,66 @@ E:\Neocore\Hardware\STACK_CORE_SRC\time_manager.c
 E:\Neocore\Hardware\PRG Node\udp.c
       1          #include "udp.h"
       2          #include "debug.h"
-      3          
-      4          void UDP_Recive(struct frame *frame){
-      5            LOG_ON("UDP RECEIVE");
-      6          };
+      3          #include "frame.h"
+      4          #include "protocol_defs.h"
+      5          #include "ip.h"
+      6          
+      7          struct udp_bind{
+      8            bool RA;
+      9            char port;
+     10            void (*fn)(struct frame *frame);
+     11          };
+     12          
+     13          // Таблица для вызова обработчиков
+     14          #define BIND_SIZE 5
+     15          static struct udp_bind BIND[BIND_SIZE];
+     16          
+     17          
+     18          void UDP_Send(char port, char *ptr, char size){
+     19            if (size > 64){
+     20              LOG_ON("UDP data too big");
+     21              return;
+     22            }
+     23            
+     24            struct frame *frame = FR_create(); 
+     25            ASSERT(frame);
+     26            bool res = FR_add_header(frame, ptr, size);
+     27            ASSERT(res);
+     28            
+     29            res = FR_add_header(frame, &port, sizeof(char));
+     30            ASSERT(res);
+     31            
+     32            frame->meta.IPP = IPP_UDP;
+     33            IP_Send(frame);
+     34            
+     35            LOG_ON("UDP frame send to gw. port=%d", port);
+     36          };
+     37          
+     38          bool UDP_bind_port(char port, void (*fn)(struct frame *frame)){
+     39            for (int i = 0 ; i < BIND_SIZE; i++)
+     40              if (!BIND[i].RA){
+     41                BIND[i].port = port;
+     42                BIND[i].fn = fn;
+     43                return true;
+     44              };
+     45            return false;
+     46          };
+     47          
+     48          void UDP_Recive(struct frame *frame){
+     49            if (frame->len == 0){
+     50              LOG_ON("UDP wrong size");
+     51            };
+     52            
+     53            char port = frame->payload[0];
+     54            bool res = FR_del_header(frame, 1);
+     55            ASSERT(res);
+     56            
+     57            for (int i = 0; i < BIND_SIZE; i++)
+     58              if (BIND[i].port == port && BIND[i].RA){
+     59                  BIND[i].fn(frame);
+     60                  return;
+     61              };
+     62          };
 E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
       1          #include "ioCC2530.h"
       2          #include "ustimer.h"
@@ -3993,16 +4377,33 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
         0     12   -> receiveCMD_Response
       2     10   AUTH_ETH_TimeAlloc
         2      0   -> AUTH_request
+        2      0   -> AUTH_resend_RESP_from_gw
       0     22   AUTH_IP_Recive
+        0     10   -> FR_del_header
         0     10   -> printf_P
         0     12   -> printf_P
+        0     10   -> set_AUTH_NODE_RESP
+      2     29   AUTH_IP_TimeAlloc
+        0     17   -> DBG_CORE_HALT
+        0     17   -> FR_add_header
+        0     17   -> IP_Send
+        0     17   -> get_AUTH_NODE_REQ
+        0     17   -> printf_P
+        0     19   -> printf_P
       2     39   AUTH_request
         0     37   -> DBG_CORE_HALT
         0     37   -> FR_add_header
         0     37   -> FR_create
-        0     37   -> eth_send
+        0     37   -> RP_Send_COMM
         0     37   -> printf_P
         0     39   -> printf_P
+      2     15   AUTH_resend_RESP_from_gw
+        0     13   -> DBG_CORE_HALT
+        0     13   -> FR_add_header
+        0     13   -> FR_create
+        0     13   -> RP_Send
+        0     13   -> printf_P
+        0     15   -> printf_P
       0    115   CBCMAC_buf_encrypt
         0     48   -> memcpy
         0     48   -> memset
@@ -4012,10 +4413,10 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
         0     34   -> memcpy
         0     34   -> memset
       0      0   Cold_Start
-      0      0   Cold_Start
       2      0   Cold_Start
         2      0   -> scheduler_rx
         2      0   -> scheduler_tx
+      0      0   Cold_Start
       0      0   Cold_Start
       0      0   DBG_CORE_FAULT
       0     63   DBG_CORE_HALT
@@ -4059,6 +4460,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
         2      0   -> AM_set_callback
       2      0   HP_callback
         2      0   -> ethernet_process
+      0      0   HW_Init
       3      1   HW_Init
       2      0   HW_Init
         2      0   -> DelayCalibrate
@@ -4070,11 +4472,10 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
         2     84   -> MEM_memcpy
       0      0   HW_Init
       0      0   HW_Init
-      0      0   HW_Init
-      0      0   Hot_Start
       2      0   Hot_Start
         2      0   -> receive
         2      0   -> transmite
+      0      0   Hot_Start
       0     12   Hot_Start
       0     12   Hot_Start
         0     10   -> DBG_CORE_HALT
@@ -4096,15 +4497,15 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
         0     10   -> frame_filter
         0     10   -> printf_P
         0     12   -> printf_P
-      1     18   IP_Send
+      1     44   IP_Send
         0     16   -> DBG_CORE_HALT
         0     16   -> FR_add_header
         0     16   -> RP_Send_GW
         0     16   -> printf_P
         0     18   -> printf_P
       0     15   IRQEnable
-      2      0   IRQ_Init
       0      0   IRQ_Init
+      2      0   IRQ_Init
       0     31   LLC_add_tx_frame
         0     10   -> AES_StreamCoder
         0     10   -> DBG_CORE_HALT
@@ -4115,7 +4516,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
         0     10   -> DBG_CORE_HALT
         0     10   -> printf_P
         0     12   -> printf_P
-      1     12   LLC_open_slot
+      1     22   LLC_open_slot
         0     10   -> DBG_CORE_HALT
         0     10   -> printf_P
         0     12   -> printf_P
@@ -4196,7 +4597,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
         0      9   -> IP_Receive
         0      9   -> NP_Receive
         0      9   -> TB_Receive
-      0     12   RP_Send
+      0     25   RP_Send
         0     10   -> eth_send
         0     10   -> printf_P
         0     12   -> printf_P
@@ -4211,6 +4612,12 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
         0     14   -> printf_P
         0     16   -> printf_P
         0     14   -> route_find_by_fsrc
+      1     53   RP_Send_COMM
+        0     14   -> FR_delete
+        0     16   -> comm_node_info
+        0     14   -> eth_send
+        0     14   -> printf_P
+        0     16   -> printf_P
       1     32   RP_Send_GW
         0     14   -> FR_delete
         0     16   -> comm_node_info
@@ -4250,16 +4657,16 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
       2      0   SL_tx_slots
       2      0   SL_zone_check
       0      0   SW_Init
+      0      0   SW_Init
       2      0   SW_Init
       0      0   SW_Init
       0     13   SW_Init
         0     13   -> MEM_memset
       2      0   SW_Init
       2      0   SW_Init
-        2      0   -> random_core_init
-      0      0   SW_Init
       0      0   SW_Init
       2      0   SW_Init
+        2      0   -> random_core_init
       2      0   SW_restart
         2      0   -> SW_Init
       2      0   SY_restart
@@ -4289,9 +4696,19 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
         0     15   -> AT_time
         0     15   -> IRQEnable
         0     15   -> TM_IRQ
-      0     22   UDP_Recive
-        0     10   -> printf_P
+      0     24   UDP_Recive
+        0     12   -> DBG_CORE_HALT
+        0     12   -> FR_del_header
         0     12   -> printf_P
+        0     14   -> printf_P
+      1     17   UDP_Send
+        0     15   -> DBG_CORE_HALT
+        0     15   -> FR_add_header
+        0     15   -> FR_create
+        0     15   -> IP_Send
+        0     15   -> printf_P
+        0     17   -> printf_P
+      1      9   UDP_bind_port
       0     44   UST_delay
         0     28   -> UST_now
       0     50   UST_interval
@@ -4352,6 +4769,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
       2      0   callback
         2      0   -> LLC_open_slot
         2      0   -> ethernet_process
+        2      0   -> send_ip_frame
       2     28   comm_node_choise
         0     16   -> find_lvl_0_node
         0     16   -> find_lvl_1_node
@@ -4373,6 +4791,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
         0     21   -> printf_P
       0     18   ethernet_process
         0     10   -> AUTH_ETH_TimeAlloc
+        0     10   -> AUTH_IP_TimeAlloc
         0     10   -> FR_delete
         0     10   -> FR_find_rx
         0     10   -> NP_TimeAlloc
@@ -4388,15 +4807,21 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
       0     25   find_lvl_1_node
       0     25   find_lvl_2_node
       0     25   find_lvl_3_node
+      0     18   frame_filter
+        0      9   -> calc_xor
       0     22   frame_filter
         0     10   -> printf_P
         0     12   -> printf_P
-      0     18   frame_filter
-        0      9   -> calc_xor
       0     23   free_index
       0     85   generateAuthData
         0     16   -> memcpy
       2      9   getRNDByte
+      1     31   get_AUTH_NODE_REQ
+        0     12   -> DBG_CORE_HALT
+        0     12   -> FR_add_header
+        0     12   -> FR_create
+        0     12   -> printf_P
+        0     14   -> printf_P
       0     23   index_by_addr
       2      0   init
         2      0   -> AT_enable
@@ -4406,6 +4831,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
       2    165   is_free
       2     16   is_need_change_comm_node
       0     28   loadTimerCompare
+      0     26   mac_cmp
       0      2   main
         0      0   -> AM_SW_Init
         0      0   -> Neocore_start
@@ -4474,12 +4900,15 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
         0      9   -> getRNDByte
       2      0   receive
         2      0   -> MAC_Receive
-      0     24   receiveCMD_Request
-        0     10   -> printf_P
-        0     12   -> printf_P
+      1     31   receiveCMD_Request
+        0     17   -> MEM_memcpy
+        0     17   -> mac_cmp
+        0     17   -> printf_P
+        0     19   -> printf_P
       1     24   receiveCMD_Response
         0     10   -> printf_P
         0     12   -> printf_P
+        0     10   -> setNodeCHTS
       0     77   recv_sync
         0     63   -> AES_StreamCoder
         0     63   -> AT_wait
@@ -4517,6 +4946,12 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
       2      9   scheulder_next_alarm
         2      0   -> AT_set_alarm
         2      0   -> _find_next_active
+      2     28   send_ip_frame
+        0     26   -> FR_add_header
+        0     26   -> FR_create
+        0     26   -> IP_Send
+        0     26   -> printf_P
+        0     28   -> printf_P
       1     32   send_node_card
         0     14   -> FR_add_header
         0     14   -> FR_create
@@ -4537,6 +4972,17 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
         0     11   -> DBG_CORE_HALT
         0     11   -> printf_P
         0     13   -> printf_P
+      0     24   setNodeCHTS
+        0     10   -> LLC_open_slot
+        0     10   -> printf_P
+        0     12   -> printf_P
+        0     14   -> printf_P
+        0     10   -> rand
+      1     29   set_AUTH_NODE_RESP
+        0     17   -> MEM_memcpy
+        0     17   -> mac_cmp
+        0     17   -> printf_P
+        0     19   -> printf_P
       2     10   start_mode_1
         2      0   -> AM_Callback
         2      0   -> AM_IRQ_Init
@@ -4601,13 +5047,16 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
        5  ?<Constant ":%d:">_8
        5  ?<Constant ":%d:">_9
       23  ?<Constant "ACTIONSLOTS[0].rx == 0">
-      16  ?<Constant "AITH_IP RECEIVE">
-      29  ?<Constant "AUTH REQ received and...">
+      42  ?<Constant "AUTH REQ from some no...">
+      24  ?<Constant "AUTH gw response sended">
       19  ?<Constant "AUTH req add to tx">
       18  ?<Constant "AUTH_ETH Response">
       25  ?<Constant "AUTH_ETH frame filltered">
       23  ?<Constant "AUTH_ETH receive frame">
       33  ?<Constant "AUTH_ETH request filt...">
+      32  ?<Constant "AUTH_IP gw resp add t...">
+      23  ?<Constant "AUTH_IP req send to GW">
+      41  ?<Constant "AUTH_IP resp from gw ...">
       18  ?<Constant "Access depricated">
       18  ?<Constant "Access depricated">_1
       29  ?<Constant "Add card exit. no fre...">
@@ -4620,6 +5069,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
       12  ?<Constant "CCA/ACK err">
       32  ?<Constant "COLD_MOD[i]->Cold_Sta...">
       39  ?<Constant "COMM_NODE_PTR no acti...">
+      21  ?<Constant "Cant handel auth req">
       11  ?<Constant "Cant send.">
       18  ?<Constant "Card added!mac %d">
       19  ?<Constant "Card filtered.exit">
@@ -4638,6 +5088,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
       30  ?<Constant "HOT_MOD[i]->Hot_Start...">
       27  ?<Constant "HW_MOD[i]->HW_Init !=...">
       16  ?<Constant "Hardware inited">
+      15  ?<Constant "IP UDP SENDED!">
       31  ?<Constant "IP frame for node. IP...">
       11  ?<Constant "IP is AUTH">
       10  ?<Constant "IP is TCP">
@@ -4648,7 +5099,10 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
       24  ?<Constant "Incorrect MODEL.TM.MODE">
       15  ?<Constant "Invalid NP_CMD">
       11  ?<Constant "NP Receive">
+      37  ?<Constant "No free space in AUTH...">
+      31  ?<Constant "No free space in AUTH...">_1
       24  ?<Constant "Node auth ok! ipaddr=%d">
+      25  ?<Constant "Node choose TS=%d, CH=%d">
       13  ?<Constant "Node started">
       19  ?<Constant "Node unsinced exit">
       14  ?<Constant "Periodic send">
@@ -4666,11 +5120,14 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
       15  ?<Constant "Send node card">
       13  ?<Constant "Send success">
       11  ?<Constant "Sended raw">
+      20  ?<Constant "Sended to COMM node">
       13  ?<Constant "Sended to GW">
       32  ?<Constant "Sended to NODE % by r...">
        7  ?<Constant "Synced">
       12  ?<Constant "TCP RECEIVE">
-      12  ?<Constant "UDP RECEIVE">
+      17  ?<Constant "UDP data too big">
+      30  ?<Constant "UDP frame send to gw....">
+      15  ?<Constant "UDP wrong size">
       17  ?<Constant "Unrecognized IPP">
       17  ?<Constant "Unrecognized cmd">
       12  ?<Constant "Use node %d">
@@ -4679,6 +5136,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
       14  ?<Constant "Wrong channel">_1
       11  ?<Constant "Wrong mode">
       11  ?<Constant "Wrong size">
+      11  ?<Constant "Wrong size">_1
        3  ?<Constant "\r\n">
        3  ?<Constant "\r\n">_1
        3  ?<Constant "\r\n">_10
@@ -4702,8 +5160,10 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
        3  ?<Constant "fn">
       11  ?<Constant "fr != NULL">
        3  ?<Constant "fr">
+       3  ?<Constant "fr">_1
        6  ?<Constant "frame">
        6  ?<Constant "frame">_1
+       6  ?<Constant "frame">_2
        5  ?<Constant "ip.c">
        6  ?<Constant "llc.c">
        6  ?<Constant "mac.c">
@@ -4716,6 +5176,8 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
        4  ?<Constant "res">_1
        4  ?<Constant "res">_2
        4  ?<Constant "res">_3
+       4  ?<Constant "res">_4
+       4  ?<Constant "res">_5
        8  ?<Constant "route.c">
       11  ?<Constant "set_ch_res">
       22  ?<Constant "slot < MAX_TIME_SLOTS">
@@ -4730,6 +5192,8 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
        9  ?<Constant "unsynced">
        4  ?<Constant {(char *)(&NB_TABLE[0].LIVE_TIME),
        4  ?<Constant {(char *)(&ROUTE_TABLE), 160, 0}>
+       5  ?<Constant {(char *)0, (char *)0, 24}>
+       5  ?<Constant {(char *)0, (char *)0, 27}>
        4  ?<Constant {(char *)0, 0, 0}>
        4  ?<Constant {(char *)0, 150, 0}>
        4  ?<Constant {(char *)0, 150, 0}>_1
@@ -4737,6 +5201,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
        5  ?<Constant {(char *)MODEL.AES.CCM_KEY, (char *
        5  ?<Constant {(char *)MODEL.AES.STREAM_IV, (char
        5  ?<Constant {(char *)MODEL.AES.STREAM_KEY, (cha
+      10  ?<Constant {1, 2, 3, 4, 5, 6, 7, 8, 9, 0}>
       16  ?<Constant {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
       16  ?<Constant {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,_1
       16  ?<Constant {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,_2
@@ -4802,12 +5267,19 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
        6  AT_wait::?relay
      353  AUTH_ETH_Receive
        6  AUTH_ETH_Receive::?relay
-      20  AUTH_ETH_TimeAlloc
+      59  AUTH_ETH_TimeAlloc
        6  AUTH_ETH_TimeAlloc::?relay
-      68  AUTH_IP_Recive
+     157  AUTH_IP_Recive
        6  AUTH_IP_Recive::?relay
-     458  AUTH_request
+     291  AUTH_IP_TimeAlloc
+       6  AUTH_IP_TimeAlloc::?relay
+     125  AUTH_NODE_REQ
+     140  AUTH_NODE_RESP
+     387  AUTH_request
        6  AUTH_request::?relay
+     558  AUTH_resend_RESP_from_gw
+       6  AUTH_resend_RESP_from_gw::?relay
+      20  BIND
        2  CALLBACK
      463  CBCMAC_buf_encrypt
        6  CBCMAC_buf_encrypt::?relay
@@ -4989,6 +5461,8 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
        6  RP_SendRT_GW::?relay
      692  RP_SendRT_RT
        6  RP_SendRT_RT::?relay
+     377  RP_Send_COMM
+       6  RP_Send_COMM::?relay
      389  RP_Send_GW
        6  RP_Send_GW::?relay
       14  RP_TimeAlloc
@@ -5080,8 +5554,12 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
        1  U0CSR
        1  U0DBUF
        1  U0GCR
-      68  UDP_Recive
+     309  UDP_Recive
        6  UDP_Recive::?relay
+     420  UDP_Send
+       6  UDP_Send::?relay
+     156  UDP_bind_port
+       6  UDP_bind_port::?relay
       10  UST_MODULE
      194  UST_delay
        6  UST_delay::?relay
@@ -5105,6 +5583,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
        4  __Constant_396
        4  __Constant_3c
        4  __Constant_3d
+       4  __Constant_5
        4  __Constant_78
        4  __Constant_7fff
        4  __Constant_8000
@@ -5155,7 +5634,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
        6  calcCompareTime::?relay
       45  calc_xor
        6  calc_xor::?relay
-      36  callback
+      39  callback
        6  callback::?relay
      874  comm_node_choise
        6  comm_node_choise::?relay
@@ -5167,7 +5646,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
        6  energy_scan::?relay
      294  eth_send
        6  eth_send::?relay
-     218  ethernet_process
+     221  ethernet_process
        6  ethernet_process::?relay
      111  fill_meta
        6  fill_meta::?relay
@@ -5194,6 +5673,8 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
        6  generateAuthData::?relay
       53  getRNDByte
        6  getRNDByte::?relay
+     319  get_AUTH_NODE_REQ
+       6  get_AUTH_NODE_REQ::?relay
      137  index_by_addr
        6  index_by_addr::?relay
       26  init
@@ -5204,13 +5685,17 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
        6  is_free::?relay
      258  is_need_change_comm_node
        6  is_need_change_comm_node::?relay
+       4  last
        4  last_analyse_time
        4  last_analyse_time
        4  last_card_req_time
        4  last_card_send_time
        4  last_request
+       4  last_send
       70  loadTimerCompare
        6  loadTimerCompare::?relay
+      55  mac_cmp
+       6  mac_cmp::?relay
      231  main
        6  main::?relay
        9  mcu_sleep
@@ -5244,9 +5729,9 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
        6  readRandom::?relay
       54  receive
        6  receive::?relay
-      74  receiveCMD_Request
+     571  receiveCMD_Request
        6  receiveCMD_Request::?relay
-     567  receiveCMD_Response
+     570  receiveCMD_Response
        6  receiveCMD_Response::?relay
      243  recv_sync
        6  recv_sync::?relay
@@ -5267,12 +5752,18 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
        6  scheduler_tx::?relay
       57  scheulder_next_alarm
        6  scheulder_next_alarm::?relay
+     212  send_ip_frame
+       6  send_ip_frame::?relay
      342  send_node_card
        6  send_node_card::?relay
      294  send_sync
        6  send_sync::?relay
      117  setFreq
        6  setFreq::?relay
+     148  setNodeCHTS
+       6  setNodeCHTS::?relay
+     562  set_AUTH_NODE_RESP
+       6  set_AUTH_NODE_RESP::?relay
        2  slot_busy
       36  start_mode_1
        6  start_mode_1::?relay
@@ -5280,6 +5771,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
        6  start_mode_2::?relay
       83  syncronize_timer
        6  syncronize_timer::?relay
+       4  time
      470  transmite
        6  transmite::?relay
       22  uart_init
@@ -5289,23 +5781,23 @@ E:\Neocore\Hardware\STACK_CORE_SRC\ustimer.c
        6  validate_sync::?relay
       51  xor_calc
        6  xor_calc::?relay
-     782  -- Other
+     910  -- Other
 
  
- 27 911 bytes in segment BANKED_CODE
-  1 248 bytes in segment BANK_RELAYS
-  3 213 bytes in segment CODE_C
+ 31 813 bytes in segment BANKED_CODE
+  1 308 bytes in segment BANK_RELAYS
+  3 709 bytes in segment CODE_C
       3 bytes in segment INTVEC
      47 bytes in segment NEAR_CODE
      35 bytes in segment SFR_AN
     232 bytes in segment XDATA_I
     232 bytes in segment XDATA_ID
-  4 135 bytes in segment XDATA_Z
+  4 432 bytes in segment XDATA_Z
  
-  4 668 bytes of CODE     memory (+ 75 bytes shared)
+  5 220 bytes of CODE     memory (+ 79 bytes shared)
       0 bytes of DATA     memory (+ 35 bytes shared)
- 27 911 bytes of HUGECODE memory
-  4 367 bytes of XDATA    memory
+ 31 813 bytes of HUGECODE memory
+  4 664 bytes of XDATA    memory
 
 Errors: none
 Warnings: 11
