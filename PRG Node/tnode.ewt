@@ -2165,6 +2165,12 @@
         <file>
             <name>$PROJ_DIR$\udp.h</name>
         </file>
+        <file>
+            <name>$PROJ_DIR$\vtimer.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\vtimer.h</name>
+        </file>
     </group>
     <group>
         <name>stack core</name>

@@ -10,6 +10,10 @@
 #define PERIOD_SEND_IP_REQ 5
 enum AUTH_IP_TYPES {AUTH_CMD_REQ = 0, AUTH_CMD_RESP = 1};
 
+void AUTH_IP_Init(){
+    // Возможно инициализировать нужно таймеры
+};
+
 void AUTH_IP_Recive(struct frame *frame){
   // Проверим размер
   if (frame->len == 0){

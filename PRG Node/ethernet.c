@@ -61,7 +61,7 @@ static bool frame_filter(struct frame *frame){
 
   // Фильтр 3: по идентификатору сети
   if (eth_header->NETID!= MODEL.SYNC.panid){
-    LOG_OFF("Filtered panid");
+    LOG_ON("Filtered panid");
     return false;
   }
   
@@ -70,12 +70,12 @@ static bool frame_filter(struct frame *frame){
   if (!from_gw){
     // Фильтр 4: по каналу отправителя
     if (eth_header->NSRC_CH  < CH11 || eth_header->NSRC_CH  > CH28){
-      LOG_OFF("Filtered NSRC_CH");
+      LOG_ON("Filtered NSRC_CH=%d",eth_header->NSRC_CH);
       return false;
     }
     // Фильтр 5: по таймслоту отправителя
     if (eth_header->NSRC_TS  < 1 || eth_header->NSRC_TS  > 49){
-      LOG_OFF("Filtered NSRC_TS");
+      LOG_ON("Filtered NSRC_TS=%d",eth_header->NSRC_TS);
       return false;
     }
   };
@@ -124,7 +124,7 @@ void ethernet_process(void){
   LOG_OFF("Start search rx");
   while (frame){
     LOG_OFF("Find rx!");
-    LOG_ON("ETH. LEN:%d, TS:%d, CH:%d, PID:%d", frame->len,
+    LOG_OFF("ETH. LEN:%d, TS:%d, CH:%d, PID:%d", frame->len,
            frame->meta.TS, frame->meta.CH, frame->meta.PID);
     parse_frame(frame);
     FR_delete(frame);

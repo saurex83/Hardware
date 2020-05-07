@@ -58,21 +58,33 @@ void IP_Receive(struct frame *frame){
   // Заполняем метаданные
   fill_meta(frame);
   
+
+                
   // Пакет предназначен для шлюза. Его нужно маршрутизировать
+  // Заголовок пока что отрезать не надо
   if(frame->meta.FDST == 0){ 
     LOG_ON("Route to GW");
     RP_SendRT_GW(frame);
     return;
   };
+
+  // Пакет для маршрутизации от шлюза к какомуто узлу
+  // Заголовок отрезать не надо
+  if (frame->meta.FDST != MODEL.node_adr)
+    if (frame->meta.FDST != 0xffff)
+      RP_SendRT_RT(frame);
+  
+  // Отрезаем заголовок
+  FR_del_header(frame, sizeof(struct IP_H));
   
   // Пакет для нас
   if (frame->meta.FDST == MODEL.node_adr || frame->meta.FDST == 0xffff){
     LOG_ON("IP frame for node. IPP_process");
     IPP_process(frame);
+    return;
   };
   
-  // Пакет для маршрутизации от шлюза к какомуто узлу
-  RP_SendRT_RT(frame);
+
 };
 
 void IP_Send(struct frame *frame){
@@ -84,6 +96,8 @@ void IP_Send(struct frame *frame){
      
   bool res =FR_add_header(frame, (char*)&iph, sizeof(struct IP_H));
   ASSERT(res);
+  frame->meta.FSRC = MODEL.node_adr;
+  frame->meta.FDST = 0;
   frame->meta.PID = PID_IP;
   LOG_ON("IP sended to gw");    
   RP_Send_GW(frame);    

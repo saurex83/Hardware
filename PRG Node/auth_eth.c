@@ -52,17 +52,16 @@ static struct auth_req AUTH_NODE_REQ[5];
 #define AUTH_NODE_RESP_SIZE 5
 static struct auth_res AUTH_NODE_RESP[5];
 
+void AUTH_ETH_Init(){
+  MEMSET((char*)AUTH_NODE_RESP, 0, sizeof(AUTH_NODE_RESP));
+  MEMSET((char*)AUTH_NODE_REQ, 0, sizeof(AUTH_NODE_REQ));
+};
+
 void AUTH_ETH_Receive(struct frame *frame){
   LOG_ON("AUTH_ETH receive frame");
-  // Проверим пакет.
-  // Мы можем получить пакет REQ или RESP
-  // Нужно типы пакетов разделить по нормальному а не cmd
-  // Для этого первым байтом делаем тип команды/данных а потом
-  // отрезаем от фрейма
   
-  bool filter_rule = (frame->meta.TS == 1) &&
-                     (frame->meta.NDST == 0xffff) &&
-                     (frame->len > 0);  
+  // Всеравно откого получили пакет. в пакет вклчен мак адрес
+  bool filter_rule = frame->len > 0;  
   if (!filter_rule){
     LOG_ON("AUTH_ETH frame filltered");
     return;
@@ -167,7 +166,7 @@ void set_AUTH_NODE_RESP(struct frame* frame){
   struct AUTH_ETH_RESP *res = (struct AUTH_ETH_RESP*)frame->payload;
   
   if (frame->len != sizeof(struct AUTH_ETH_RESP)){
-    LOG_ON("AUTH_IP resp from gw have wrong size= %d",
+    LOG_ON("AUTH_IP resp from gw have wrong size= %d. struct size=%d", frame->len,
            sizeof(struct AUTH_ETH_RESP));
     return;
   };
@@ -221,7 +220,7 @@ struct frame* get_AUTH_NODE_REQ(){
     };
   
   // Ничего не нашли
-  if (idx < -1)
+  if (idx < 0)
     return NULL;
 
   struct frame *fr = FR_create();
@@ -238,7 +237,7 @@ struct frame* get_AUTH_NODE_REQ(){
   return fr;
 };
 
-/** brief Обработка запроса авторизации
+/** brief Обработка запроса авторизации от соседних узлов
 * Запрос обрабатывается если данный узел авторизован  
 */
 static void receiveCMD_Request(struct frame* frame){
@@ -285,11 +284,11 @@ static void receiveCMD_Request(struct frame* frame){
   AUTH_NODE_REQ[idx].RA = true;
   MEMCPY((char*)&AUTH_NODE_REQ[idx].req, (char*)req, 
          sizeof(struct AUTH_ETH_REQ));
+  char *mac_ptr = AUTH_NODE_REQ[idx].req.mac;
   
-  // TODO Сохранить запрос в таблице и добавить геттер запросов.
-  // Авторизация уровня IP будет опрашивать таблицу и
-  // общаться со шлюзом по этому вопросу.
-  LOG_ON("AUTH REQ from some node add AUTH_NODE_REQ");
+  LOG_ON("AUTH REQ from mac: 0x%2x%2x%2x%2x%2x%2x%2x%2x add AUTH_NODE_REQ",
+         mac_ptr[0],mac_ptr[1],mac_ptr[2],mac_ptr[4],mac_ptr[5],mac_ptr[6],
+         mac_ptr[7]);
 };
 
 /** brief Передача ответа на авторизацию, полученую от шлюза
@@ -336,10 +335,9 @@ static void AUTH_resend_RESP_from_gw(){
   frame->meta.PID = PID_AUTH;  
   frame->meta.NSRC = MODEL.node_adr;
   frame->meta.NDST = 0xffff;
+  LOG_ON("Auth ip response from gw sended")
   RP_Send(frame);
-  
-  AUTH_NODE_RESP[idx].RA = false;
-  LOG_ON("AUTH gw response sended");
+  AUTH_NODE_RESP[idx].RA = false;;
 };
 
 void AUTH_ETH_TimeAlloc(){
@@ -382,6 +380,6 @@ static void AUTH_request(){
   ASSERT(res);
   
   frame->meta.PID = PID_AUTH;
+  LOG_ON("Node authorisation requested");
   RP_Send_COMM(frame);
-  LOG_ON("AUTH req add to tx");
 };

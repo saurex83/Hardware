@@ -105,7 +105,7 @@ void RP_Send_COMM(struct frame *frame){
   frame->meta.NDST = addr;
   frame->meta.NSRC = MODEL.node_adr;
   eth_send(frame);
-  LOG_ON("Sended to COMM node");  
+  LOG_ON("Sended to COMM node. NDST=%d, CH=%d, TS=%d", addr, ch, ts);  
 };
 
 void RP_Send_GW(struct frame *frame){
@@ -130,8 +130,11 @@ void RP_Send_GW(struct frame *frame){
   frame->meta.CH = ch;
   frame->meta.NDST = addr;
   frame->meta.NSRC = MODEL.node_adr;
+  LOG_ON("Sended to GW. frame_ptr=0x%x, NDST=%d, NSRC=%d, FDST=%d, FSRC=%d, TS=%d, CH=%d",
+         (char*)frame,frame->meta.NDST,frame->meta.NSRC,
+         frame->meta.FDST,frame->meta.FSRC,ts,ch);
   eth_send(frame);
-  LOG_ON("Sended to GW");  
+  
 };
 
 void RP_Send(struct frame *frame){
@@ -192,13 +195,24 @@ void RP_SendRT_GW(struct frame *frame){
   // Обновим таблицу маршрутов
   bool res = route_update(nsrc, fsrc, nsrc_ts, nsrc_ch);
   if (res){
-    LOG_ON("Route table updated. nsrc=%, fsrc=%d, ts=%d, ch=%d",
+    LOG_ON("Route table updated. nsrc=%d, fsrc=%d, ts=%d, ch=%d",
            nsrc, fsrc, nsrc_ts, nsrc_ch);
-    return;
-  };
-  
-  LOG_ON("Route table update faild. nsrc=%, fsrc=%d, ts=%d, ch=%d",
+  } else
+    LOG_ON("Route table update faild. nsrc=%d, fsrc=%d, ts=%d, ch=%d",
          nsrc, fsrc, nsrc_ts, nsrc_ch);
+  
+  
+  // frame будет удален после выхода из eth_receive и пакет не будет 
+  // отправлен. Нужно его скопировать и только потом отправлять
+  struct frame *new_frame = FR_create();
+  ASSERT(new_frame);
+  
+  FR_add_header(new_frame, frame->payload, frame->len);
+  new_frame->meta.FSRC = fsrc;
+  new_frame->meta.PID = frame->meta.PID;
+  new_frame->meta.IPP = frame->meta.IPP;
+  
+  RP_Send_GW(new_frame);
 };
 
 /** brief Ищем маршрут до fdst
@@ -218,19 +232,16 @@ void RP_SendRT_RT(struct frame *frame){
   
   if (fsrc != 0){
     LOG_ON("Frame must be sended GW. Drop. fsrc=%d", fsrc);
-    FR_delete(frame);
     return;
   };
   
   if (fdst == 0){
     LOG_ON("Frame fdst is 0. Drop.");
-    FR_delete(frame);
     return;
   };
   
   if (fdst == 0xffff){
     LOG_ON("Frame fdst is 0xffff. Drop.");
-    FR_delete(frame);
     return;
   };
   
@@ -238,14 +249,26 @@ void RP_SendRT_RT(struct frame *frame){
   int idx = route_find_by_fsrc(fdst);
   if (idx < 0){
     LOG_ON("Route to node %d not found. Drop.", fdst);
-    FR_delete(frame);
     return;
   };
   
-  frame->meta.TS = ROUTE_TABLE[idx].NSRC_TS;
-  frame->meta.CH = ROUTE_TABLE[idx].NSRC_CH;
-  frame->meta.NDST = ROUTE_TABLE[idx].nsrc;
-  frame->meta.NSRC = MODEL.node_adr;
-  eth_send(frame);
-  LOG_ON("Sended to NODE % by route table", ROUTE_TABLE[idx].nsrc); 
+  // frame будет удален после выхода из eth_receive и пакет не будет 
+  // отправлен. Нужно его скопировать и только потом отправлять
+  struct frame *new_frame = FR_create();
+  ASSERT(new_frame);
+  
+  FR_add_header(new_frame, frame->payload, frame->len);
+
+  new_frame->meta.PID = frame->meta.PID; 
+  new_frame->meta.TS = ROUTE_TABLE[idx].NSRC_TS;
+  new_frame->meta.CH = ROUTE_TABLE[idx].NSRC_CH;
+  new_frame->meta.NDST = ROUTE_TABLE[idx].nsrc;
+  new_frame->meta.NSRC = MODEL.node_adr;
+  
+  
+  LOG_ON("Route frame(fdst=%d, fsrc=%d) to NODE %d by route table. ", 
+    fdst, fsrc, ROUTE_TABLE[idx].nsrc); 
+    
+  eth_send(new_frame);
+
 };

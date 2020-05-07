@@ -18,7 +18,7 @@
 #define DEFAULT_SYS_CH CH11
 
 #define FRAME_FOOTER_DEL //!< FR_del_header заполняет пустое место нулями
-#define FILL_SLOT_ZERO //!< SL_alloc заполняет буфер нулями
+//#define FILL_SLOT_ZERO //!< SL_alloc заполняет буфер нулями. Если выкл. прог виснет на addHeader
  
 #define MAX_PACKETS 20 
 #define MAX_RX_BUFF     10

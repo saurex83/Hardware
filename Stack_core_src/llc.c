@@ -49,6 +49,7 @@ void LLC_open_slot(timeslot_t ts, channel_t ch){
   ASSERT(ts >= 1 && ts < MAX_SLOTS);
   ASSERT(ch >= MIN_CH && ch <= MAX_CH);
   ACTIONSLOTS[ts].rx = ch;
+  LOG_ON("Slot open. TS=%d, CH=%d", ts, ch);
 }
 
 void LLC_close_slot(timeslot_t ts){
@@ -69,6 +70,9 @@ static void scheduler_tx(void){
   
   if (!tx_frame)
     return;
+  
+  if (tx_frame->meta.TS==0)
+    while(1);
   
   while(tx_frame){
     ASSERT(tx_frame->meta.TS != 0);

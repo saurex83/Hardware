@@ -9,6 +9,8 @@
 #include "stdlib.h"
 #include "macros.h"
 #include "global.h"
+#include "llc.h"
+
 
 #define MODE_0 0 // Отклчена модуль синхронизации 
 #define MODE_1 1 // Прием, ретрансляция, синхронизация

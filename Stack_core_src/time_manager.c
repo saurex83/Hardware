@@ -86,6 +86,7 @@ static void init(void){
 static void start_mode_1(void){
   AM_IRQ_Init();
   init();
+  LLC_open_slot(1, MODEL.SYNC.sys_channel);
   while (true){
     mcu_sleep();
     if (MODEL.TM.MODE == 0){

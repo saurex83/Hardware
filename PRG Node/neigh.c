@@ -54,6 +54,7 @@ void NP_Init(){
   MEMSET((char*)NB_TABLE, 0, sizeof(NB_TABLE));
   COMM_NODE_PTR = NULL;
   LAST_UPDATE_TIME_COMM_NODE = 0;
+  MODEL.NEIGH.comm_node_found = false;
 };
 
 /** brief Возращает информацио об узле связи с шлюзом
@@ -71,6 +72,7 @@ bool comm_node_info(unsigned int *addr, char *ts, char *ch){
     return true;
   };
   
+  *addr = COMM_NODE_PTR->ADDR;
   *ts = COMM_NODE_PTR->TS_SLOT;
   *ch = COMM_NODE_PTR->CH_SLOT;
   return true;
@@ -124,11 +126,19 @@ static int free_index(){
 };
 
 /** brief Добавим или обновим карточку в таблице
+* Уничтожения худших карт не происходит
+* Добавляются соседи с RSSI >= -90
 */
 static void add_card(struct frame *frame){
   LOG_ON("Add card");
   if (frame->len != sizeof(struct NP_CARD))
     return;
+  
+  if (frame->meta.RSSI_SIG < -90){
+    LOG_ON("Bad frame rssi=%d", frame->meta.RSSI_SIG);
+      return;
+  };
+
   
   struct NP_CARD *card = (struct NP_CARD*)frame->payload;
   // Проверим присланные параметры
@@ -171,7 +181,9 @@ static void add_card(struct frame *frame){
   NB_TABLE[idx].TS_SLOT = card->TS;
   NB_TABLE[idx].CH_SLOT = card->CH;
   NB_TABLE[idx].ETX = card->ETX;
-  LOG_ON("Card added!mac %d", NB_TABLE[idx].ADDR);
+  
+  LOG_ON("Card added! ADDR=%d, RSSI=%d, ETX=%d", 
+         NB_TABLE[idx].ADDR,NB_TABLE[idx].RSSI_SIG, NB_TABLE[idx].ETX);
 };
 
 void NP_Receive(struct frame *frame){
@@ -229,6 +241,7 @@ static void periodic_card_send(){
 };
 
 /** brief Анализ таблицы и уменьшении времени жизни записи
+* TODO выбрасывать плохих соседей с высоким ETX
 */
 static void analyse_table(){
   static unsigned long last_analyse_time = 0;
@@ -260,144 +273,45 @@ static void analyse_table(){
   };
 };
 
-/** brief Поиск шлюза среди соседей
+/** brief Поиск узла с минимальным ETX(приоритет) и максимальным RSSI
 * 
-* Выбор шлюза для связи является лучшим вариантом, поэтому 
-* допускаеться уровень связи желтого уровня
 */
-static int find_lvl_0_node(){
+static int find_node(){
   int idx = -1;
-  signed char rssi = -80;
-  char etx = 0;
-  
-  bool filter;
-  for (int  i = 0; i < NB_ITEMS; i++){
-    // Пропускаем пустые записи
-    if (!NB_TABLE[i].RA)
-      continue;
-    filter = true;
-    filter &= NB_TABLE[i].RSSI_SIG >= rssi;
-    filter &= NB_TABLE[i].ETX <= etx;
-    if (filter){
-      rssi = NB_TABLE[i].RSSI_SIG;
-      etx = NB_TABLE[i].ETX;
-      idx = i;
-    };
-  };
-  return idx;
-};
-
-
-/** brief Поиск соседа для связи по строгим правилам
-* Выбирает узел с минимальным ETX и RSSI с устойчивой связью.
-* При равных значениях ETX выбирается узел с максимальным RSSI
-*/
-static int find_lvl_1_node(){
-  int idx = -1;
-  signed char rssi = -50;
+  signed char rssi = -90;
   char etx = 255;
   
-  bool filter;
   for (int  i = 0; i < NB_ITEMS; i++){
     // Пропускаем пустые записи
     if (!NB_TABLE[i].RA)
       continue;
-    filter = true;
-    filter &= NB_TABLE[i].RSSI_SIG >= rssi;
-    filter &= NB_TABLE[i].ETX <= etx;
-    if (filter){
+  
+    // Если ETX ниже то беззоговорочно выбираем этот узел
+    if (NB_TABLE[i].ETX < etx){
       rssi = NB_TABLE[i].RSSI_SIG;
       etx = NB_TABLE[i].ETX;
       idx = i;
     };
-  };
-  return idx;
-};
-
-/** brief Поиск соседа для связи по строгим правилам
-* Выбирает узел с минимальным ETX и RSSI с неустойчевой связью.
-* При равных значениях ETX выбирается узел с максимальным RSSI
-*/
-static int find_lvl_2_node(){
-  int idx = -1;
-  signed char rssi = -80;
-  char etx = 255;
-  
-  bool filter;
-  for (int  i = 0; i < NB_ITEMS; i++){
-    // Пропускаем пустые записи
-    if (!NB_TABLE[i].RA)
-      continue;
-    filter = true;
-    filter &= NB_TABLE[i].RSSI_SIG >= rssi;
-    filter &= NB_TABLE[i].ETX <= etx;
-    if (filter){
-      rssi = NB_TABLE[i].RSSI_SIG;
-      etx = NB_TABLE[i].ETX;
-      idx = i;
-    };
-  };
-  return idx;
-};
-
-/** brief Поиск соседа для связи по строгим правилам
-* Выбирает узел с минимальным ETX и RSSI с плохой связью.
-* При равных значениях ETX выбирается узел с максимальным RSSI
-*/
-static int find_lvl_3_node(){
-  int idx = -1;
-  signed char rssi = -120;
-  char etx = 255;
-  
-  bool filter;
-  for (int  i = 0; i < NB_ITEMS; i++){
-    // Пропускаем пустые записи
-    if (!NB_TABLE[i].RA)
-      continue;
-    filter = true;
-    filter &= NB_TABLE[i].RSSI_SIG >= rssi;
-    filter &= NB_TABLE[i].ETX <= etx;
-    if (filter){
-      rssi = NB_TABLE[i].RSSI_SIG;
-      etx = NB_TABLE[i].ETX;
-      idx = i;
-    };
-  };
-  return idx;
-};
-
-/** brief Решает требуется ли замена узла
-*/
-static bool is_need_change_comm_node(struct np_record *node){
-  // Нашли сами себя
-  if (node == COMM_NODE_PTR)
-    return false;
-  
-  // Мы нашли шлюз с примелемой связью
-  if (node->ETX == 0)
-    if (node->RSSI_SIG >= -80)
-      return true;
-
-  // Мы нашли узел с лучшим ETX
-  if (COMM_NODE_PTR->ETX > node->ETX)
-    if (node->RSSI_SIG >= -80)
-      return true;
-
-  // Мы нашли узел с таким же ETX
-  // Анализируем по уровню сигнала
-  if (COMM_NODE_PTR->ETX == node->ETX)
-    // Лучшее враг хорошего ))
-    if (COMM_NODE_PTR->RSSI_SIG >= - 70)
-      return false;
     
-    if (COMM_NODE_PTR->RSSI_SIG >= - 90)
-      if (node->RSSI_SIG > COMM_NODE_PTR->RSSI_SIG + 5)
-        return true;  
+    // Среди соседий с низким ETX выбираем того у кого лучше сигнал
+    if (NB_TABLE[i].ETX == etx)
+      if (NB_TABLE[i].RSSI_SIG > rssi){
+        rssi = NB_TABLE[i].RSSI_SIG;
+        etx = NB_TABLE[i].ETX;
+        idx = i;
+      };
+  };
   
-  return false;
+  // Раскажем что мы нашли
+  if (idx >= 0)
+    LOG_ON("Find: idx=%d, addr=%d, rssi=%d, etx=%d",
+           idx, NB_TABLE[idx].ADDR, NB_TABLE[idx].RSSI_SIG,
+           NB_TABLE[idx].ETX);
+    
+  return idx;
 };
 
-/** brief Выбираем и следим за указатель на узел связи с шлюзом
+/** brief Выбираем и следим за указателем на узел связи с шлюзом
 */
 static void comm_node_choise(){
   unsigned long now = MODEL.RTC.uptime;
@@ -433,36 +347,27 @@ static void comm_node_choise(){
   }
   
   // Начинаем выбирать соседей для связи
-  int idx;
-  if (idx = find_lvl_0_node() < 0)
-    if (idx = find_lvl_1_node() < 0)
-      if (idx = find_lvl_2_node() < 0)
-        if (idx = find_lvl_3_node() <0){
-          LOG_ON("Imposible");  
-          return; // Этого быть не должно
-          }
+  int idx = find_node();
+  if (idx < 0){
+    LOG_ON("Imposible");  
+    return; // Этого быть не должно
+  };
   
-  // Если раньше небыло никакого узла связи, 
-  // то выберим тот который нашли. Обновим время и уходим.
-  if (!COMM_NODE_PTR){
-    COMM_NODE_PTR = &NB_TABLE[idx];
+  // Нашли тот же самый узел
+  // Нужно перерасчитать ETX так как найденый узел мог обновить свой маршут
+  if (COMM_NODE_PTR == &NB_TABLE[idx]){
     LAST_UPDATE_TIME_COMM_NODE = now;
-    MODEL.node_ETX = COMM_NODE_PTR->ETX + 1;
-    MODEL.NEIGH.comm_node_found = true;
-    LOG_ON("Use node %d", NB_TABLE[idx].ADDR);
+    MODEL.node_ETX = COMM_NODE_PTR->ETX + 1;  
+    LOG_ON("Unchanged IDX=%d. PTR=%d, ADDR", idx, &NB_TABLE[idx], NB_TABLE[idx].ADDR);
     return;
   };
-
-  // Теперь нужно решить стоит ли менять узел связи.
-  if (is_need_change_comm_node(&NB_TABLE[idx])){
-    COMM_NODE_PTR = &NB_TABLE[idx];
-    LAST_UPDATE_TIME_COMM_NODE = now;
-    MODEL.node_ETX = COMM_NODE_PTR->ETX + 1;
-    LOG_ON("Use node changed to %d", NB_TABLE[idx].ADDR);
-    return;
-  }
-
-    
+  
+  // Меняем узел
+  COMM_NODE_PTR = &NB_TABLE[idx];
+  LAST_UPDATE_TIME_COMM_NODE = now;
+  MODEL.node_ETX = COMM_NODE_PTR->ETX + 1;  
+  MODEL.NEIGH.comm_node_found = true;
+  LOG_ON("Find IDX=%d. PTR=%d, ADDR", idx, &NB_TABLE[idx], NB_TABLE[idx].ADDR);    
 };
 
 static bool is_free(){

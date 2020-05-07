@@ -142,6 +142,28 @@ char* SL_alloc(void){
   return ret_ptr;
 };
 
+/**
+@brief Копируем слот. 
+@details При копировании сбрасываем принадлежность к буферам RX/TX
+@ return указатель на новый слот или NULL
+*/
+char* SL_copy(char *buff){
+  char *ret_ptr = SL_alloc();
+  if (!ret_ptr)
+    return NULL;
+  
+  ATOMIC_BLOCK_RESTORE{
+    struct slot *src = container_of(buff, struct slot, buffer);
+    struct slot *dst = container_of(ret_ptr, struct slot, buffer);
+    MEMCPY((char*)dst, (char*)src, sizeof(struct slot));
+    dst->property.RX = false;
+    dst->property.TX = false;
+  };
+
+  return ret_ptr;
+};
+
+
 static bool _free(char *buff){
   struct slot *slot = container_of(buff, struct slot, buffer);
     

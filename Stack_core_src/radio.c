@@ -78,8 +78,10 @@ static inline void pre_config(void){
 }
 
 bool RI_SetChannel(channel_t channel){
-  if (!(channel >= MIN_CH) && (channel <= MAX_CH))
+  if (!(channel >= MIN_CH) && (channel <= MAX_CH)){
+    LOG_ON("Channel %d  [CH11..CH28]", channel);
     return false;
+  };
   MODEL.RADIO.channel = channel;
   return true;
 }

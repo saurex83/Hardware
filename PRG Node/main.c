@@ -1,26 +1,4 @@
-#include "action_manager.h"
-#include "time_manager.h"
-#include "debug.h"
-#include "model.h"
-#include "sync.h"
-#include "action_manager.h"
-#include "frame.h"
-#include "model.h"
-#include "radio.h"
-#include "llc.h"
-#include "ethernet.h"
-#include "ip.h"
-#include "protocol_defs.h"
-
-static struct frame* get_frame(void){
-  struct frame *frame = FR_create(); 
-  char data[10] = {1,2,3,4,5,6,7,8,9,0};
-  FR_add_header(frame, data, sizeof(data));
-  frame->meta.tx_attempts = 3;
-  frame->meta.TS = 2;
-  frame->meta.CH = CH20;
-  return frame;
-}
+#include "controller.h"
 
 static void send_ip_frame(){
   bool flt = MODEL.AUTH.auth_ok && MODEL.AUTH.access_ok;
@@ -33,56 +11,38 @@ static void send_ip_frame(){
    return;
  last_send = now;
  
- 
- struct frame *frame = FR_create(); 
-  char data[10] = {1,2,3,4,5,6,7,8,9,0};
-  FR_add_header(frame, data, sizeof(data));
-  frame->meta.IPP = IPP_UDP;
-  IP_Send(frame);
-  LOG_ON("IP UDP SENDED!");
+ char data[] = {1,2,3,4,5};
+ UDP_Send(99, data, sizeof(data));
+ LOG_ON("UDP SENDED1");
 };
 
-/** brief Функция вызывается после приема пакетов
-* Здесь происходит обработка протоколов верхнего уровня
-*/
-static void callback(void){
-  static bool first=true;
-  if (first){
-    LLC_open_slot(1, MODEL.SYNC.sys_channel);
-    first = false;
-  }
-  ethernet_process();
+
+static void user_time_alloc(void){
+  // measure_process()
+  // Запуск измерений. им не нужена авторизация
   
+  // Следующим задачам нужна авторизация и возможность передачи
+  if (!NeocoreReady())
+    return;
+  // statisticAgregate()
+  // measureAgregate()
+  // nodeHeathControl() Контролируем стек и параметры.
+  //
   send_ip_frame();
-  //  LLC_add_tx_frame(frame);
- LOG_OFF("callback exit");
-}
+};
 
-//TODO alarm manager вызывает из прерывания TM_IRQ
-//в TM_IRQ засоряется стек прерывания
-static void pre_init(void){
-  AM_HW_Init();
-  AM_SW_Init();
-  LOG_ON("Hardware inited");
-  MODEL.SYNC.mode = 1;
-  MODEL.TM.MODE = 1;
-  AM_set_callback(callback);
-}
+#define ONE_SEC 1000000U
 
-// TODO добавить в buffer.c размер RX и TX очереди
 void main(void){
-  pre_init();
-  LOG_ON("Node started");
+  HP_Init();
+  setUserTimeAllocation(user_time_alloc);
   
-  while (1){
-    MODEL.SYNC.mode = 1;
-    MODEL.TM.MODE = 1;
-    while (!network_sync(1000000U));
-    LOG_ON("Synced");
-    MODEL.node_TS = 5;
-    MODEL.node_CH =14;
+  while (true){
+    while (!network_sync(ONE_SEC));
+    LOG_ON("Network synced");
     Neocore_start();
+    LOG_ON("Network lost sync. Resync");
     AM_SW_Init();
-    LOG_ON("START RESYNC");
+    HP_Init();
   }
 };

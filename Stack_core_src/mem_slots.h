@@ -4,6 +4,7 @@ int SL_zone_check();
 int SL_available();
 int SL_busy();
 bool SL_free(char *buff);
+char* SL_copy(char *buff);
 char* SL_alloc(void);
 bool SL_is_tx(char *buff);
 bool SL_is_rx(char *buff);

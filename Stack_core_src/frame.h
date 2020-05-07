@@ -11,6 +11,7 @@ struct frame{
 };
 
 struct frame* FR_create();
+struct frame* FR_copy(struct frame *frame);
 bool FR_delete(struct frame*);
 bool FR_add_header(struct frame*, void *head, char len);
 bool FR_del_header(struct frame*, char len);

@@ -21,7 +21,14 @@ void FR_restart(){
 }
 
 struct frame* FR_create(){
-  return (struct frame*)SL_alloc();
+  struct frame *fr  = (struct frame*)SL_alloc();
+  MEMSET((char*)&fr->meta, 0, sizeof(struct meta));
+  fr->len = 0;
+  return fr;
+};
+
+struct frame* FR_copy(struct frame *frame){
+  return (struct frame*)SL_copy((char*)frame);
 };
 
 bool FR_delete(struct frame *frame){
