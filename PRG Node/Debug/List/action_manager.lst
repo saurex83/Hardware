@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# IAR C/C++ Compiler V10.10.1.4655 for 8051               04/May/2020  18:31:49
+# IAR C/C++ Compiler V10.10.1.4655 for 8051               09/May/2020  23:57:13
 # Copyright 2004-2017 IAR Systems AB.
 # PC-locked license - IAR Embedded Workbench for 8051
 #
@@ -13,7 +13,7 @@
 #                          
 #    Source file        =  E:\Neocore\Hardware\STACK_CORE_SRC\action_manager.c
 #    Command line       =  
-#        -f C:\Users\08A4~1\AppData\Local\Temp\EWCDF8.tmp
+#        -f C:\Users\08A4~1\AppData\Local\Temp\EW143A.tmp
 #        (E:\Neocore\Hardware\STACK_CORE_SRC\action_manager.c -lc
 #        "E:\Neocore\Hardware\PRG Node\Debug\List" -o "E:\Neocore\Hardware\PRG
 #        Node\Debug\Obj" -e --debug --core=plain --dptr=16,1 --data_model=large
@@ -2005,99 +2005,106 @@ E:\Neocore\Hardware\STACK_CORE_SRC\llc.c
      59          
      60          bool LLC_add_tx_frame(struct frame *frame){
      61            ASSERT(frame);
-     62            AES_StreamCoder(true, frame->payload, frame->payload, frame->len); 
-     63            FR_set_tx(frame);
-     64            return true;
-     65          }
-     66          
-     67          static void scheduler_tx(void){
-     68            struct frame* tx_frame = NULL; 
-     69            tx_frame = FR_find_tx(tx_frame);
-     70            
-     71            if (!tx_frame)
-     72              return;
-     73            
-     74            if (tx_frame->meta.TS==0)
-     75              while(1);
-     76            
-     77            while(tx_frame){
-     78              ASSERT(tx_frame->meta.TS != 0);
-     79              // Если у нас есть что передавать, берем следующий кадр из буфера
-     80              if (ACTIONSLOTS[tx_frame->meta.TS].frame_tx){
-     81                tx_frame = FR_find_tx(tx_frame);
-     82                continue;
-     83              }
-     84              ACTIONSLOTS[tx_frame->meta.TS].frame_tx = tx_frame;
-     85              TM_SetAlarm(tx_frame->meta.TS, TX_ALARM); 
-     86              tx_frame = FR_find_tx(tx_frame);
-     87            }
-     88          }
-     89          
-     90          static void scheduler_rx(void){
-     91            ASSERT(ACTIONSLOTS[0].rx == 0);
-     92            for (char i = 1; i < MAX_SLOTS; i++)
-     93              if (ACTIONSLOTS[i].rx)
-     94                TM_SetAlarm(i, RX_ALARM);
-     95              else
-     96                TM_ClrAlarm(i, RX_ALARM);
-     97          }
-     98          
-     99          static void Cold_Start(void){
-    100          // Планировщик планирует на один суперфрейм в начале ts0
-    101            if (MODEL.TM.timeslot != 0)
-    102              return;
-    103            
-    104            scheduler_tx();
-    105            scheduler_rx();
-    106          };
-    107          
-    108          static inline void receive(){
-    109            timeslot_t ts = MODEL.TM.timeslot;
-    110            MAC_Receive(ACTIONSLOTS[ts].rx);
-    111          }
-    112          
-    113          static void transmite(void){
-    114            timeslot_t ts = MODEL.TM.timeslot;
-    115            struct frame *frame = ACTIONSLOTS[ts].frame_tx;
-    116            
-    117            if (!frame)
-    118              HALT("Error")
-    119            
-    120            // Неудачные передачи учитывает MAC_Send()
-    121            int send_res = MAC_Send(frame);
-    122            switch (send_res) {
-    123              case 1: { // удачная передача
-    124                TM_ClrAlarm(ts, TX_ALARM);
-    125                ACTIONSLOTS[ts].frame_tx = NULL;
-    126                LOG_ON("Send success");
-    127                break;
-    128              }
-    129              case 0: { // неудачная передача. ACK не получен или CCA
-    130                LOG_ON("CCA/ACK err")
-    131                break;
-    132              }
-    133              case -1: { // Исчерпаны попытки отправки
-    134                TM_ClrAlarm(ts, TX_ALARM);
-    135                ACTIONSLOTS[ts].frame_tx = NULL;
-    136                LOG_ON("Attempts exired");
-    137                break;
-    138              }
-    139              default:
-    140                HALT("Error");
-    141            };
-    142          }
-    143          
-    144          static void Hot_Start(void){
-    145            timeslot_t ts = MODEL.TM.timeslot;
-    146            if (ts == 0)
-    147              return;
-    148            char alarm = MODEL.TM.alarm;
-    149            
-    150            if (alarm & TX_ALARM)
-    151              transmite();
-    152            else if (alarm & RX_ALARM)
-    153              receive();
-    154          };
+     62            // Проверим количество доступных пакетов
+     63            int fr_av = FR_available();
+     64            if (fr_av == 0){
+     65              LOG_ON("NOT ENOUGH FREE FRAME");
+     66              return false;
+     67            };
+     68            
+     69            AES_StreamCoder(true, frame->payload, frame->payload, frame->len); 
+     70            FR_set_tx(frame);
+     71            return true;
+     72          }
+     73          
+     74          static void scheduler_tx(void){
+     75            struct frame* tx_frame = NULL; 
+     76            tx_frame = FR_find_tx(tx_frame);
+     77            
+     78            if (!tx_frame)
+     79              return;
+     80            
+     81            if (tx_frame->meta.TS==0)
+     82              while(1);
+     83            
+     84            while(tx_frame){
+     85              ASSERT(tx_frame->meta.TS != 0);
+     86              // Если у нас есть что передавать, берем следующий кадр из буфера
+     87              if (ACTIONSLOTS[tx_frame->meta.TS].frame_tx){
+     88                tx_frame = FR_find_tx(tx_frame);
+     89                continue;
+     90              }
+     91              ACTIONSLOTS[tx_frame->meta.TS].frame_tx = tx_frame;
+     92              TM_SetAlarm(tx_frame->meta.TS, TX_ALARM); 
+     93              tx_frame = FR_find_tx(tx_frame);
+     94            }
+     95          }
+     96          
+     97          static void scheduler_rx(void){
+     98            ASSERT(ACTIONSLOTS[0].rx == 0);
+     99            for (char i = 1; i < MAX_SLOTS; i++)
+    100              if (ACTIONSLOTS[i].rx)
+    101                TM_SetAlarm(i, RX_ALARM);
+    102              else
+    103                TM_ClrAlarm(i, RX_ALARM);
+    104          }
+    105          
+    106          static void Cold_Start(void){
+    107          // Планировщик планирует на один суперфрейм в начале ts0
+    108            if (MODEL.TM.timeslot != 0)
+    109              return;
+    110            
+    111            scheduler_tx();
+    112            scheduler_rx();
+    113          };
+    114          
+    115          static inline void receive(){
+    116            timeslot_t ts = MODEL.TM.timeslot;
+    117            MAC_Receive(ACTIONSLOTS[ts].rx);
+    118          }
+    119          
+    120          static void transmite(void){
+    121            timeslot_t ts = MODEL.TM.timeslot;
+    122            struct frame *frame = ACTIONSLOTS[ts].frame_tx;
+    123            
+    124            if (!frame)
+    125              HALT("Error")
+    126            
+    127            // Неудачные передачи учитывает MAC_Send()
+    128            int send_res = MAC_Send(frame);
+    129            switch (send_res) {
+    130              case 1: { // удачная передача
+    131                TM_ClrAlarm(ts, TX_ALARM);
+    132                ACTIONSLOTS[ts].frame_tx = NULL;
+    133                LOG_ON("Send success");
+    134                break;
+    135              }
+    136              case 0: { // неудачная передача. ACK не получен или CCA
+    137                LOG_ON("CCA/ACK err")
+    138                break;
+    139              }
+    140              case -1: { // Исчерпаны попытки отправки
+    141                TM_ClrAlarm(ts, TX_ALARM);
+    142                ACTIONSLOTS[ts].frame_tx = NULL;
+    143                LOG_ON("Attempts exired");
+    144                break;
+    145              }
+    146              default:
+    147                HALT("Error");
+    148            };
+    149          }
+    150          
+    151          static void Hot_Start(void){
+    152            timeslot_t ts = MODEL.TM.timeslot;
+    153            if (ts == 0)
+    154              return;
+    155            char alarm = MODEL.TM.alarm;
+    156            
+    157            if (alarm & TX_ALARM)
+    158              transmite();
+    159            else if (alarm & RX_ALARM)
+    160              receive();
+    161          };
 E:\Neocore\Hardware\STACK_CORE_SRC\mac.c
       1          #include "action_manager.h"
       2          #include "frame.h"
@@ -2134,7 +2141,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\mac.c
      33            //UST_delay(400);
      34           // nwtime_t NOW1 = AT_time();
      35            struct frame *frame = RI_Receive(RECV_TIMEOUT); //
-     36            FRAME_END = AT_time(); // ДЛЯ ОТЛАДКИ
+     36           // FRAME_END = AT_time(); // ДЛЯ ОТЛАДКИ
      37           // nwtime_t NOW2 = AT_time();
      38            return frame;
      39          }
@@ -3326,124 +3333,131 @@ E:\Neocore\Hardware\STACK_CORE_SRC\radio.c
     262              return NULL;
     263            }
     264            
-    265            // Создаем буфер, последнии два байта FCS1,2 и поле LEN не копируем
-    266            struct frame *frame = FR_create();
-    267            ASSERT(frame);
-    268            bool add_h = FR_add_header(frame, &RXBUFF[1], frame_size - 3);
-    269            ASSERT(add_h);
-    270            
-    271            frame->meta.TIMESTAMP = sfd_stamp;
-    272            frame->meta.RSSI_SIG =  FCS1 + RSSI_OFFSET;
-    273            uint8_t corr = FCS2 & 0x7F;
-    274            frame->meta.LIQ = LIQ_CALC(corr);
-    275            frame->meta.CH = MODEL.RADIO.channel;
-    276            return frame;
-    277          }
-    278          
-    279          
-    280          /**
-    281          @breif Подссчет количества бит в байте
-    282          @return Возвращает количество бит
-    283          */
-    284          static uint8_t bits_count(uint8_t value) {
-    285            int ret = 0;
-    286            for ( ; value; value = value >> 1 )
-    287              ret += value & 1;
-    288            return ret;
-    289          }
-    290          
-    291          /**
-    292          @brief Возращает 1 байт случайного числа
-    293          @details Радио выдает всего лишь дви бита, нам нужно 8 
-    294          */
-    295          static inline uint8_t getRNDByte(void)
-    296          {
-    297            uint8_t val = 0;
-    298            val |= RFRND << 0;
-    299            val |= RFRND << 2;
-    300            val |= RFRND << 4;
-    301            val |= RFRND << 6;
-    302            return val;
-    303          }
-    304          
-    305          /**
-    306          @brief Возвращает случайное число с числом включеных бит от 2 до 6 включительно
-    307          @details Случайные числа появляются в регистре с частотой 170нс. Функция 
-    308          возвращает гарантированно новое значение. 
-    309          @return возвращает случайное число.
-    310          */
-    311          static inline uint8_t readRandom(void)
-    312          {
-    313            uint8_t rnd_val = 0;
-    314            uint8_t bit_cnt = 0;
-    315            while ( bit_cnt <= 2 || bit_cnt >= 6 )
-    316            {
-    317              rnd_val = getRNDByte();
-    318              while (rnd_val == getRNDByte());
-    319              rnd_val = getRNDByte();
-    320              bit_cnt = bits_count(rnd_val);
-    321            }
-    322            return rnd_val;
-    323          }
-    324          
-    325          /*!
-    326          \brief Иницилизирует ядро генератора случайных чисел данными из эфира
-    327          */
-    328          static void random_core_init(void)  
-    329          {
-    330            unsigned int rnd_core = 0;;
-    331               
-    332            pre_config();
-    333            FREQCTRL = 0x00; // Выбираем не используемую частоту
-    334          
-    335            // TODO По какой то причине OP_EXE не выполняет команду.
-    336            // регистра RFST читается как 0xD0. это его состояние при reset
-    337            // Включаем демодулятор
-    338            ISRXON();
-    339            
-    340            // Ждем пока статус RSSI_VALID станет true
-    341            while(!RSSISTAT);
-    342            
-    343            // Ждем случайных чисел
-    344            while (RFRND == 0);
-    345            
-    346            // Настраиваем ядро случайного генератора
-    347            rnd_core = readRandom();
-    348            rnd_core |= (unsigned int)readRandom()<<8;
-    349            srand(rnd_core);
-    350            
-    351            // Выключаем демодулятор
-    352            ISRFOFF();
-    353            // Первая генерация случайного числа занимает много времени.
-    354            // Влияло на работу радио, так как использовались случайные посылки
-    355            rand(); 
-    356          }
-    357          
-    358          /**
-    359          @brief Измерение мощности сигнала
-    360          @details Частота = 2394+fch. fch = [0..113]. 2394MHz to 2507MHz.
-    361           Устройство поддерживает частоты до 2507 МГц
-    362          @param[in] fch номер ЧАСТОТНОГО канала
-    363          @param[in] timeout_ms время сканирования в мс
-    364          @param[out] Максимальная мощность сигнала за время сканирования
-    365          @return true если успешно
-    366          */
-    367          bool RI_Measure_POW(char fch, ustime_t timeout, 
-    368                              int8_t *RSSI_SIG){
-    369            if (fch > 113)
-    370              return false;
-    371            //(2394+FREQCTRL.FREQ[6:0])
-    372            FREQCTRL = fch; // Выбираем не используемую частоту
-    373            ISRXON();
-    374            while(!RSSISTAT);
-    375            FRMCTRL0 |= 1<<4; // включаем ENERGY_SCAN, детектор пикового сигнала
-    376            UST_delay(timeout);
-    377            int8_t rssi = RSSI + RSSI_OFFSET;
-    378            *RSSI_SIG = rssi;
-    379            ISRFOFF();
-    380            return true;
-    381          }
-    382          
+    265            // Проверим количество доступных пакетов для хранения принятых данных
+    266            int fr_av = FR_available();
+    267            if (fr_av == 0){
+    268              LOG_ON("NOT ENOUGH FREE FRAME");
+    269              return NULL;
+    270            };
+    271            
+    272            // Создаем буфер, последнии два байта FCS1,2 и поле LEN не копируем
+    273            struct frame *frame = FR_create();
+    274            ASSERT(frame);
+    275            bool add_h = FR_add_header(frame, &RXBUFF[1], frame_size - 3);
+    276            ASSERT(add_h);
+    277            
+    278            frame->meta.TIMESTAMP = sfd_stamp;
+    279            frame->meta.RSSI_SIG =  FCS1 + RSSI_OFFSET;
+    280            uint8_t corr = FCS2 & 0x7F;
+    281            frame->meta.LIQ = LIQ_CALC(corr);
+    282            frame->meta.CH = MODEL.RADIO.channel;
+    283            return frame;
+    284          }
+    285          
+    286          
+    287          /**
+    288          @breif Подссчет количества бит в байте
+    289          @return Возвращает количество бит
+    290          */
+    291          static uint8_t bits_count(uint8_t value) {
+    292            int ret = 0;
+    293            for ( ; value; value = value >> 1 )
+    294              ret += value & 1;
+    295            return ret;
+    296          }
+    297          
+    298          /**
+    299          @brief Возращает 1 байт случайного числа
+    300          @details Радио выдает всего лишь дви бита, нам нужно 8 
+    301          */
+    302          static inline uint8_t getRNDByte(void)
+    303          {
+    304            uint8_t val = 0;
+    305            val |= RFRND << 0;
+    306            val |= RFRND << 2;
+    307            val |= RFRND << 4;
+    308            val |= RFRND << 6;
+    309            return val;
+    310          }
+    311          
+    312          /**
+    313          @brief Возвращает случайное число с числом включеных бит от 2 до 6 включительно
+    314          @details Случайные числа появляются в регистре с частотой 170нс. Функция 
+    315          возвращает гарантированно новое значение. 
+    316          @return возвращает случайное число.
+    317          */
+    318          static inline uint8_t readRandom(void)
+    319          {
+    320            uint8_t rnd_val = 0;
+    321            uint8_t bit_cnt = 0;
+    322            while ( bit_cnt <= 2 || bit_cnt >= 6 )
+    323            {
+    324              rnd_val = getRNDByte();
+    325              while (rnd_val == getRNDByte());
+    326              rnd_val = getRNDByte();
+    327              bit_cnt = bits_count(rnd_val);
+    328            }
+    329            return rnd_val;
+    330          }
+    331          
+    332          /*!
+    333          \brief Иницилизирует ядро генератора случайных чисел данными из эфира
+    334          */
+    335          static void random_core_init(void)  
+    336          {
+    337            unsigned int rnd_core = 0;;
+    338               
+    339            pre_config();
+    340            FREQCTRL = 0x00; // Выбираем не используемую частоту
+    341          
+    342            // TODO По какой то причине OP_EXE не выполняет команду.
+    343            // регистра RFST читается как 0xD0. это его состояние при reset
+    344            // Включаем демодулятор
+    345            ISRXON();
+    346            
+    347            // Ждем пока статус RSSI_VALID станет true
+    348            while(!RSSISTAT);
+    349            
+    350            // Ждем случайных чисел
+    351            while (RFRND == 0);
+    352            
+    353            // Настраиваем ядро случайного генератора
+    354            rnd_core = readRandom();
+    355            rnd_core |= (unsigned int)readRandom()<<8;
+    356            srand(rnd_core);
+    357            
+    358            // Выключаем демодулятор
+    359            ISRFOFF();
+    360            // Первая генерация случайного числа занимает много времени.
+    361            // Влияло на работу радио, так как использовались случайные посылки
+    362            rand(); 
+    363          }
+    364          
+    365          /**
+    366          @brief Измерение мощности сигнала
+    367          @details Частота = 2394+fch. fch = [0..113]. 2394MHz to 2507MHz.
+    368           Устройство поддерживает частоты до 2507 МГц
+    369          @param[in] fch номер ЧАСТОТНОГО канала
+    370          @param[in] timeout_ms время сканирования в мс
+    371          @param[out] Максимальная мощность сигнала за время сканирования
+    372          @return true если успешно
+    373          */
+    374          bool RI_Measure_POW(char fch, ustime_t timeout, 
+    375                              int8_t *RSSI_SIG){
+    376            if (fch > 113)
+    377              return false;
+    378            //(2394+FREQCTRL.FREQ[6:0])
+    379            FREQCTRL = fch; // Выбираем не используемую частоту
+    380            ISRXON();
+    381            while(!RSSISTAT);
+    382            FRMCTRL0 |= 1<<4; // включаем ENERGY_SCAN, детектор пикового сигнала
+    383            UST_delay(timeout);
+    384            int8_t rssi = RSSI + RSSI_OFFSET;
+    385            *RSSI_SIG = rssi;
+    386            ISRFOFF();
+    387            return true;
+    388          }
+    389          
 E:\Neocore\Hardware\PRG Node\route.c
       1          #include "model.h"
       2          #include "debug.h"
@@ -3768,8 +3782,8 @@ E:\Neocore\Hardware\STACK_CORE_SRC\sync.c
      21          #define NEG_RECV_OFFSET 33 // nwtime
      22          #define POS_RECV_OFFSET 33 // nwtime
      23          #define SEND_PERIOD 10 // Периодичность отправки пакетов
-     24          #define RETRANSMITE_TRY 3 // Кол-во попыток отправки sync
-     25          #define PROBABILIT 40 // % вероятность одной попытки отправки 
+     24          #define RETRANSMITE_TRY 5 // Кол-во попыток отправки sync
+     25          #define PROBABILIT 50 // % вероятность одной попытки отправки 
      26          #define UNSYNC_TIME 60 // Время в секундах рассинхронизации сети
      27          
      28          static void SW_Init(void);
@@ -3858,207 +3872,223 @@ E:\Neocore\Hardware\STACK_CORE_SRC\sync.c
     111          
     112          static inline void mode_1_retransmition_process(void){
     113            retransmite--;
-    114            if (!_throw_dice())
-    115              return;
-    116            send_sync();
-    117            retransmite = 0;
-    118          }
-    119          
-    120          static void mode_1_process(){
-    121           // Прием, ретрансляция, синхронизация   
-    122            if ( MODEL.RTC.uptime >= MODEL.SYNC.next_time_recv)
-    123              mode_1_receive_process();
-    124            else if(retransmite)
-    125              mode_1_retransmition_process();
-    126            
-    127            if (MODEL.RTC.uptime - MODEL.SYNC.last_time_recv > UNSYNC_TIME){
-    128              MODEL.SYNC.synced = false;
-    129              MODEL.SYNC.mode = 0;
-    130              MODEL.TM.MODE = 0;
-    131              LOG_ON("unsynced");
-    132            }
-    133          }
-    134          
-    135          /**
-    136          * brief Сканирование энергии в канале
-    137          *
-    138          * Работает только в режиме шлюза.
-    139          */
-    140          static void energy_scan(){
-    141            static channel_t scan_channel = CH11;
-    142            int8_t rssi_sig;
-    143            
-    144            RI_Measure_POW(scan_channel, 8000, &rssi_sig);
-    145            // Сохраняем пиковые значения
-    146            if (rssi_sig > MODEL.PWR_SCAN.energy[scan_channel - 11])
-    147              MODEL.PWR_SCAN.energy[scan_channel - 11] = rssi_sig;
-    148            
-    149            scan_channel++;
-    150            if (scan_channel > CH28)
-    151              scan_channel = CH11;
-    152          };
-    153          
-    154          static void mode_2_process(){
-    155            // Периодическое вещание
-    156            if ( MODEL.RTC.uptime < MODEL.SYNC.next_sync_send){
-    157              energy_scan();
-    158              return;
-    159            }
-    160            MODEL.SYNC.next_sync_send = MODEL.RTC.uptime + SEND_PERIOD;
-    161            LOW(PIN1);
-    162            send_sync();
-    163            HIGH(PIN1);
-    164          }
-    165          
-    166          static void Hot_Start(void){
-    167            if (MODEL.TM.timeslot != SYNC_TS)
-    168              return;
-    169            switch(MODEL.SYNC.mode){
-    170              case MODE_0: break;
-    171              case MODE_1: mode_1_process(); break;
-    172              case MODE_2: mode_2_process(); break;
-    173              default:
-    174              HALT("Wrong mode");
-    175            }
-    176          };
-    177          
-    178          static struct frame* recv_sync(void){
-    179            if(!RI_SetChannel(MODEL.SYNC.sync_channel))
-    180              HALT("Wrong channel");
-    181            struct frame *frame;
-    182            
-    183            AT_wait(SYNC_TIME - NEG_RECV_OFFSET);
-    184            ustime_t recv_time = NWTIME_TO_US(NEG_RECV_OFFSET + POS_RECV_OFFSET);
-    185            TRY{
-    186              frame = RI_Receive(recv_time);
-    187              if (!frame)
-    188                THROW(1);
-    189              if (frame->len != sizeof(struct sync))
-    190                THROW(2);
-    191              AES_StreamCoder(false, frame->payload, frame->payload, frame->len);
-    192              return frame;
-    193            }
-    194            CATCH(1){
+    114            // Если наступила последняя передача синхропакета, то передаем принудительно
+    115            // без подбрасывания костей
+    116            if (retransmite == 0){
+    117              send_sync();
+    118              return;
+    119            };
+    120            
+    121            // Если количество попыток не исчерпано, кидаем кости. Событие равноверятное
+    122            // 50%
+    123            if (!_throw_dice())
+    124              return;
+    125            send_sync();
+    126            retransmite = 0;
+    127          }
+    128          
+    129          static void mode_1_process(){
+    130           // Прием, ретрансляция, синхронизация   
+    131            if ( MODEL.RTC.uptime >= MODEL.SYNC.next_time_recv)
+    132              mode_1_receive_process();
+    133            else if(retransmite)
+    134              mode_1_retransmition_process();
+    135            
+    136            if (MODEL.RTC.uptime - MODEL.SYNC.last_time_recv > UNSYNC_TIME){
+    137              MODEL.SYNC.synced = false;
+    138              MODEL.SYNC.mode = 0;
+    139              MODEL.TM.MODE = 0;
+    140              LOG_ON("unsynced");
+    141            }
+    142          }
+    143          
+    144          /**
+    145          * brief Сканирование энергии в канале
+    146          *
+    147          * Работает только в режиме шлюза.
+    148          */
+    149          static void energy_scan(){
+    150            static channel_t scan_channel = CH11;
+    151            int8_t rssi_sig;
+    152            
+    153            RI_Measure_POW(scan_channel, 8000, &rssi_sig);
+    154            // Сохраняем пиковые значения
+    155            if (rssi_sig > MODEL.PWR_SCAN.energy[scan_channel - 11])
+    156              MODEL.PWR_SCAN.energy[scan_channel - 11] = rssi_sig;
+    157            
+    158            scan_channel++;
+    159            if (scan_channel > CH28)
+    160              scan_channel = CH11;
+    161          };
+    162          
+    163          static void mode_2_process(){
+    164            // Периодическое вещание
+    165            if ( MODEL.RTC.uptime < MODEL.SYNC.next_sync_send){
+    166              energy_scan();
+    167              return;
+    168            }
+    169            MODEL.SYNC.next_sync_send = MODEL.RTC.uptime + SEND_PERIOD;
+    170            LOW(PIN1);
+    171            send_sync();
+    172            HIGH(PIN1);
+    173          }
+    174          
+    175          static void Hot_Start(void){
+    176            if (MODEL.TM.timeslot != SYNC_TS)
+    177              return;
+    178            switch(MODEL.SYNC.mode){
+    179              case MODE_0: break;
+    180              case MODE_1: mode_1_process(); break;
+    181              case MODE_2: mode_2_process(); break;
+    182              default:
+    183              HALT("Wrong mode");
+    184            }
+    185          };
+    186          
+    187          static struct frame* recv_sync(void){
+    188            if(!RI_SetChannel(MODEL.SYNC.sync_channel))
+    189              HALT("Wrong channel");
+    190            struct frame *frame;
+    191            
+    192            AT_wait(SYNC_TIME - NEG_RECV_OFFSET);
+    193            ustime_t recv_time = NWTIME_TO_US(NEG_RECV_OFFSET + POS_RECV_OFFSET);
+    194            TRY{
+    195              frame = RI_Receive(recv_time);
+    196              if (!frame)
+    197                THROW(1);
+    198              if (frame->len != sizeof(struct sync))
+    199                THROW(2);
+    200              AES_StreamCoder(false, frame->payload, frame->payload, frame->len);
+    201              return frame;
+    202            }
+    203            CATCH(1){
                    ^
 Warning[Pe111]: statement is unreachable
           detected during compilation of secondary translation unit
                     "E:\Neocore\Hardware\STACK_CORE_SRC\sync.c"
-    195              return NULL;
-    196            }
-    197            CATCH(2){
+    204              return NULL;
+    205            }
+    206            CATCH(2){
                    ^
 Warning[Pe111]: statement is unreachable
           detected during compilation of secondary translation unit
                     "E:\Neocore\Hardware\STACK_CORE_SRC\sync.c"
-    198              FR_delete(frame);
-    199              return NULL;
-    200            }
-    201            ETRY;
+    207              FR_delete(frame);
+    208              return NULL;
+    209            }
+    210            ETRY;
                    ^
 Warning[Pe111]: statement is unreachable
           detected during compilation of secondary translation unit
                     "E:\Neocore\Hardware\STACK_CORE_SRC\sync.c"
-    202            return frame;
-    203          }
-    204          
-    205          static bool send_sync(void){
-    206            struct sync sync;
-    207            sync.sys_ch = MODEL.SYNC.sys_channel;
-    208            sync.tx_power = MODEL.RADIO.power_tx;
-    209            sync.panid = MODEL.SYNC.panid;
-    210            sync.rtc = MODEL.RTC.rtc;
-    211            sync.magic = MAGIC;
-    212            
-    213            struct frame *fr = FR_create();
-    214            ASSERT(fr);
-    215            FR_add_header(fr, &sync, sizeof(struct sync));
-    216            
-    217            AES_StreamCoder(true, fr->payload, fr->payload, fr->len);
-    218            
-    219            bool set_ch_res = RI_SetChannel(MODEL.SYNC.sync_channel);
-    220            ASSERT(set_ch_res);
-    221            bool res = RI_Send_time(fr, (nwtime_t)SYNC_TIME);
-    222            FR_delete(fr);
-    223            LOG_OFF("SYNC sended, res = %d", res);
-    224            return res;
-    225          }
-    226          
-    227          static struct frame* network_recv_sync(ustime_t timeout){
-    228            if(!RI_SetChannel(MODEL.SYNC.sync_channel))
-    229              HALT("Wrong channel");
-    230            
-    231            struct frame *frame = NULL;
-    232            TRY{
-    233              frame = RI_Receive(timeout);
-    234              if (!frame)
-    235                THROW(1);
-    236              if (frame->len != sizeof(struct sync))
-    237                THROW(2);
-    238              AES_StreamCoder(false, frame->payload, frame->payload, frame->len);
-    239              return frame;
-    240            }
-    241            CATCH(1){
+    211            return frame;
+    212          }
+    213          
+    214          static bool send_sync(void){
+    215            struct sync sync;
+    216            sync.sys_ch = MODEL.SYNC.sys_channel;
+    217            sync.tx_power = MODEL.RADIO.power_tx;
+    218            sync.panid = MODEL.SYNC.panid;
+    219            sync.rtc = MODEL.RTC.rtc;
+    220            sync.magic = MAGIC;
+    221            
+    222            // Проверим количество доступных пакетов
+    223            int fr_av = FR_available();
+    224            if (fr_av == 0){
+    225              LOG_ON("NOT ENOUGH FREE FRAME");
+    226              return false;
+    227            };
+    228            
+    229            struct frame *fr = FR_create();
+    230            ASSERT(fr);
+    231            FR_add_header(fr, &sync, sizeof(struct sync));
+    232            
+    233            AES_StreamCoder(true, fr->payload, fr->payload, fr->len);
+    234            
+    235            bool set_ch_res = RI_SetChannel(MODEL.SYNC.sync_channel);
+    236            ASSERT(set_ch_res);
+    237            bool res = RI_Send_time(fr, (nwtime_t)SYNC_TIME);
+    238            FR_delete(fr);
+    239            LOG_OFF("SYNC sended, res = %d", res);
+    240            return res;
+    241          }
+    242          
+    243          static struct frame* network_recv_sync(ustime_t timeout){
+    244            if(!RI_SetChannel(MODEL.SYNC.sync_channel))
+    245              HALT("Wrong channel");
+    246            
+    247            struct frame *frame = NULL;
+    248            TRY{
+    249              frame = RI_Receive(timeout);
+    250              if (!frame)
+    251                THROW(1);
+    252              if (frame->len != sizeof(struct sync))
+    253                THROW(2);
+    254              AES_StreamCoder(false, frame->payload, frame->payload, frame->len);
+    255              return frame;
+    256            }
+    257            CATCH(1){
                    ^
 Warning[Pe111]: statement is unreachable
           detected during compilation of secondary translation unit
                     "E:\Neocore\Hardware\STACK_CORE_SRC\sync.c"
-    242              return NULL;
-    243            }
-    244            CATCH(2){
+    258              return NULL;
+    259            }
+    260            CATCH(2){
                    ^
 Warning[Pe111]: statement is unreachable
           detected during compilation of secondary translation unit
                     "E:\Neocore\Hardware\STACK_CORE_SRC\sync.c"
-    245              FR_delete(frame);
-    246              return NULL;
-    247            }
-    248            ETRY;
+    261              FR_delete(frame);
+    262              return NULL;
+    263            }
+    264            ETRY;
                    ^
 Warning[Pe111]: statement is unreachable
           detected during compilation of secondary translation unit
                     "E:\Neocore\Hardware\STACK_CORE_SRC\sync.c"
-    249            return frame;
-    250          }
-    251          
-    252          bool network_sync(ustime_t timeout){  
-    253            stamp_t now = UST_now();
-    254            struct frame *frame;
-    255            struct sync *sync;
-    256            
-    257            TRY{
-    258              while(true){
-    259                if(UST_time_over(now, timeout))
-    260                   THROW(1);
-    261                
-    262                frame = network_recv_sync(timeout);
-    263                if (!frame)
-    264                   continue;
-    265                
-    266                sync = (struct sync*)frame->payload;
-    267                if (sync->magic != MAGIC){
-    268                  FR_delete(frame);
-    269                  continue;
-    270                }
-    271               
-    272                syncronize_timer(frame);
-    273                
-    274                MODEL.SYNC.synced = true;
-    275                MODEL.SYNC.sys_channel = sync->sys_ch;
-    276                MODEL.SYNC.panid = sync->panid;
-    277                MODEL.RADIO.power_tx = sync->tx_power;
-    278                MODEL.RTC.rtc = sync->rtc;
-    279                
-    280                retransmite = RETRANSMITE_TRY;
-    281                MODEL.SYNC.next_time_recv = MODEL.RTC.uptime +  SEND_PERIOD ;
-    282                MODEL.SYNC.last_time_recv = MODEL.RTC.uptime;     
-    283                break;
-    284              }
-    285            }
-    286            CATCH(1){
-    287              FR_delete(frame);
-    288              return false; // timeout
-    289            }
-    290            FINALLY{
+    265            return frame;
+    266          }
+    267          
+    268          bool network_sync(ustime_t timeout){  
+    269            stamp_t now = UST_now();
+    270            struct frame *frame;
+    271            struct sync *sync;
+    272            
+    273            TRY{
+    274              while(true){
+    275                if(UST_time_over(now, timeout))
+    276                   THROW(1);
+    277                
+    278                frame = network_recv_sync(timeout);
+    279                if (!frame)
+    280                   continue;
+    281                
+    282                sync = (struct sync*)frame->payload;
+    283                if (sync->magic != MAGIC){
+    284                  FR_delete(frame);
+    285                  continue;
+    286                }
+    287               
+    288                syncronize_timer(frame);
+    289                
+    290                MODEL.SYNC.synced = true;
+    291                MODEL.SYNC.sys_channel = sync->sys_ch;
+    292                MODEL.SYNC.panid = sync->panid;
+    293                MODEL.RADIO.power_tx = sync->tx_power;
+    294                MODEL.RTC.rtc = sync->rtc;
+    295                
+    296                retransmite = RETRANSMITE_TRY;
+    297                MODEL.SYNC.next_time_recv = MODEL.RTC.uptime +  SEND_PERIOD ;
+    298                MODEL.SYNC.last_time_recv = MODEL.RTC.uptime;     
+    299                break;
+    300              }
+    301            }
+    302            CATCH(1){
+    303              FR_delete(frame);
+    304              return false; // timeout
+    305            }
+    306            FINALLY{
                    ^
 Warning[Pe111]: statement is unreachable
           detected during compilation of secondary translation unit
@@ -4070,11 +4100,11 @@ Warning[Pe111]: statement is unreachable
           "SW_Init" was declared but never referenced
           detected during compilation of secondary translation unit
                     "E:\Neocore\Hardware\STACK_CORE_SRC\alarm_timer.c"
-    291              FR_delete(frame);
-    292            }
-    293            ETRY;
-    294            return true;  
-    295          }
+    307              FR_delete(frame);
+    308            }
+    309            ETRY;
+    310            return true;  
+    311          }
 E:\Neocore\Hardware\PRG Node\tcp.c
       1          #include "tcp.h"
       2          #include "debug.h"
@@ -4494,7 +4524,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
       1    184   FR_add_header
         0     19   -> MEM_memcpy
         0     19   -> mem_move
-      2      0   FR_available
+      2     22   FR_available
         2      0   -> SL_available
       2      0   FR_busy
         2      0   -> SL_busy
@@ -4587,6 +4617,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
       0     31   LLC_add_tx_frame
         0     10   -> AES_StreamCoder
         0     10   -> DBG_CORE_HALT
+        0     10   -> FR_available
         0     10   -> FR_set_tx
         0     10   -> printf_P
         0     12   -> printf_P
@@ -4648,6 +4679,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
       1     89   RI_Receive
         0     22   -> DBG_CORE_HALT
         0     22   -> FR_add_header
+        0     22   -> FR_available
         0     22   -> FR_create
         0     24   -> RecvData
         0     26   -> UST_interval
@@ -4830,13 +4862,12 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
         0     18   -> printf_P
         0     20   -> printf_P
         0     16   -> xor_calc
-      0     30   _recv_frame
-        0     16   -> AT_time
-        0     16   -> DBG_CORE_HALT
-        0     16   -> RI_Receive
-        0     16   -> RI_SetChannel
-        0     16   -> printf_P
-        0     18   -> printf_P
+      0     26   _recv_frame
+        0     12   -> DBG_CORE_HALT
+        0     12   -> RI_Receive
+        0     12   -> RI_SetChannel
+        0     12   -> printf_P
+        0     14   -> printf_P
       1     33   _send_ack
         0     13   -> DBG_CORE_HALT
         0     13   -> FR_add_header
@@ -5055,6 +5086,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
         0     21   -> AES_StreamCoder
         0     21   -> DBG_CORE_HALT
         0     21   -> FR_add_header
+        0     21   -> FR_available
         0     21   -> FR_create
         0     21   -> FR_delete
         0     21   -> RI_Send_time
@@ -5219,6 +5251,9 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
       10  ?<Constant "Imposible">
       24  ?<Constant "Incorrect MODEL.TM.MODE">
       15  ?<Constant "Invalid NP_CMD">
+      22  ?<Constant "NOT ENOUGH FREE FRAME">
+      22  ?<Constant "NOT ENOUGH FREE FRAME">_1
+      22  ?<Constant "NOT ENOUGH FREE FRAME">_2
       11  ?<Constant "NP Receive">
       21  ?<Constant "Neocore stack inited">
       26  ?<Constant "Network lost sync. Re...">
@@ -5538,7 +5573,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
        4  LAST_UPDATE_TIME_COMM_NODE
       10  LED_MODULE
       10  LLC_MODULE
-     105  LLC_add_tx_frame
+     181  LLC_add_tx_frame
        6  LLC_add_tx_frame::?relay
      113  LLC_close_slot
        6  LLC_close_slot::?relay
@@ -5584,7 +5619,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
        1  RFST
       89  RI_Measure_POW
        6  RI_Measure_POW::?relay
-     546  RI_Receive
+     626  RI_Receive
        6  RI_Receive::?relay
      205  RI_Send
        6  RI_Send::?relay
@@ -5757,7 +5792,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
        6  _interval::?relay
      433  _recv_ack
        6  _recv_ack::?relay
-     108  _recv_frame
+      93  _recv_frame
        6  _recv_frame::?relay
      253  _send_ack
        6  _send_ack::?relay
@@ -5841,7 +5876,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
        6  mode_1_process::?relay
      119  mode_1_receive_process
        6  mode_1_receive_process::?relay
-      32  mode_1_retransmition_process
+      43  mode_1_retransmition_process
        6  mode_1_retransmition_process::?relay
       64  mode_2_process
        6  mode_2_process::?relay
@@ -5889,7 +5924,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
        6  send_ip_frame::?relay
      342  send_node_card
        6  send_node_card::?relay
-     294  send_sync
+     371  send_sync
        6  send_sync::?relay
      117  setFreq
        6  setFreq::?relay
@@ -5930,9 +5965,9 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
      969  -- Other
 
  
- 33 220 bytes in segment BANKED_CODE
+ 33 449 bytes in segment BANKED_CODE
   1 344 bytes in segment BANK_RELAYS
-  4 442 bytes in segment CODE_C
+  4 508 bytes in segment CODE_C
       3 bytes in segment INTVEC
      47 bytes in segment NEAR_CODE
      35 bytes in segment SFR_AN
@@ -5940,9 +5975,9 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
     231 bytes in segment XDATA_ID
   4 438 bytes in segment XDATA_Z
  
-  5 980 bytes of CODE     memory (+ 87 bytes shared)
+  6 046 bytes of CODE     memory (+ 87 bytes shared)
       0 bytes of DATA     memory (+ 35 bytes shared)
- 33 220 bytes of HUGECODE memory
+ 33 449 bytes of HUGECODE memory
   4 669 bytes of XDATA    memory
 
 Errors: none

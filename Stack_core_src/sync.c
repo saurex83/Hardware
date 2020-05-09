@@ -21,8 +21,8 @@
 #define NEG_RECV_OFFSET 33 // nwtime
 #define POS_RECV_OFFSET 33 // nwtime
 #define SEND_PERIOD 10 // Периодичность отправки пакетов
-#define RETRANSMITE_TRY 3 // Кол-во попыток отправки sync
-#define PROBABILIT 40 // % вероятность одной попытки отправки 
+#define RETRANSMITE_TRY 5 // Кол-во попыток отправки sync
+#define PROBABILIT 50 // % вероятность одной попытки отправки 
 #define UNSYNC_TIME 60 // Время в секундах рассинхронизации сети
 
 static void SW_Init(void);
@@ -111,6 +111,15 @@ static inline bool _throw_dice(void){
 
 static inline void mode_1_retransmition_process(void){
   retransmite--;
+  // Если наступила последняя передача синхропакета, то передаем принудительно
+  // без подбрасывания костей
+  if (retransmite == 0){
+    send_sync();
+    return;
+  };
+  
+  // Если количество попыток не исчерпано, кидаем кости. Событие равноверятное
+  // 50%
   if (!_throw_dice())
     return;
   send_sync();
@@ -209,6 +218,13 @@ static bool send_sync(void){
   sync.panid = MODEL.SYNC.panid;
   sync.rtc = MODEL.RTC.rtc;
   sync.magic = MAGIC;
+  
+  // Проверим количество доступных пакетов
+  int fr_av = FR_available();
+  if (fr_av == 0){
+    LOG_ON("NOT ENOUGH FREE FRAME");
+    return false;
+  };
   
   struct frame *fr = FR_create();
   ASSERT(fr);

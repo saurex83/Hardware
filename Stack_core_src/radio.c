@@ -262,6 +262,13 @@ struct frame* RI_Receive(ustime_t timeout){
     return NULL;
   }
   
+  // Проверим количество доступных пакетов для хранения принятых данных
+  int fr_av = FR_available();
+  if (fr_av == 0){
+    LOG_ON("NOT ENOUGH FREE FRAME");
+    return NULL;
+  };
+  
   // Создаем буфер, последнии два байта FCS1,2 и поле LEN не копируем
   struct frame *frame = FR_create();
   ASSERT(frame);

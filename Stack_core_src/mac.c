@@ -33,7 +33,7 @@ static inline struct frame* _recv_frame(channel_t ch){
   //UST_delay(400);
  // nwtime_t NOW1 = AT_time();
   struct frame *frame = RI_Receive(RECV_TIMEOUT); //
-  FRAME_END = AT_time(); // ДЛЯ ОТЛАДКИ
+ // FRAME_END = AT_time(); // ДЛЯ ОТЛАДКИ
  // nwtime_t NOW2 = AT_time();
   return frame;
 }

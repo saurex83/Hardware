@@ -59,6 +59,13 @@ void LLC_close_slot(timeslot_t ts){
 
 bool LLC_add_tx_frame(struct frame *frame){
   ASSERT(frame);
+  // Проверим количество доступных пакетов
+  int fr_av = FR_available();
+  if (fr_av == 0){
+    LOG_ON("NOT ENOUGH FREE FRAME");
+    return false;
+  };
+  
   AES_StreamCoder(true, frame->payload, frame->payload, frame->len); 
   FR_set_tx(frame);
   return true;
