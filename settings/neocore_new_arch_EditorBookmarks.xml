@@ -33,6 +33,10 @@
         <row>76</row>
     </bookmark>
     <bookmark>
+        <path>E:\NEOCORE\HARDWARE\PRG NODE\auth_eth.c</path>
+        <row>176</row>
+    </bookmark>
+    <bookmark>
         <path>E:\NEOCORE\HARDWARE\PRG NODE\neigh.c</path>
         <row>426</row>
     </bookmark>
@@ -47,10 +51,6 @@
     <bookmark>
         <path>E:\NEOCORE\HARDWARE\PRG NODE\neigh.c</path>
         <row>469</row>
-    </bookmark>
-    <bookmark>
-        <path>E:\NEOCORE\HARDWARE\PRG NODE\neigh.c</path>
-        <row>397</row>
     </bookmark>
     <bookmark>
         <path>E:\NEOCORE\HARDWARE\PRG NODE\neigh.c</path>
@@ -109,8 +109,24 @@
         <row>76</row>
     </bookmark>
     <bookmark>
+        <path>E:\NEOCORE\HARDWARE\STACK_CORE_SRC\mac.c</path>
+        <row>77</row>
+    </bookmark>
+    <bookmark>
+        <path>E:\NEOCORE\HARDWARE\STACK_CORE_SRC\mac.c</path>
+        <row>35</row>
+    </bookmark>
+    <bookmark>
+        <path>E:\NEOCORE\HARDWARE\STACK_CORE_SRC\mac.c</path>
+        <row>37</row>
+    </bookmark>
+    <bookmark>
+        <path>E:\NEOCORE\HARDWARE\STACK_CORE_SRC\mem_slots.c</path>
+        <row>233</row>
+    </bookmark>
+    <bookmark>
         <path>E:\NEOCORE\HARDWARE\STACK_CORE_SRC\radio.c</path>
-        <row>265</row>
+        <row>272</row>
     </bookmark>
     <bookmark>
         <path>E:\WMNU\IAR_NEW_ARCH\STACK_CORE_SRC\buffer.c</path>

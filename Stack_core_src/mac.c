@@ -5,9 +5,11 @@
 #include "ustimer.h"
 #include "debug.h"
 #include "model.h"
+#include "mem_utils.h"
 
 #define RECV_TIMEOUT 2500
 #define ACK_RECV_TIMEOUT 1500
+#define REPEATED_TIMEOUT 5
 
 //ДЛЯ ОЛАДКИ 
 nwtime_t FRAME_END ;
@@ -23,8 +25,22 @@ struct ack{ // Формат структуры пакета ACK
 } __attribute__((packed));
 
 static void SW_Init(void){};
-static void IRQ_Init(void){};
 
+
+struct frame_repeated{
+  bool RA;
+  char NSRC;
+  char CRC8;
+  unsigned long update;
+} __attribute__((packed));
+
+#define REPEATED_ITEMS 10
+static struct frame_repeated REPEATED[REPEATED_ITEMS];          
+   
+
+static void IRQ_Init(void){
+  MEMSET((char*)&REPEATED, 0, sizeof (REPEATED));
+};
 
 static inline struct frame* _recv_frame(channel_t ch){
   if(!RI_SetChannel(ch))
@@ -74,7 +90,73 @@ static inline void _send_ack(struct frame *frame){
   FR_delete(ack_frame);  
 }
 
+/**
+@brief Проверка является ли пакет повторным
+@detail Повторно переданым пакетом является пакет от того же отправителя 
+* NDST, с тем же значением xor_calc за время меньше 10 сек. Если xor другой
+* то запись обновляем. Можно использовать CRC16
+*/
+static bool is_repeated_frame(struct frame *frame){
+  char nsrc = frame->meta.NSRC;
+  char crc8 = xor_calc(frame);
+  unsigned long now = MODEL.RTC.uptime;
+  
+  // Удалим старые записи
+  for (int i = 0; i < REPEATED_ITEMS; i++){
+    if (REPEATED[i].RA)
+      if ((now - REPEATED[i].update) > REPEATED_TIMEOUT)
+        REPEATED[i].RA = false;
+  };
+  
+  int idx = -1;
+  // Ищем запись по nsrc с совпадающим crc8
+  for (int i = 0; i < REPEATED_ITEMS; i++)
+    if (REPEATED[i].RA &&
+        REPEATED[i].NSRC == nsrc &&
+        REPEATED[i].CRC8 == crc8){
+            idx = i;
+            break;
+        };
+  
+  // Нашли запись. Значит пакет повторно пришел
+  // Обновим отмету времени
+  if (idx >=0){
+    REPEATED[idx].update = now; 
+    return true;
+  }
+  else{ // Такого пакета еще небыло. нужно добавить
+    // Ищем пустое место
+    idx = -1;
+    for (int i = 0; i < REPEATED_ITEMS; i++)
+      if (!REPEATED[i].RA){
+        idx = i;
+        break;
+      };
+    
+    // Не нашли места для нового пакета. Будем считать что он не повторный
+    if (idx < 0){
+      LOG_ON("No free space. Not repeated.");
+      return false;
+    };
+    
+    // Нашли место для пакета
+    REPEATED[idx].RA = true;
+    REPEATED[idx].CRC8 = crc8;
+    REPEATED[idx].update = now;  
+    return false;
+  };
+  
+};
+
 void MAC_Receive(channel_t ch){
+  // Проверим количество доступных пакетов для хранения принятых данных
+  // Нельзя принимать данные до нуля свободных мест, так как узел не сможет 
+  // принять ACK и отправлять sync.
+ // if (FR_rx_available() == 0){
+   // LOG_ON("NO FREE RX FRAME");
+   // return;
+  //};  
+  
   struct frame *frame = _recv_frame(ch);
   if (!frame)
     return;
@@ -85,13 +167,30 @@ void MAC_Receive(channel_t ch){
   
   AES_StreamCoder(false, frame->payload, frame->payload, frame->len);
   
-  LOG_ON("RX frame. TS=%d, CH=%d", frame->meta.TS, frame->meta.CH);
-  FR_set_rx(frame);  
+  // Прежде чем переместить пакет в буфер принятых, нужно убедиться что пакет
+  // не является повторным. Эффект множественной передачи происходит из-за
+  // плохой доставки ACK. Узел-отправитель не получив ACK будет пытаться еще
+  // раз передать. 
+  if (MODEL.TM.timeslot > 1)
+    if (is_repeated_frame(frame)){
+      LOG_ON("Repeated frame from NSRC=%d deleted", frame->meta.NSRC);
+      FR_delete(frame);
+      return;
+    };
+    
+  FR_set_rx(frame);
+  LOG_ON("RX frame. TS=%d, CH=%d, RSSI=%d, RX_CNT=%d", 
+         frame->meta.TS, frame->meta.CH, frame->meta.RSSI_SIG, FR_rx_frames());
+  DATA_LOG_OFF((char*)&frame->payload, frame->len);
 }
 
 static inline bool _send_frame(struct frame *frame){
-  if(!RI_SetChannel(frame->meta.CH))
+  if(!RI_SetChannel(frame->meta.CH)){
+    int a=5; //DEBUG!!
+    a++;
+    if (frame->meta.CH == 0)
     HALT("Wrong channel");  
+  };
   
   UST_delay(918);
   bool tx_success = RI_Send(frame);
@@ -149,6 +248,11 @@ int MAC_Send(struct frame *frame){
     ack_success = _recv_ack(frame);
   else
     ack_success = true;
+  
+  LOG_ON("Send try: NDST=%d, NSRC=%d, FSRC=%d, FDST=%d",
+         frame->meta.NDST, frame->meta.NSRC, 
+         frame->meta.FSRC, frame->meta.FDST);
+  DATA_LOG_OFF((char*)&frame->payload, frame->len);
   
   if (tx_success && ack_success){ // Удачная передача
     FR_delete(frame);

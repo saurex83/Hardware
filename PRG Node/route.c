@@ -133,6 +133,20 @@ void RP_Send_GW(struct frame *frame){
   LOG_ON("Sended to GW. frame_ptr=0x%x, NDST=%d, NSRC=%d, FDST=%d, FSRC=%d, TS=%d, CH=%d",
          (char*)frame,frame->meta.NDST,frame->meta.NSRC,
          frame->meta.FDST,frame->meta.FSRC,ts,ch);
+ 
+  // Тут все сложно. Иногда бывает, что узел отправляет пакет не впередед к шлюзу,
+  // а назад. Это происходит если произошла ошибка с определением ETX.
+  // У меня было так: шлюз передал NP card с ошибкой ETX. Там было etx=244.
+  // Узел принял эту карту, и решил что его сосед с ETX=2 лучше чем 244. 
+  // Переключился на работу с ним, и пакеты UDP отправлял ему. Второй узел
+  // Считал, что первый является путем к шлюзу и пакет переадресовывал ему.
+  // Вобщем получилась петля. 
+  if (frame->meta.FSRC == frame->meta.NDST){
+    LOG_ON("Frame loop found. FSRC=NDST=%d", frame->meta.NDST);
+    FR_delete(frame);
+    return;
+  };
+  
   eth_send(frame);
   
 };

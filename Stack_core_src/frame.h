@@ -17,6 +17,8 @@ bool FR_add_header(struct frame*, void *head, char len);
 bool FR_del_header(struct frame*, char len);
 int FR_busy();
 int FR_available();
+int FR_tx_available();
+int FR_rx_available();
 int FR_rx_frames();
 int FR_tx_frames();
 void FR_set_rx(struct frame* frame);

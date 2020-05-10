@@ -163,6 +163,7 @@ void set_AUTH_NODE_RESP(struct frame* frame){
   // Протокол AUTH_IP ничего не знает о структурах запросов,
   // он выполняет функцию транспортного уровня. payload
   // содержит ответ шлюза
+  ASSERT(frame);
   struct AUTH_ETH_RESP *res = (struct AUTH_ETH_RESP*)frame->payload;
   
   if (frame->len != sizeof(struct AUTH_ETH_RESP)){
@@ -201,11 +202,11 @@ void set_AUTH_NODE_RESP(struct frame* frame){
   };
   
   // Добавляем запись
-  AUTH_NODE_RESP[idx].RA = true;
   MEMCPY((char*)&AUTH_NODE_RESP[idx].res, (char*)res, 
          sizeof(struct AUTH_ETH_RESP));
+  AUTH_NODE_RESP[idx].RA = true;
   
-  LOG_ON("AUTH REQ from some node add AUTH_NODE_REQ");
+  LOG_ON("AUTH RESP from GW add AUTH_NODE_RESP");
 };
 
 /** brief Подготавливает и возвращает кадр с данными запроса
@@ -317,6 +318,7 @@ static void AUTH_resend_RESP_from_gw(){
   // Нашли пакет для передачи
   // Создаем ответ
   struct frame* frame = FR_create();
+  ASSERT(frame);
   
   // Добавляем в пакет данные
   bool res;

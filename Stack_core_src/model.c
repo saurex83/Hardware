@@ -18,7 +18,7 @@ static void SW_Init(void){
     MODEL.PWR_SCAN.energy[i] = -127;
   
   MODEL.node_adr = 0;
-  MODEL.node_mac[0] = 0x11; // 11 - первый 12 - второй,13=85,14=86,15=87,16=88,17=89
+  MODEL.node_mac[0] = 0x16; // 11 - первый 12 - второй,13=85,14=86,15=87,16=88,17=89
   MODEL.node_mac[1] = 0x22;
   MODEL.node_mac[2] = 0x33;
   MODEL.node_mac[3] = 0x44;

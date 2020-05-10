@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# IAR C/C++ Compiler V10.10.1.4655 for 8051               09/May/2020  23:57:13
+# IAR C/C++ Compiler V10.10.1.4655 for 8051               10/May/2020  22:05:00
 # Copyright 2004-2017 IAR Systems AB.
 # PC-locked license - IAR Embedded Workbench for 8051
 #
@@ -13,7 +13,7 @@
 #                          
 #    Source file        =  E:\Neocore\Hardware\STACK_CORE_SRC\action_manager.c
 #    Command line       =  
-#        -f C:\Users\08A4~1\AppData\Local\Temp\EW143A.tmp
+#        -f C:\Users\08A4~1\AppData\Local\Temp\EWA7DB.tmp
 #        (E:\Neocore\Hardware\STACK_CORE_SRC\action_manager.c -lc
 #        "E:\Neocore\Hardware\PRG Node\Debug\List" -o "E:\Neocore\Hardware\PRG
 #        Node\Debug\Obj" -e --debug --core=plain --dptr=16,1 --data_model=large
@@ -478,226 +478,228 @@ E:\Neocore\Hardware\PRG Node\auth_eth.c
     163            // Протокол AUTH_IP ничего не знает о структурах запросов,
     164            // он выполняет функцию транспортного уровня. payload
     165            // содержит ответ шлюза
-    166            struct AUTH_ETH_RESP *res = (struct AUTH_ETH_RESP*)frame->payload;
-    167            
-    168            if (frame->len != sizeof(struct AUTH_ETH_RESP)){
-    169              LOG_ON("AUTH_IP resp from gw have wrong size= %d. struct size=%d", frame->len,
-    170                     sizeof(struct AUTH_ETH_RESP));
-    171              return;
-    172            };
-    173          
-    174            // Проверим что такого ответа еще нет по мак адресу
-    175            int idx = -1;
-    176            for (int i = 0; i < AUTH_NODE_RESP_SIZE; i++){
-    177              // Пропускаем пустые записи
-    178              if (!AUTH_NODE_RESP[i].RA)
-    179                continue;
-    180              
-    181              // Если нашли запись с таким же мак адрессом
-    182              if (mac_cmp(AUTH_NODE_RESP[i].res.mac, res->mac)){
-    183                idx = i;
-    184                break;
-    185              };
-    186            };
-    187          
-    188            // Не нашли запись. Ищем свободное место
-    189            // Записи с таким же мак адресом нету. Найдем свободное место
-    190            if (idx < 0){
-    191              for (int i = 0; i < AUTH_NODE_RESP_SIZE; i++)
-    192                if (!AUTH_NODE_RESP[i].RA){
-    193                  idx = i;
-    194                  break;
-    195                };
-    196            };
-    197            
-    198            if (idx < 0){
-    199              LOG_ON("No free space in AUTH_NODE_RESP_SIZE");
-    200              return;
-    201            };
-    202            
-    203            // Добавляем запись
-    204            AUTH_NODE_RESP[idx].RA = true;
+    166            ASSERT(frame);
+    167            struct AUTH_ETH_RESP *res = (struct AUTH_ETH_RESP*)frame->payload;
+    168            
+    169            if (frame->len != sizeof(struct AUTH_ETH_RESP)){
+    170              LOG_ON("AUTH_IP resp from gw have wrong size= %d. struct size=%d", frame->len,
+    171                     sizeof(struct AUTH_ETH_RESP));
+    172              return;
+    173            };
+    174          
+    175            // Проверим что такого ответа еще нет по мак адресу
+    176            int idx = -1;
+    177            for (int i = 0; i < AUTH_NODE_RESP_SIZE; i++){
+    178              // Пропускаем пустые записи
+    179              if (!AUTH_NODE_RESP[i].RA)
+    180                continue;
+    181              
+    182              // Если нашли запись с таким же мак адрессом
+    183              if (mac_cmp(AUTH_NODE_RESP[i].res.mac, res->mac)){
+    184                idx = i;
+    185                break;
+    186              };
+    187            };
+    188          
+    189            // Не нашли запись. Ищем свободное место
+    190            // Записи с таким же мак адресом нету. Найдем свободное место
+    191            if (idx < 0){
+    192              for (int i = 0; i < AUTH_NODE_RESP_SIZE; i++)
+    193                if (!AUTH_NODE_RESP[i].RA){
+    194                  idx = i;
+    195                  break;
+    196                };
+    197            };
+    198            
+    199            if (idx < 0){
+    200              LOG_ON("No free space in AUTH_NODE_RESP_SIZE");
+    201              return;
+    202            };
+    203            
+    204            // Добавляем запись
     205            MEMCPY((char*)&AUTH_NODE_RESP[idx].res, (char*)res, 
     206                   sizeof(struct AUTH_ETH_RESP));
-    207            
-    208            LOG_ON("AUTH REQ from some node add AUTH_NODE_REQ");
-    209          };
-    210          
-    211          /** brief Подготавливает и возвращает кадр с данными запроса
-    212          */
-    213          struct frame* get_AUTH_NODE_REQ(){
-    214            int idx = -1;
-    215            // Ищем первую активную запись в таблице
-    216            for (int i = 0; i < AUTH_NODE_REQ_SIZE; i++)
-    217              if (AUTH_NODE_REQ[i].RA){
-    218                idx = i;
-    219                break;
-    220              };
-    221            
-    222            // Ничего не нашли
-    223            if (idx < 0)
-    224              return NULL;
-    225          
-    226            struct frame *fr = FR_create();
-    227            ASSERT(fr);
-    228            
-    229            //Добавим данные запроса
-    230            bool res = FR_add_header(fr, 
-    231                       (char*)(&AUTH_NODE_REQ[idx].req),
-    232                        sizeof(struct AUTH_ETH_REQ));
-    233            ASSERT(res);
-    234            
-    235            // Освобождаем запись
-    236            AUTH_NODE_REQ[idx].RA = false;
-    237            return fr;
-    238          };
-    239          
-    240          /** brief Обработка запроса авторизации от соседних узлов
-    241          * Запрос обрабатывается если данный узел авторизован  
-    242          */
-    243          static void receiveCMD_Request(struct frame* frame){
-    244            bool condition = MODEL.AUTH.auth_ok && MODEL.AUTH.access_ok &&
-    245              MODEL.SYNC.synced && MODEL.NEIGH.comm_node_found;
-    246            if (!condition){
-    247              LOG_ON("Cant handel auth req");
-    248              return;
-    249            };
-    250            
-    251            // Сначала убедимся что этот узел уже не в списке запросов
-    252            // проверим mac. Если узел существует то обновим запись о нем
-    253            // вдруг что то изменилось
-    254            struct AUTH_ETH_REQ *req = (struct AUTH_ETH_REQ*)frame->payload;
-    255            
-    256            int idx = -1;
-    257            for (int i = 0; i < AUTH_NODE_REQ_SIZE; i++){
-    258              // Пропускаем пустые записи
-    259              if (!AUTH_NODE_REQ[i].RA)
-    260                continue;
-    261              
-    262              // Если нашли запись с таким же мак адрессом
-    263              if (mac_cmp(AUTH_NODE_REQ[i].req.mac, req->mac)){
-    264                idx = i;
-    265                break;
-    266              };
-    267            };
-    268            
-    269            // Записи с таким же мак адресом нету. Найдем свободное место
-    270            if (idx < 0){
-    271              for (int i = 0; i < AUTH_NODE_REQ_SIZE; i++)
-    272                if (!AUTH_NODE_REQ[i].RA){
-    273                  idx = i;
-    274                  break;
-    275                };
-    276            };
-    277            
-    278            if (idx < 0){
-    279              LOG_ON("No free space in AUTH_NODE_REQ");
-    280              return;
-    281            };
-    282            
-    283            // Добавляем запись
-    284            AUTH_NODE_REQ[idx].RA = true;
-    285            MEMCPY((char*)&AUTH_NODE_REQ[idx].req, (char*)req, 
-    286                   sizeof(struct AUTH_ETH_REQ));
-    287            char *mac_ptr = AUTH_NODE_REQ[idx].req.mac;
-    288            
-    289            LOG_ON("AUTH REQ from mac: 0x%2x%2x%2x%2x%2x%2x%2x%2x add AUTH_NODE_REQ",
-    290                   mac_ptr[0],mac_ptr[1],mac_ptr[2],mac_ptr[4],mac_ptr[5],mac_ptr[6],
-    291                   mac_ptr[7]);
-    292          };
-    293          
-    294          /** brief Передача ответа на авторизацию, полученую от шлюза
-    295          * запросившему узлу.
-    296          */
-    297          static void AUTH_resend_RESP_from_gw(){
-    298            static unsigned long int last = 0;
-    299            if ((MODEL.RTC.uptime - last) < AUTH_RESP_GW_INTERVAL)
-    300              return;
-    301            // Обновляем время
-    302            last = MODEL.RTC.uptime;
-    303            
-    304            // Ищем ответ шлюза
-    305            int idx = -1;
-    306            for (int i = 0; i < AUTH_NODE_RESP_SIZE; i++){
-    307              if (AUTH_NODE_RESP[i].RA){
-    308                idx = i;
-    309                break;
-    310              };
-    311            };
-    312            
-    313            // Таблица пуста
-    314            if (idx < 0) 
-    315              return;
-    316            
-    317            // Нашли пакет для передачи
-    318            // Создаем ответ
-    319            struct frame* frame = FR_create();
-    320            
-    321            // Добавляем в пакет данные
-    322            bool res;
-    323            res = FR_add_header(frame, (char*)&AUTH_NODE_RESP[idx].res,
-    324                                sizeof(struct AUTH_ETH_RESP));
-    325            ASSERT(res);
-    326            
-    327            // Добавляем в загловок тип ответа
-    328            char cmd = AUTH_CMD_RESP;
-    329            res = FR_add_header(frame, &cmd, sizeof(cmd));
-    330            ASSERT(res);
-    331            
-    332            // Добавляем параметры передачи
-    333            frame->meta.TS = 1;
-    334            frame->meta.CH = MODEL.SYNC.sys_channel;
-    335            frame->meta.PID = PID_AUTH;  
-    336            frame->meta.NSRC = MODEL.node_adr;
-    337            frame->meta.NDST = 0xffff;
-    338            LOG_ON("Auth ip response from gw sended")
-    339            RP_Send(frame);
-    340            AUTH_NODE_RESP[idx].RA = false;;
-    341          };
-    342          
-    343          void AUTH_ETH_TimeAlloc(){
-    344              // Если узел еще не авторизован, но синхронизирован и 
-    345            // найден ближайший сосед для передачи, то отправляем запрос
-    346            // авторизации
-    347            if (!MODEL.AUTH.auth_ok && MODEL.SYNC.synced &&
-    348                MODEL.NEIGH.comm_node_found)   
-    349                  AUTH_request();
-    350            
-    351            // Если мы авторизированы, синхронизированы, есть сосед для
-    352            // передачи данных и доступ нам разрешен, то будем ретранслировать
-    353            // ответы от шлюза на запросы подключения.
-    354            if (MODEL.AUTH.auth_ok && MODEL.SYNC.synced &&
-    355                MODEL.NEIGH.comm_node_found && MODEL.AUTH.access_ok)    
-    356             AUTH_resend_RESP_from_gw();
-    357          };
-    358          
-    359          static void AUTH_request(){
-    360            // Еще не наступло время передачи запроса
-    361            if ((MODEL.RTC.uptime - last_request) < REQUEST_INTERVAL)
-    362              return;
-    363            // Обновляем время
-    364            last_request = MODEL.RTC.uptime;
-    365            
-    366            // Создаем запрос
-    367            struct frame* frame = FR_create();
-    368            struct AUTH_ETH_REQ req;
-    369            for (int i = 0; i < 8; i++)
-    370              req.mac[i] = MODEL.node_mac[i];
-    371            
-    372            req.node_type = NODE_TYPE;
-    373            req.node_ver = NODE_VER;
-    374          
-    375            bool res;
-    376            res = FR_add_header(frame, &req, sizeof(struct AUTH_ETH_REQ));
-    377            ASSERT(res);
-    378            char cmd = AUTH_CMD_REQ;
-    379            res = FR_add_header(frame, &cmd, sizeof(cmd));
-    380            ASSERT(res);
-    381            
-    382            frame->meta.PID = PID_AUTH;
-    383            LOG_ON("Node authorisation requested");
-    384            RP_Send_COMM(frame);
-    385          };
+    207            AUTH_NODE_RESP[idx].RA = true;
+    208            
+    209            LOG_ON("AUTH RESP from GW add AUTH_NODE_RESP");
+    210          };
+    211          
+    212          /** brief Подготавливает и возвращает кадр с данными запроса
+    213          */
+    214          struct frame* get_AUTH_NODE_REQ(){
+    215            int idx = -1;
+    216            // Ищем первую активную запись в таблице
+    217            for (int i = 0; i < AUTH_NODE_REQ_SIZE; i++)
+    218              if (AUTH_NODE_REQ[i].RA){
+    219                idx = i;
+    220                break;
+    221              };
+    222            
+    223            // Ничего не нашли
+    224            if (idx < 0)
+    225              return NULL;
+    226          
+    227            struct frame *fr = FR_create();
+    228            ASSERT(fr);
+    229            
+    230            //Добавим данные запроса
+    231            bool res = FR_add_header(fr, 
+    232                       (char*)(&AUTH_NODE_REQ[idx].req),
+    233                        sizeof(struct AUTH_ETH_REQ));
+    234            ASSERT(res);
+    235            
+    236            // Освобождаем запись
+    237            AUTH_NODE_REQ[idx].RA = false;
+    238            return fr;
+    239          };
+    240          
+    241          /** brief Обработка запроса авторизации от соседних узлов
+    242          * Запрос обрабатывается если данный узел авторизован  
+    243          */
+    244          static void receiveCMD_Request(struct frame* frame){
+    245            bool condition = MODEL.AUTH.auth_ok && MODEL.AUTH.access_ok &&
+    246              MODEL.SYNC.synced && MODEL.NEIGH.comm_node_found;
+    247            if (!condition){
+    248              LOG_ON("Cant handel auth req");
+    249              return;
+    250            };
+    251            
+    252            // Сначала убедимся что этот узел уже не в списке запросов
+    253            // проверим mac. Если узел существует то обновим запись о нем
+    254            // вдруг что то изменилось
+    255            struct AUTH_ETH_REQ *req = (struct AUTH_ETH_REQ*)frame->payload;
+    256            
+    257            int idx = -1;
+    258            for (int i = 0; i < AUTH_NODE_REQ_SIZE; i++){
+    259              // Пропускаем пустые записи
+    260              if (!AUTH_NODE_REQ[i].RA)
+    261                continue;
+    262              
+    263              // Если нашли запись с таким же мак адрессом
+    264              if (mac_cmp(AUTH_NODE_REQ[i].req.mac, req->mac)){
+    265                idx = i;
+    266                break;
+    267              };
+    268            };
+    269            
+    270            // Записи с таким же мак адресом нету. Найдем свободное место
+    271            if (idx < 0){
+    272              for (int i = 0; i < AUTH_NODE_REQ_SIZE; i++)
+    273                if (!AUTH_NODE_REQ[i].RA){
+    274                  idx = i;
+    275                  break;
+    276                };
+    277            };
+    278            
+    279            if (idx < 0){
+    280              LOG_ON("No free space in AUTH_NODE_REQ");
+    281              return;
+    282            };
+    283            
+    284            // Добавляем запись
+    285            AUTH_NODE_REQ[idx].RA = true;
+    286            MEMCPY((char*)&AUTH_NODE_REQ[idx].req, (char*)req, 
+    287                   sizeof(struct AUTH_ETH_REQ));
+    288            char *mac_ptr = AUTH_NODE_REQ[idx].req.mac;
+    289            
+    290            LOG_ON("AUTH REQ from mac: 0x%2x%2x%2x%2x%2x%2x%2x%2x add AUTH_NODE_REQ",
+    291                   mac_ptr[0],mac_ptr[1],mac_ptr[2],mac_ptr[4],mac_ptr[5],mac_ptr[6],
+    292                   mac_ptr[7]);
+    293          };
+    294          
+    295          /** brief Передача ответа на авторизацию, полученую от шлюза
+    296          * запросившему узлу.
+    297          */
+    298          static void AUTH_resend_RESP_from_gw(){
+    299            static unsigned long int last = 0;
+    300            if ((MODEL.RTC.uptime - last) < AUTH_RESP_GW_INTERVAL)
+    301              return;
+    302            // Обновляем время
+    303            last = MODEL.RTC.uptime;
+    304            
+    305            // Ищем ответ шлюза
+    306            int idx = -1;
+    307            for (int i = 0; i < AUTH_NODE_RESP_SIZE; i++){
+    308              if (AUTH_NODE_RESP[i].RA){
+    309                idx = i;
+    310                break;
+    311              };
+    312            };
+    313            
+    314            // Таблица пуста
+    315            if (idx < 0) 
+    316              return;
+    317            
+    318            // Нашли пакет для передачи
+    319            // Создаем ответ
+    320            struct frame* frame = FR_create();
+    321            ASSERT(frame);
+    322            
+    323            // Добавляем в пакет данные
+    324            bool res;
+    325            res = FR_add_header(frame, (char*)&AUTH_NODE_RESP[idx].res,
+    326                                sizeof(struct AUTH_ETH_RESP));
+    327            ASSERT(res);
+    328            
+    329            // Добавляем в загловок тип ответа
+    330            char cmd = AUTH_CMD_RESP;
+    331            res = FR_add_header(frame, &cmd, sizeof(cmd));
+    332            ASSERT(res);
+    333            
+    334            // Добавляем параметры передачи
+    335            frame->meta.TS = 1;
+    336            frame->meta.CH = MODEL.SYNC.sys_channel;
+    337            frame->meta.PID = PID_AUTH;  
+    338            frame->meta.NSRC = MODEL.node_adr;
+    339            frame->meta.NDST = 0xffff;
+    340            LOG_ON("Auth ip response from gw sended")
+    341            RP_Send(frame);
+    342            AUTH_NODE_RESP[idx].RA = false;;
+    343          };
+    344          
+    345          void AUTH_ETH_TimeAlloc(){
+    346              // Если узел еще не авторизован, но синхронизирован и 
+    347            // найден ближайший сосед для передачи, то отправляем запрос
+    348            // авторизации
+    349            if (!MODEL.AUTH.auth_ok && MODEL.SYNC.synced &&
+    350                MODEL.NEIGH.comm_node_found)   
+    351                  AUTH_request();
+    352            
+    353            // Если мы авторизированы, синхронизированы, есть сосед для
+    354            // передачи данных и доступ нам разрешен, то будем ретранслировать
+    355            // ответы от шлюза на запросы подключения.
+    356            if (MODEL.AUTH.auth_ok && MODEL.SYNC.synced &&
+    357                MODEL.NEIGH.comm_node_found && MODEL.AUTH.access_ok)    
+    358             AUTH_resend_RESP_from_gw();
+    359          };
+    360          
+    361          static void AUTH_request(){
+    362            // Еще не наступло время передачи запроса
+    363            if ((MODEL.RTC.uptime - last_request) < REQUEST_INTERVAL)
+    364              return;
+    365            // Обновляем время
+    366            last_request = MODEL.RTC.uptime;
+    367            
+    368            // Создаем запрос
+    369            struct frame* frame = FR_create();
+    370            struct AUTH_ETH_REQ req;
+    371            for (int i = 0; i < 8; i++)
+    372              req.mac[i] = MODEL.node_mac[i];
+    373            
+    374            req.node_type = NODE_TYPE;
+    375            req.node_ver = NODE_VER;
+    376          
+    377            bool res;
+    378            res = FR_add_header(frame, &req, sizeof(struct AUTH_ETH_REQ));
+    379            ASSERT(res);
+    380            char cmd = AUTH_CMD_REQ;
+    381            res = FR_add_header(frame, &cmd, sizeof(cmd));
+    382            ASSERT(res);
+    383            
+    384            frame->meta.PID = PID_AUTH;
+    385            LOG_ON("Node authorisation requested");
+    386            RP_Send_COMM(frame);
+    387          };
 E:\Neocore\Hardware\PRG Node\auth_ip.c
       1          #include "tcp.h"
       2          #include "debug.h"
@@ -1695,24 +1697,25 @@ E:\Neocore\Hardware\PRG Node\ethernet.c
     140          };
     141          
     142          void eth_send(struct frame *frame){
-    143            struct ETH_LAY eth_header;
-    144            eth_header.ETH_T.bits.PID = frame->meta.PID ;
-    145            eth_header.ETH_T.bits.ETH_VER =HEADER_ETH_VER;
-    146            eth_header.NETID = MODEL.SYNC.panid;
-    147            eth_header.NDST = frame->meta.NDST;
-    148            eth_header.NSRC = frame->meta.NSRC;
-    149            eth_header.NSRC_CH = MODEL.node_CH;
-    150            eth_header.NSRC_TS = MODEL.node_TS;
-    151            eth_header.XOR = calc_xor(&eth_header);
-    152            
-    153            bool res;
-    154            res = FR_add_header(frame, &eth_header,
-    155                                sizeof(struct ETH_LAY));
-    156            ASSERT(res);
-    157           
-    158            frame->meta.tx_attempts = 5;
-    159            res = LLC_add_tx_frame(frame); 
-    160          };
+    143            ASSERT(frame);
+    144            struct ETH_LAY eth_header;
+    145            eth_header.ETH_T.bits.PID = frame->meta.PID ;
+    146            eth_header.ETH_T.bits.ETH_VER =HEADER_ETH_VER;
+    147            eth_header.NETID = MODEL.SYNC.panid;
+    148            eth_header.NDST = frame->meta.NDST;
+    149            eth_header.NSRC = frame->meta.NSRC;
+    150            eth_header.NSRC_CH = MODEL.node_CH;
+    151            eth_header.NSRC_TS = MODEL.node_TS;
+    152            eth_header.XOR = calc_xor(&eth_header);
+    153            
+    154            bool res;
+    155            res = FR_add_header(frame, &eth_header,
+    156                                sizeof(struct ETH_LAY));
+    157            ASSERT(res);
+    158           
+    159            frame->meta.tx_attempts = 5;
+    160            res = LLC_add_tx_frame(frame); 
+    161          };
 E:\Neocore\Hardware\STACK_CORE_SRC\frame.c
       1          #include "action_manager.h"
       2          #include "frame.h"
@@ -1738,91 +1741,101 @@ E:\Neocore\Hardware\STACK_CORE_SRC\frame.c
      22          
      23          struct frame* FR_create(){
      24            struct frame *fr  = (struct frame*)SL_alloc();
-     25            MEMSET((char*)&fr->meta, 0, sizeof(struct meta));
-     26            fr->len = 0;
-     27            return fr;
-     28          };
-     29          
-     30          struct frame* FR_copy(struct frame *frame){
-     31            return (struct frame*)SL_copy((char*)frame);
-     32          };
-     33          
-     34          bool FR_delete(struct frame *frame){
-     35            return SL_free((char*)frame);
-     36          }
-     37          
-     38          static void mem_move(char *dst, char *src, char len){
-     39            for (int i = len - 1; i >= 0; i--)
-     40              dst[i] = src[i];
-     41          };
-     42          
-     43          bool FR_add_header(struct frame* frame ,void *head, char len){
-     44            int new_len = frame->len + len;
-     45            if (!(new_len < MAX_PAYLOAD_SIZE))
-     46              return false;
-     47            
-     48            // Сдвинем данные на размер вставки при необходимости
-     49            if (frame->len != 0)
-     50              mem_move(&frame->payload[len], frame->payload, frame->len);
-     51            
-     52            // Скопируем новые данные
-     53            MEMCPY(frame->payload, head, len);
-     54            frame->len = new_len;
-     55            return true;
-     56          };
-     57          
-     58          
-     59          bool FR_del_header(struct frame* frame, char len){
-     60            if (len == 0 || len > frame->len )
-     61              return false;
-     62            frame->len = frame->len - len;
-     63            MEMCPY(frame->payload, &frame->payload[len], frame->len);
-     64            
-     65            #ifdef FRAME_FOOTER_DEL
-     66            MEMSET(&frame->payload[frame->len], 0, len);
-     67            #endif
-     68            return true;
-     69          }
-     70          
-     71          void FR_set_rx(struct frame* frame){
-     72            SL_set_rx((char*)frame);
-     73          }
-     74          
-     75          void FR_set_tx(struct frame* frame){
-     76            SL_set_tx((char*)frame);
-     77          }
-     78          
-     79          bool FR_is_rx(struct frame* frame){
-     80            return SL_is_rx((char*)frame);
-     81          }
-     82          
-     83          bool FR_is_tx(struct frame* frame){
-     84            return SL_is_tx((char*)frame);
-     85          }
-     86          
-     87          int FR_rx_frames(){
-     88            return SL_rx_slots();
-     89          };
-     90          
-     91          int FR_tx_frames(){
-     92            return SL_tx_slots();
-     93          };
-     94          
-     95          int FR_busy(){
-     96            return SL_busy();
-     97          }
-     98          
-     99          struct frame* FR_find_tx(struct frame* frame){
-    100            return (struct frame*)SL_find_tx((char*)frame);  
-    101          }
-    102          
-    103          struct frame* FR_find_rx(struct frame* frame){
-    104            return (struct frame*)SL_find_rx((char*)frame);  
-    105          }
-    106          
-    107          int FR_available(){
-    108            return SL_available();
-    109          };
+     25            if (!fr)
+     26              return NULL;
+     27            MEMSET((char*)&fr->meta, 0, sizeof(struct meta));
+     28            fr->len = 0;
+     29            return fr;
+     30          };
+     31          
+     32          struct frame* FR_copy(struct frame *frame){
+     33            return (struct frame*)SL_copy((char*)frame);
+     34          };
+     35          
+     36          bool FR_delete(struct frame *frame){
+     37            return SL_free((char*)frame);
+     38          }
+     39          
+     40          static void mem_move(char *dst, char *src, char len){
+     41            for (int i = len - 1; i >= 0; i--)
+     42              dst[i] = src[i];
+     43          };
+     44          
+     45          bool FR_add_header(struct frame* frame ,void *head, char len){
+     46            int new_len = frame->len + len;
+     47            if (!(new_len < MAX_PAYLOAD_SIZE))
+     48              return false;
+     49            
+     50            // Сдвинем данные на размер вставки при необходимости
+     51            if (frame->len != 0)
+     52              mem_move(&frame->payload[len], frame->payload, frame->len);
+     53            
+     54            // Скопируем новые данные
+     55            MEMCPY(frame->payload, head, len);
+     56            frame->len = new_len;
+     57            return true;
+     58          };
+     59          
+     60          
+     61          bool FR_del_header(struct frame* frame, char len){
+     62            if (len == 0 || len > frame->len )
+     63              return false;
+     64            frame->len = frame->len - len;
+     65            MEMCPY(frame->payload, &frame->payload[len], frame->len);
+     66            
+     67            #ifdef FRAME_FOOTER_DEL
+     68            MEMSET(&frame->payload[frame->len], 0, len);
+     69            #endif
+     70            return true;
+     71          }
+     72          
+     73          void FR_set_rx(struct frame* frame){
+     74            SL_set_rx((char*)frame);
+     75          }
+     76          
+     77          void FR_set_tx(struct frame* frame){
+     78            SL_set_tx((char*)frame);
+     79          }
+     80          
+     81          bool FR_is_rx(struct frame* frame){
+     82            return SL_is_rx((char*)frame);
+     83          }
+     84          
+     85          bool FR_is_tx(struct frame* frame){
+     86            return SL_is_tx((char*)frame);
+     87          }
+     88          
+     89          int FR_rx_frames(){
+     90            return SL_rx_slots();
+     91          };
+     92          
+     93          int FR_tx_frames(){
+     94            return SL_tx_slots();
+     95          };
+     96          
+     97          int FR_busy(){
+     98            return SL_busy();
+     99          }
+    100          
+    101          struct frame* FR_find_tx(struct frame* frame){
+    102            return (struct frame*)SL_find_tx((char*)frame);  
+    103          }
+    104          
+    105          struct frame* FR_find_rx(struct frame* frame){
+    106            return (struct frame*)SL_find_rx((char*)frame);  
+    107          }
+    108          
+    109          int FR_available(){
+    110            return SL_available();
+    111          };
+    112          
+    113          int FR_tx_available(){
+    114            return SL_tx_available();
+    115          };
+    116          
+    117          int FR_rx_available(){
+    118            return SL_rx_available();
+    119          };
 E:\Neocore\Hardware\PRG Node\ip.c
       1          #include "model.h"
       2          #include "debug.h"
@@ -2004,107 +2017,106 @@ E:\Neocore\Hardware\STACK_CORE_SRC\llc.c
      58          }
      59          
      60          bool LLC_add_tx_frame(struct frame *frame){
-     61            ASSERT(frame);
-     62            // Проверим количество доступных пакетов
-     63            int fr_av = FR_available();
-     64            if (fr_av == 0){
-     65              LOG_ON("NOT ENOUGH FREE FRAME");
-     66              return false;
-     67            };
-     68            
-     69            AES_StreamCoder(true, frame->payload, frame->payload, frame->len); 
-     70            FR_set_tx(frame);
-     71            return true;
-     72          }
-     73          
-     74          static void scheduler_tx(void){
-     75            struct frame* tx_frame = NULL; 
-     76            tx_frame = FR_find_tx(tx_frame);
-     77            
-     78            if (!tx_frame)
-     79              return;
-     80            
-     81            if (tx_frame->meta.TS==0)
-     82              while(1);
-     83            
-     84            while(tx_frame){
-     85              ASSERT(tx_frame->meta.TS != 0);
-     86              // Если у нас есть что передавать, берем следующий кадр из буфера
-     87              if (ACTIONSLOTS[tx_frame->meta.TS].frame_tx){
-     88                tx_frame = FR_find_tx(tx_frame);
-     89                continue;
-     90              }
-     91              ACTIONSLOTS[tx_frame->meta.TS].frame_tx = tx_frame;
-     92              TM_SetAlarm(tx_frame->meta.TS, TX_ALARM); 
-     93              tx_frame = FR_find_tx(tx_frame);
-     94            }
-     95          }
-     96          
-     97          static void scheduler_rx(void){
-     98            ASSERT(ACTIONSLOTS[0].rx == 0);
-     99            for (char i = 1; i < MAX_SLOTS; i++)
-    100              if (ACTIONSLOTS[i].rx)
-    101                TM_SetAlarm(i, RX_ALARM);
-    102              else
-    103                TM_ClrAlarm(i, RX_ALARM);
-    104          }
-    105          
-    106          static void Cold_Start(void){
-    107          // Планировщик планирует на один суперфрейм в начале ts0
-    108            if (MODEL.TM.timeslot != 0)
-    109              return;
-    110            
-    111            scheduler_tx();
-    112            scheduler_rx();
-    113          };
-    114          
-    115          static inline void receive(){
-    116            timeslot_t ts = MODEL.TM.timeslot;
-    117            MAC_Receive(ACTIONSLOTS[ts].rx);
-    118          }
-    119          
-    120          static void transmite(void){
-    121            timeslot_t ts = MODEL.TM.timeslot;
-    122            struct frame *frame = ACTIONSLOTS[ts].frame_tx;
-    123            
-    124            if (!frame)
-    125              HALT("Error")
-    126            
-    127            // Неудачные передачи учитывает MAC_Send()
-    128            int send_res = MAC_Send(frame);
-    129            switch (send_res) {
-    130              case 1: { // удачная передача
-    131                TM_ClrAlarm(ts, TX_ALARM);
-    132                ACTIONSLOTS[ts].frame_tx = NULL;
-    133                LOG_ON("Send success");
-    134                break;
-    135              }
-    136              case 0: { // неудачная передача. ACK не получен или CCA
-    137                LOG_ON("CCA/ACK err")
-    138                break;
-    139              }
-    140              case -1: { // Исчерпаны попытки отправки
-    141                TM_ClrAlarm(ts, TX_ALARM);
-    142                ACTIONSLOTS[ts].frame_tx = NULL;
-    143                LOG_ON("Attempts exired");
-    144                break;
-    145              }
-    146              default:
-    147                HALT("Error");
-    148            };
-    149          }
-    150          
-    151          static void Hot_Start(void){
-    152            timeslot_t ts = MODEL.TM.timeslot;
-    153            if (ts == 0)
-    154              return;
-    155            char alarm = MODEL.TM.alarm;
-    156            
-    157            if (alarm & TX_ALARM)
-    158              transmite();
-    159            else if (alarm & RX_ALARM)
-    160              receive();
-    161          };
+     61            ASSERT(frame); 
+     62            if (FR_tx_available() == 0){
+     63              LOG_ON("NO FREE TX FRAME");
+     64              FR_delete(frame);
+     65              return false;
+     66            };  
+     67             
+     68            AES_StreamCoder(true, frame->payload, frame->payload, frame->len); 
+     69            FR_set_tx(frame);
+     70            return true;
+     71          }
+     72          
+     73          static void scheduler_tx(void){
+     74            struct frame* tx_frame = NULL; 
+     75            tx_frame = FR_find_tx(tx_frame);
+     76            
+     77            if (!tx_frame)
+     78              return;
+     79            
+     80            if (tx_frame->meta.TS==0)
+     81              while(1);
+     82            
+     83            while(tx_frame){
+     84              ASSERT(tx_frame->meta.TS != 0);
+     85              // Если у нас есть что передавать, берем следующий кадр из буфера
+     86              if (ACTIONSLOTS[tx_frame->meta.TS].frame_tx){
+     87                tx_frame = FR_find_tx(tx_frame);
+     88                continue;
+     89              }
+     90              ACTIONSLOTS[tx_frame->meta.TS].frame_tx = tx_frame;
+     91              TM_SetAlarm(tx_frame->meta.TS, TX_ALARM); 
+     92              tx_frame = FR_find_tx(tx_frame);
+     93            }
+     94          }
+     95          
+     96          static void scheduler_rx(void){
+     97            ASSERT(ACTIONSLOTS[0].rx == 0);
+     98            for (char i = 1; i < MAX_SLOTS; i++)
+     99              if (ACTIONSLOTS[i].rx)
+    100                TM_SetAlarm(i, RX_ALARM);
+    101              else
+    102                TM_ClrAlarm(i, RX_ALARM);
+    103          }
+    104          
+    105          static void Cold_Start(void){
+    106          // Планировщик планирует на один суперфрейм в начале ts0
+    107            if (MODEL.TM.timeslot != 0)
+    108              return;
+    109            
+    110            scheduler_tx();
+    111            scheduler_rx();
+    112          };
+    113          
+    114          static inline void receive(){
+    115            timeslot_t ts = MODEL.TM.timeslot;
+    116            MAC_Receive(ACTIONSLOTS[ts].rx);
+    117          }
+    118          
+    119          static void transmite(void){
+    120            timeslot_t ts = MODEL.TM.timeslot;
+    121            struct frame *frame = ACTIONSLOTS[ts].frame_tx;
+    122            
+    123            if (!frame)
+    124              HALT("Error")
+    125            
+    126            // Неудачные передачи учитывает MAC_Send()
+    127            int send_res = MAC_Send(frame);
+    128            switch (send_res) {
+    129              case 1: { // удачная передача
+    130                TM_ClrAlarm(ts, TX_ALARM);
+    131                ACTIONSLOTS[ts].frame_tx = NULL;
+    132                LOG_ON("Send success");
+    133                break;
+    134              }
+    135              case 0: { // неудачная передача. ACK не получен или CCA
+    136                LOG_ON("CCA/ACK err")
+    137                break;
+    138              }
+    139              case -1: { // Исчерпаны попытки отправки
+    140                TM_ClrAlarm(ts, TX_ALARM);
+    141                ACTIONSLOTS[ts].frame_tx = NULL;
+    142                LOG_ON("Attempts exired");
+    143                break;
+    144              }
+    145              default:
+    146                HALT("Error");
+    147            };
+    148          }
+    149          
+    150          static void Hot_Start(void){
+    151            timeslot_t ts = MODEL.TM.timeslot;
+    152            if (ts == 0)
+    153              return;
+    154            char alarm = MODEL.TM.alarm;
+    155            
+    156            if (alarm & TX_ALARM)
+    157              transmite();
+    158            else if (alarm & RX_ALARM)
+    159              receive();
+    160          };
 E:\Neocore\Hardware\STACK_CORE_SRC\mac.c
       1          #include "action_manager.h"
       2          #include "frame.h"
@@ -2113,167 +2125,271 @@ E:\Neocore\Hardware\STACK_CORE_SRC\mac.c
       5          #include "ustimer.h"
       6          #include "debug.h"
       7          #include "model.h"
-      8          
-      9          #define RECV_TIMEOUT 2500
-     10          #define ACK_RECV_TIMEOUT 1500
-     11          
-     12          //ДЛЯ ОЛАДКИ 
-     13          nwtime_t FRAME_END ;
-     14          nwtime_t ACK_START ;
-     15          
-     16          static void SW_Init(void);
-     17          static void IRQ_Init(void);
-     18          
-     19          module_s MAC_MODULE = {ALIAS(SW_Init), ALIAS(IRQ_Init)};
+      8          #include "mem_utils.h"
+      9          
+     10          #define RECV_TIMEOUT 2500
+     11          #define ACK_RECV_TIMEOUT 1500
+     12          #define REPEATED_TIMEOUT 5
+     13          
+     14          //ДЛЯ ОЛАДКИ 
+     15          nwtime_t FRAME_END ;
+     16          nwtime_t ACK_START ;
+     17          
+     18          static void SW_Init(void);
+     19          static void IRQ_Init(void);
      20          
-     21          struct ack{ // Формат структуры пакета ACK
-     22            char CRC8;
-     23          } __attribute__((packed));
-     24          
-     25          static void SW_Init(void){};
-     26          static void IRQ_Init(void){};
-     27          
+     21          module_s MAC_MODULE = {ALIAS(SW_Init), ALIAS(IRQ_Init)};
+     22          
+     23          struct ack{ // Формат структуры пакета ACK
+     24            char CRC8;
+     25          } __attribute__((packed));
+     26          
+     27          static void SW_Init(void){};
      28          
-     29          static inline struct frame* _recv_frame(channel_t ch){
-     30            if(!RI_SetChannel(ch))
-     31              HALT("Wrong channel");
-     32            
-     33            //UST_delay(400);
-     34           // nwtime_t NOW1 = AT_time();
-     35            struct frame *frame = RI_Receive(RECV_TIMEOUT); //
-     36           // FRAME_END = AT_time(); // ДЛЯ ОТЛАДКИ
-     37           // nwtime_t NOW2 = AT_time();
-     38            return frame;
-     39          }
+     29          
+     30          struct frame_repeated{
+     31            bool RA;
+     32            char NSRC;
+     33            char CRC8;
+     34            unsigned long update;
+     35          } __attribute__((packed));
+     36          
+     37          #define REPEATED_ITEMS 10
+     38          static struct frame_repeated REPEATED[REPEATED_ITEMS];          
+     39             
      40          
-     41          static uint8_t xor_calc(struct frame *frame){
-     42            uint8_t crc = 0x34; // Начальное значение
-     43            uint8_t *val = (uint8_t*)frame->payload;
-     44            for (uint8_t i = 0; i < frame->len; i++)
-     45              crc ^= val[i];
-     46            return crc;
-     47          }
-     48          
-     49          static inline void _send_ack(struct frame *frame){
-     50          //nwtime_t T1 = AT_time(); // ДЛЯ ОТЛАДКИ
-     51            struct ack ack;
-     52            struct frame *ack_frame;
-     53            // Создаем подтверждение кадра
-     54            ack.CRC8 = xor_calc(frame);
-     55            // Создаем кадр для отправки
+     41          static void IRQ_Init(void){
+     42            MEMSET((char*)&REPEATED, 0, sizeof (REPEATED));
+     43          };
+     44          
+     45          static inline struct frame* _recv_frame(channel_t ch){
+     46            if(!RI_SetChannel(ch))
+     47              HALT("Wrong channel");
+     48            
+     49            //UST_delay(400);
+     50           // nwtime_t NOW1 = AT_time();
+     51            struct frame *frame = RI_Receive(RECV_TIMEOUT); //
+     52           // FRAME_END = AT_time(); // ДЛЯ ОТЛАДКИ
+     53           // nwtime_t NOW2 = AT_time();
+     54            return frame;
+     55          }
      56          
-     57            ack_frame = FR_create();
-     58          
-     59            ASSERT(ack_frame);
-     60            FR_add_header(ack_frame, &ack, sizeof(struct ack));
-     61          //  nwtime_t T2 = AT_time(); // ДЛЯ ОТЛАДКИ
-     62          //UST_delay(500);
-     63          //ACK_START = AT_time(); // ДЛЯ ОТЛАДКИ
-     64            
-     65            // ВНИМАНИЕ!
-     66            // ВЫЧИЛСЕНИЕ XOR+СОЗДАНИЕ ФРЕЙМА И ДОБАВЛЕНИЕ ACK ЗАНИМАЕТ 0.3мс!
-     67            // Так что перед приемом нужно подождать
-     68            RI_Send(ack_frame);
-     69            LOG_ON("ACK=%d, frame_len=%d, TS_ACK=%d, TS_FRAME=%d", ack.CRC8, frame->len, 
-     70                   ack_frame->meta.TIMESTAMP, frame->meta.TIMESTAMP);
-     71           // LOG_ON("ACK_S=%d, ACK_P=%d, FR_END=%d, DEL=%d, DEL_CALC=%d",
-     72             //      ACK_START, ack_frame->meta.TIMESTAMP,FRAME_END, ACK_START-FRAME_END,
-     73               //    T2 - T1 );
-     74            FR_delete(ack_frame);  
-     75          }
-     76          
-     77          void MAC_Receive(channel_t ch){
-     78            struct frame *frame = _recv_frame(ch);
-     79            if (!frame)
-     80              return;
-     81            
-     82            frame->meta.TS = MODEL.TM.timeslot;
-     83            if (MODEL.TM.timeslot > 1) // не системный таймслот требует подтверждения
-     84              _send_ack(frame);
-     85            
-     86            AES_StreamCoder(false, frame->payload, frame->payload, frame->len);
-     87            
-     88            LOG_ON("RX frame. TS=%d, CH=%d", frame->meta.TS, frame->meta.CH);
-     89            FR_set_rx(frame);  
-     90          }
-     91          
-     92          static inline bool _send_frame(struct frame *frame){
-     93            if(!RI_SetChannel(frame->meta.CH))
-     94              HALT("Wrong channel");  
-     95            
-     96            UST_delay(918);
-     97            bool tx_success = RI_Send(frame);
-     98            return tx_success;
-     99          }
-    100          
-    101          
-    102          static inline bool _recv_ack(struct frame *frame){
-    103            // Принимаем пакет ACK на той же частоте что и передавали пакет
-    104            // Передача ACK требует больше времени чем процедура приема.
-    105            // Задержка была найдена эксперементально.
-    106            // Я использую 900, но возможно 800 более оптимально будет с учетом
-    107            // разбороса параметров узлов
-    108            // OK[500-900] NOTGOOD[1000] BAD[1200] 
-    109            UST_delay(900); 
-    110            struct frame *fr_ack = RI_Receive(ACK_RECV_TIMEOUT);  
-    111            if (!fr_ack){
-    112              LOG_ON("Frame ack not received");
-    113              return false;
-    114            };
-    115            
-    116            // Размер ответа не верен
-    117            if (fr_ack->len != sizeof(struct ack)){
-    118              LOG_ON("ACK size %d incorrect. Expected %d",
-    119                     fr_ack->len, sizeof(struct ack));
-    120              FR_delete(fr_ack);
-    121              return false;
-    122            }
-    123            
-    124            // Извлекаем структур ответа
-    125            struct ack *ack = (struct ack*)fr_ack->payload;
-    126            
-    127            // Расчитываем CRC8 отправленного пакета
-    128            uint8_t CRC8 = xor_calc(frame);
-    129            
-    130            // Сравним значения
-    131            if (ack->CRC8 == CRC8){
-    132              LOG_ON("Frame acked");
-    133              FR_delete(fr_ack);
-    134              return true;
-    135            }
-    136            else{
-    137              LOG_ON("Frame not acked. fr_ack=%d, send_ack=%d",
-    138                     ack->CRC8, CRC8);
-    139              FR_delete(fr_ack);
-    140              return false;
-    141            }
-    142          }
-    143          
-    144          int MAC_Send(struct frame *frame){
-    145            bool tx_success = _send_frame(frame);
-    146            
-    147            bool ack_success = false;
-    148            if (MODEL.TM.timeslot > 1) // Ждем подтверждения ack для не системных слотов
-    149              ack_success = _recv_ack(frame);
-    150            else
-    151              ack_success = true;
-    152            
-    153            if (tx_success && ack_success){ // Удачная передача
-    154              FR_delete(frame);
-    155              return 1;
-    156            }
-    157            else{ // неудачная передача
-    158              if (frame->meta.tx_attempts > 0)
-    159                frame->meta.tx_attempts --;
-    160              
-    161              if (!frame->meta.tx_attempts){ // кончились попытки передачи
-    162                FR_delete(frame);
-    163                LOG_ON("TX attempts exied. Frame delete.");
-    164                return -1;
-    165              }
-    166            }
-    167            return 0;
-    168          }
+     57          static uint8_t xor_calc(struct frame *frame){
+     58            uint8_t crc = 0x34; // Начальное значение
+     59            uint8_t *val = (uint8_t*)frame->payload;
+     60            for (uint8_t i = 0; i < frame->len; i++)
+     61              crc ^= val[i];
+     62            return crc;
+     63          }
+     64          
+     65          static inline void _send_ack(struct frame *frame){
+     66          //nwtime_t T1 = AT_time(); // ДЛЯ ОТЛАДКИ
+     67            struct ack ack;
+     68            struct frame *ack_frame;
+     69            // Создаем подтверждение кадра
+     70            ack.CRC8 = xor_calc(frame);
+     71            // Создаем кадр для отправки
+     72          
+     73            ack_frame = FR_create();
+     74          
+     75            ASSERT(ack_frame);
+     76            FR_add_header(ack_frame, &ack, sizeof(struct ack));
+     77          //  nwtime_t T2 = AT_time(); // ДЛЯ ОТЛАДКИ
+     78          //UST_delay(500);
+     79          //ACK_START = AT_time(); // ДЛЯ ОТЛАДКИ
+     80            
+     81            // ВНИМАНИЕ!
+     82            // ВЫЧИЛСЕНИЕ XOR+СОЗДАНИЕ ФРЕЙМА И ДОБАВЛЕНИЕ ACK ЗАНИМАЕТ 0.3мс!
+     83            // Так что перед приемом нужно подождать
+     84            RI_Send(ack_frame);
+     85            LOG_ON("ACK=%d, frame_len=%d, TS_ACK=%d, TS_FRAME=%d", ack.CRC8, frame->len, 
+     86                   ack_frame->meta.TIMESTAMP, frame->meta.TIMESTAMP);
+     87           // LOG_ON("ACK_S=%d, ACK_P=%d, FR_END=%d, DEL=%d, DEL_CALC=%d",
+     88             //      ACK_START, ack_frame->meta.TIMESTAMP,FRAME_END, ACK_START-FRAME_END,
+     89               //    T2 - T1 );
+     90            FR_delete(ack_frame);  
+     91          }
+     92          
+     93          /**
+     94          @brief Проверка является ли пакет повторным
+     95          @detail Повторно переданым пакетом является пакет от того же отправителя 
+     96          * NDST, с тем же значением xor_calc за время меньше 10 сек. Если xor другой
+     97          * то запись обновляем. Можно использовать CRC16
+     98          */
+     99          static bool is_repeated_frame(struct frame *frame){
+    100            char nsrc = frame->meta.NSRC;
+    101            char crc8 = xor_calc(frame);
+    102            unsigned long now = MODEL.RTC.uptime;
+    103            
+    104            // Удалим старые записи
+    105            for (int i = 0; i < REPEATED_ITEMS; i++){
+    106              if (REPEATED[i].RA)
+    107                if ((now - REPEATED[i].update) > REPEATED_TIMEOUT)
+    108                  REPEATED[i].RA = false;
+    109            };
+    110            
+    111            int idx = -1;
+    112            // Ищем запись по nsrc с совпадающим crc8
+    113            for (int i = 0; i < REPEATED_ITEMS; i++)
+    114              if (REPEATED[i].RA &&
+    115                  REPEATED[i].NSRC == nsrc &&
+    116                  REPEATED[i].CRC8 == crc8){
+    117                      idx = i;
+    118                      break;
+    119                  };
+    120            
+    121            // Нашли запись. Значит пакет повторно пришел
+    122            // Обновим отмету времени
+    123            if (idx >=0){
+    124              REPEATED[idx].update = now; 
+    125              return true;
+    126            }
+    127            else{ // Такого пакета еще небыло. нужно добавить
+    128              // Ищем пустое место
+    129              idx = -1;
+    130              for (int i = 0; i < REPEATED_ITEMS; i++)
+    131                if (!REPEATED[i].RA){
+    132                  idx = i;
+    133                  break;
+    134                };
+    135              
+    136              // Не нашли места для нового пакета. Будем считать что он не повторный
+    137              if (idx < 0){
+    138                LOG_ON("No free space. Not repeated.");
+    139                return false;
+    140              };
+    141              
+    142              // Нашли место для пакета
+    143              REPEATED[idx].RA = true;
+    144              REPEATED[idx].CRC8 = crc8;
+    145              REPEATED[idx].update = now;  
+    146              return false;
+    147            };
+    148            
+    149          };
+    150          
+    151          void MAC_Receive(channel_t ch){
+    152            // Проверим количество доступных пакетов для хранения принятых данных
+    153            // Нельзя принимать данные до нуля свободных мест, так как узел не сможет 
+    154            // принять ACK и отправлять sync.
+    155           // if (FR_rx_available() == 0){
+    156             // LOG_ON("NO FREE RX FRAME");
+    157             // return;
+    158            //};  
+    159            
+    160            struct frame *frame = _recv_frame(ch);
+    161            if (!frame)
+    162              return;
+    163            
+    164            frame->meta.TS = MODEL.TM.timeslot;
+    165            if (MODEL.TM.timeslot > 1) // не системный таймслот требует подтверждения
+    166              _send_ack(frame);
+    167            
+    168            AES_StreamCoder(false, frame->payload, frame->payload, frame->len);
+    169            
+    170            // Прежде чем переместить пакет в буфер принятых, нужно убедиться что пакет
+    171            // не является повторным. Эффект множественной передачи происходит из-за
+    172            // плохой доставки ACK. Узел-отправитель не получив ACK будет пытаться еще
+    173            // раз передать. 
+    174            if (MODEL.TM.timeslot > 1)
+    175              if (is_repeated_frame(frame)){
+    176                LOG_ON("Repeated frame from NSRC=%d deleted", frame->meta.NSRC);
+    177                FR_delete(frame);
+    178                return;
+    179              };
+    180              
+    181            FR_set_rx(frame);
+    182            LOG_ON("RX frame. TS=%d, CH=%d, RSSI=%d, RX_CNT=%d", 
+    183                   frame->meta.TS, frame->meta.CH, frame->meta.RSSI_SIG, FR_rx_frames());
+    184            DATA_LOG_OFF((char*)&frame->payload, frame->len);
+    185          }
+    186          
+    187          static inline bool _send_frame(struct frame *frame){
+    188            if(!RI_SetChannel(frame->meta.CH)){
+    189              int a=5; //DEBUG!!
+    190              a++;
+    191              if (frame->meta.CH == 0)
+    192              HALT("Wrong channel");  
+    193            };
+    194            
+    195            UST_delay(918);
+    196            bool tx_success = RI_Send(frame);
+    197            return tx_success;
+    198          }
+    199          
+    200          
+    201          static inline bool _recv_ack(struct frame *frame){
+    202            // Принимаем пакет ACK на той же частоте что и передавали пакет
+    203            // Передача ACK требует больше времени чем процедура приема.
+    204            // Задержка была найдена эксперементально.
+    205            // Я использую 900, но возможно 800 более оптимально будет с учетом
+    206            // разбороса параметров узлов
+    207            // OK[500-900] NOTGOOD[1000] BAD[1200] 
+    208            UST_delay(900); 
+    209            struct frame *fr_ack = RI_Receive(ACK_RECV_TIMEOUT);  
+    210            if (!fr_ack){
+    211              LOG_ON("Frame ack not received");
+    212              return false;
+    213            };
+    214            
+    215            // Размер ответа не верен
+    216            if (fr_ack->len != sizeof(struct ack)){
+    217              LOG_ON("ACK size %d incorrect. Expected %d",
+    218                     fr_ack->len, sizeof(struct ack));
+    219              FR_delete(fr_ack);
+    220              return false;
+    221            }
+    222            
+    223            // Извлекаем структур ответа
+    224            struct ack *ack = (struct ack*)fr_ack->payload;
+    225            
+    226            // Расчитываем CRC8 отправленного пакета
+    227            uint8_t CRC8 = xor_calc(frame);
+    228            
+    229            // Сравним значения
+    230            if (ack->CRC8 == CRC8){
+    231              LOG_ON("Frame acked");
+    232              FR_delete(fr_ack);
+    233              return true;
+    234            }
+    235            else{
+    236              LOG_ON("Frame not acked. fr_ack=%d, send_ack=%d",
+    237                     ack->CRC8, CRC8);
+    238              FR_delete(fr_ack);
+    239              return false;
+    240            }
+    241          }
+    242          
+    243          int MAC_Send(struct frame *frame){
+    244            bool tx_success = _send_frame(frame);
+    245            
+    246            bool ack_success = false;
+    247            if (MODEL.TM.timeslot > 1) // Ждем подтверждения ack для не системных слотов
+    248              ack_success = _recv_ack(frame);
+    249            else
+    250              ack_success = true;
+    251            
+    252            LOG_ON("Send try: NDST=%d, NSRC=%d, FSRC=%d, FDST=%d",
+    253                   frame->meta.NDST, frame->meta.NSRC, 
+    254                   frame->meta.FSRC, frame->meta.FDST);
+    255            DATA_LOG_OFF((char*)&frame->payload, frame->len);
+    256            
+    257            if (tx_success && ack_success){ // Удачная передача
+    258              FR_delete(frame);
+    259              return 1;
+    260            }
+    261            else{ // неудачная передача
+    262              if (frame->meta.tx_attempts > 0)
+    263                frame->meta.tx_attempts --;
+    264              
+    265              if (!frame->meta.tx_attempts){ // кончились попытки передачи
+    266                FR_delete(frame);
+    267                LOG_ON("TX attempts exied. Frame delete.");
+    268                return -1;
+    269              }
+    270            }
+    271            return 0;
+    272          }
 E:\Neocore\Hardware\PRG Node\main.c
       1          #include "controller.h"
       2          
@@ -2337,223 +2453,259 @@ E:\Neocore\Hardware\STACK_CORE_SRC\mem_slots.c
      11          #define SLOT_BUFFER_SIZE 150
      12          #define RED_ZONE_CODE 0x73
      13          
-     14          typedef char red_zone_t;
-     15          
-     16          static void SW_Init(void);
-     17          module_s MS_MODULE = {ALIAS(SW_Init)};
-     18          
-     19          struct property{
-     20            char taken: 1;
-     21            char RX :1;
-     22            char TX :1;
-     23          };
-     24          
-     25          struct slot{
-     26            struct property property;
-     27            red_zone_t red_zone_1;
-     28            char buffer[SLOT_BUFFER_SIZE];
-     29            red_zone_t red_zone_2;
-     30          };
-     31          
-     32          //!< Хранилище слотов
-     33          static struct slot SLOT_POOL[SLOT_POOL_ITEMS];
-     34          //!< Количество занятых слотов
-     35          static int slot_busy;
+     14          #ifndef SLOT_POOL_ITEMS
+     15          #define SLOT_POOL_ITEMS 20
+     16          #endif
+     17          
+     18          #ifndef SLOT_TX_ITEMS   
+     19          #define SLOT_TX_ITEMS 7
+     20          #endif
+     21          
+     22          #ifndef SLOT_RX_ITEMS   
+     23          #define SLOT_RX_ITEMS 7
+     24          #endif
+     25          
+     26          typedef char red_zone_t;
+     27          
+     28          static void SW_Init(void);
+     29          module_s MS_MODULE = {ALIAS(SW_Init)};
+     30          
+     31          struct property{
+     32            char taken: 1;
+     33            char RX :1;
+     34            char TX :1;
+     35          };
      36          
-     37          void SW_Init(void){
-     38            slot_busy = 0;
-     39            for_each_type(struct slot, SLOT_POOL, slot){
-     40              slot->property.taken = false;
-     41              slot->property.RX = false;
-     42              slot->property.TX = false;
-     43              #ifdef FILL_SLOT_ZERO
-     44                MEMSET(slot->buffer, 0, SLOT_BUFFER_SIZE);
-     45              #endif    
-     46              slot->red_zone_1 = RED_ZONE_CODE;
-     47              slot->red_zone_2 = RED_ZONE_CODE;
-     48            }
-     49          };
-     50          
-     51          void SW_restart(){
-     52            SW_Init();
-     53          };
-     54          
-     55          int SL_rx_slots(){
-     56              int cnt=0;
-     57              for_each_type(struct slot, SLOT_POOL, slot){
-     58                if (slot->property.taken && slot->property.RX)
-     59                  cnt++;
-     60              }
-     61              return cnt;
-     62          }
-     63          
-     64          int SL_tx_slots(){
-     65              int cnt=0;
-     66              for_each_type(struct slot, SLOT_POOL, slot){
-     67                if (slot->property.taken && slot->property.TX)
-     68                  cnt++;
-     69              }
-     70              return cnt;
-     71          }
+     37          struct slot{
+     38            struct property property;
+     39            red_zone_t red_zone_1;
+     40            char buffer[SLOT_BUFFER_SIZE];
+     41            red_zone_t red_zone_2;
+     42          };
+     43          
+     44          //!< Хранилище слотов
+     45          static struct slot SLOT_POOL[SLOT_POOL_ITEMS];
+     46          //!< Количество занятых слотов
+     47          static int slot_busy;
+     48          //!< Количество пакетов помеченных на прием
+     49          static int slot_rx_cnt;
+     50          //!< Количество пакетов помеченных на передачу
+     51          static int slot_tx_cnt;
+     52          
+     53          void SW_Init(void){
+     54            slot_busy = 0;
+     55            slot_rx_cnt = 0;
+     56            slot_tx_cnt = 0;
+     57            for_each_type(struct slot, SLOT_POOL, slot){
+     58              slot->property.taken = false;
+     59              slot->property.RX = false;
+     60              slot->property.TX = false;
+     61              #ifdef FILL_SLOT_ZERO
+     62                MEMSET(slot->buffer, 0, SLOT_BUFFER_SIZE);
+     63              #endif    
+     64              slot->red_zone_1 = RED_ZONE_CODE;
+     65              slot->red_zone_2 = RED_ZONE_CODE;
+     66            }
+     67          };
+     68          
+     69          void SW_restart(){
+     70            SW_Init();
+     71          };
      72          
-     73          /**
-     74          @brief Возвращает указатель на следующий буфер tx
-     75          @param buff. buff = NULL поиск от начала списка или от последнего найденого 
-     76           буфера.
-     77          */
-     78          char* SL_find_tx(char* buff){  
-     79            if (!buff){
-     80              for_each_type(struct slot, SLOT_POOL, slot){
-     81                if (slot->property.taken && slot->property.TX)
-     82                  return slot->buffer;
-     83              }
-     84              return NULL;
-     85            }
-     86            struct slot *geven_slot = container_of(buff, struct slot, buffer);
-     87            geven_slot++;
-     88            
-     89            while (geven_slot <= &SLOT_POOL[SLOT_POOL_ITEMS]){
-     90              if (geven_slot->property.taken && geven_slot->property.TX)
-     91                return geven_slot->buffer;
-     92              geven_slot++;
-     93            }
-     94            return NULL;
-     95          }
-     96          
-     97          /**
-     98          @brief Возвращает указатель на следующий буфер rx
-     99          @param buff. buff = NULL поиск от начала списка или от последнего найденого 
-    100           буфера.
-    101          */
-    102          char* SL_find_rx(char* buff){  
-    103            if (!buff){
-    104              for_each_type(struct slot, SLOT_POOL, slot){
-    105                if (slot->property.taken && slot->property.RX)
-    106                  return slot->buffer;
-    107              }
-    108              return NULL;
-    109            }
-    110            struct slot *geven_slot = container_of(buff, struct slot, buffer);
-    111            geven_slot++;
-    112            
-    113            while (geven_slot <= &SLOT_POOL[SLOT_POOL_ITEMS]){
-    114              if (geven_slot->property.taken && geven_slot->property.RX)
-    115                return geven_slot->buffer;
-    116              geven_slot++;
-    117            }
-    118            return NULL;
-    119          }
-    120          
-    121          /**
-    122          @brief Возвращает указатель на буфер или NULL. Буфер заполнен 0
-    123          @detail 
-    124          */
-    125          char* SL_alloc(void){  
-    126            char *ret_ptr = NULL;
-    127            ATOMIC_BLOCK_RESTORE{
-    128              for_each_type(struct slot, SLOT_POOL, slot){
-    129                if (!slot->property.taken){
-    130                  slot->property.taken = true;
-    131                  slot->property.RX = false;
-    132                  slot->property.TX = false;
-    133                  slot_busy++;
-    134                  #ifdef FILL_SLOT_ZERO
-    135                    MEMSET(slot->buffer, 0, SLOT_BUFFER_SIZE);
-    136                  #endif
-    137                  ret_ptr = slot->buffer;
-    138                  break;
-    139                };
-    140              };  
-    141            };
-    142            return ret_ptr;
-    143          };
-    144          
-    145          /**
-    146          @brief Копируем слот. 
-    147          @details При копировании сбрасываем принадлежность к буферам RX/TX
-    148          @ return указатель на новый слот или NULL
-    149          */
-    150          char* SL_copy(char *buff){
-    151            char *ret_ptr = SL_alloc();
-    152            if (!ret_ptr)
-    153              return NULL;
-    154            
-    155            ATOMIC_BLOCK_RESTORE{
-    156              struct slot *src = container_of(buff, struct slot, buffer);
-    157              struct slot *dst = container_of(ret_ptr, struct slot, buffer);
-    158              MEMCPY((char*)dst, (char*)src, sizeof(struct slot));
-    159              dst->property.RX = false;
-    160              dst->property.TX = false;
-    161            };
+     73          int SL_rx_slots(){
+     74              int cnt=0;
+     75              for_each_type(struct slot, SLOT_POOL, slot){
+     76                if (slot->property.taken && slot->property.RX)
+     77                  cnt++;
+     78              }
+     79              return cnt;
+     80          }
+     81          
+     82          int SL_tx_slots(){
+     83              int cnt=0;
+     84              for_each_type(struct slot, SLOT_POOL, slot){
+     85                if (slot->property.taken && slot->property.TX)
+     86                  cnt++;
+     87              }
+     88              return cnt;
+     89          }
+     90          
+     91          /**
+     92          @brief Возвращает указатель на следующий буфер tx
+     93          @param buff. buff = NULL поиск от начала списка или от последнего найденого 
+     94           буфера.
+     95          */
+     96          char* SL_find_tx(char* buff){  
+     97            if (!buff){
+     98              for_each_type(struct slot, SLOT_POOL, slot){
+     99                if (slot->property.taken && slot->property.TX)
+    100                  return slot->buffer;
+    101              }
+    102              return NULL;
+    103            }
+    104            struct slot *geven_slot = container_of(buff, struct slot, buffer);
+    105            geven_slot++;
+    106            
+    107            while (geven_slot <= &SLOT_POOL[SLOT_POOL_ITEMS]){
+    108              if (geven_slot->property.taken && geven_slot->property.TX)
+    109                return geven_slot->buffer;
+    110              geven_slot++;
+    111            }
+    112            return NULL;
+    113          }
+    114          
+    115          /**
+    116          @brief Возвращает указатель на следующий буфер rx
+    117          @param buff. buff = NULL поиск от начала списка или от последнего найденого 
+    118           буфера.
+    119          */
+    120          char* SL_find_rx(char* buff){  
+    121            if (!buff){
+    122              for_each_type(struct slot, SLOT_POOL, slot){
+    123                if (slot->property.taken && slot->property.RX)
+    124                  return slot->buffer;
+    125              }
+    126              return NULL;
+    127            }
+    128            struct slot *geven_slot = container_of(buff, struct slot, buffer);
+    129            geven_slot++;
+    130            
+    131            while (geven_slot <= &SLOT_POOL[SLOT_POOL_ITEMS]){
+    132              if (geven_slot->property.taken && geven_slot->property.RX)
+    133                return geven_slot->buffer;
+    134              geven_slot++;
+    135            }
+    136            return NULL;
+    137          }
+    138          
+    139          /**
+    140          @brief Возвращает указатель на буфер или NULL. Буфер заполнен 0
+    141          @detail 
+    142          */
+    143          char* SL_alloc(void){  
+    144            char *ret_ptr = NULL;
+    145            ATOMIC_BLOCK_RESTORE{
+    146              for_each_type(struct slot, SLOT_POOL, slot){
+    147                if (!slot->property.taken){
+    148                  slot->property.taken = true;
+    149                  slot->property.RX = false;
+    150                  slot->property.TX = false;
+    151                  slot_busy++;
+    152                  #ifdef FILL_SLOT_ZERO
+    153                    MEMSET(slot->buffer, 0, SLOT_BUFFER_SIZE);
+    154                  #endif
+    155                  ret_ptr = slot->buffer;
+    156                  break;
+    157                };
+    158              };  
+    159            };
+    160            return ret_ptr;
+    161          };
     162          
-    163            return ret_ptr;
-    164          };
-    165          
-    166          
-    167          static bool _free(char *buff){
-    168            struct slot *slot = container_of(buff, struct slot, buffer);
-    169              
-    170            slot->property.taken = false;
-    171            slot->property.RX = false;
-    172            slot->property.TX = false;
-    173            slot_busy--;
-    174            return true;
-    175          }
-    176          
-    177          bool SL_is_tx(char *buff){
-    178            struct slot *slot = container_of(buff, struct slot, buffer);
-    179            return slot->property.TX;
-    180          }
-    181          
-    182          bool SL_is_rx(char *buff){
-    183            struct slot *slot = container_of(buff, struct slot, buffer);
-    184            return slot->property.RX;
-    185          }
-    186          
-    187          void SL_set_tx(char *buff){
-    188            ATOMIC_BLOCK_RESTORE{
-    189              struct slot *slot = container_of(buff, struct slot, buffer);
-    190              slot->property.TX = true;
-    191            }
-    192          }
-    193          
-    194          void SL_set_rx(char *buff){
-    195            ATOMIC_BLOCK_RESTORE{
-    196              struct slot *slot = container_of(buff, struct slot, buffer);
-    197              slot->property.RX = true;
-    198            }
-    199          }
-    200          
-    201          bool SL_free(char *buff){
-    202            bool res;
-    203            ATOMIC_BLOCK_RESTORE{
-    204              res = _free(buff);
-    205            }
-    206            return res;
-    207          };
-    208          
-    209          
-    210          int SL_busy(){
-    211            ASSERT(slot_busy <= SLOT_POOL_ITEMS);
-    212            return slot_busy;
-    213          };
-    214          
-    215          int SL_available(){
-    216            ASSERT(slot_busy <= SLOT_POOL_ITEMS);  
-    217            return SLOT_POOL_ITEMS - slot_busy;
-    218          };
-    219          
-    220          int SL_zone_check(){
-    221            int index = 0;
-    222            for_each_type(struct slot, SLOT_POOL, slot){
-    223              if (!(slot->red_zone_1 == RED_ZONE_CODE &&
-    224                    slot->red_zone_2 == RED_ZONE_CODE))
-    225                return index;
-    226              index++;
-    227            }
-    228            return -1;
-    229          };
-    230          
+    163          /**
+    164          @brief Копируем слот. 
+    165          @details При копировании сбрасываем принадлежность к буферам RX/TX
+    166          @ return указатель на новый слот или NULL
+    167          */
+    168          char* SL_copy(char *buff){
+    169            char *ret_ptr = SL_alloc();
+    170            if (!ret_ptr)
+    171              return NULL;
+    172            
+    173            ATOMIC_BLOCK_RESTORE{
+    174              struct slot *src = container_of(buff, struct slot, buffer);
+    175              struct slot *dst = container_of(ret_ptr, struct slot, buffer);
+    176              MEMCPY((char*)dst, (char*)src, sizeof(struct slot));
+    177              dst->property.RX = false;
+    178              dst->property.TX = false;
+    179            };
+    180          
+    181            return ret_ptr;
+    182          };
+    183          
+    184          
+    185          static bool _free(char *buff){
+    186            struct slot *slot = container_of(buff, struct slot, buffer);
+    187              
+    188            slot->property.taken = false;
+    189            slot->property.RX = false;
+    190            slot->property.TX = false;
+    191            slot_busy--;
+    192            return true;
+    193          }
+    194          
+    195          bool SL_is_tx(char *buff){
+    196            struct slot *slot = container_of(buff, struct slot, buffer);
+    197            return slot->property.TX;
+    198          }
+    199          
+    200          bool SL_is_rx(char *buff){
+    201            struct slot *slot = container_of(buff, struct slot, buffer);
+    202            return slot->property.RX;
+    203          }
+    204          
+    205          void SL_set_tx(char *buff){
+    206            ATOMIC_BLOCK_RESTORE{
+    207              slot_tx_cnt++;
+    208              struct slot *slot = container_of(buff, struct slot, buffer);
+    209              slot->property.TX = true;
+    210            }
+    211          }
+    212          
+    213          void SL_set_rx(char *buff){
+    214            ATOMIC_BLOCK_RESTORE{
+    215              slot_rx_cnt++;
+    216              struct slot *slot = container_of(buff, struct slot, buffer);
+    217              slot->property.RX = true;
+    218            }
+    219          }
+    220          
+    221          
+    222          bool SL_free(char *buff){
+    223            bool res;
+    224            ATOMIC_BLOCK_RESTORE{
+    225              if (SL_is_tx(buff))
+    226                slot_tx_cnt--;
+    227              else if (SL_is_rx(buff))
+    228                slot_rx_cnt--;
+    229              
+    230              res = _free(buff);
+    231            }
+    232            return res;
+    233          };
+    234          
+    235          
+    236          int SL_busy(){
+    237            ASSERT(slot_busy <= SLOT_POOL_ITEMS);
+    238            return slot_busy;
+    239          };
+    240          
+    241          int SL_available(){
+    242            ASSERT(slot_busy <= SLOT_POOL_ITEMS);  
+    243            return SLOT_POOL_ITEMS - slot_busy;
+    244          };
+    245          
+    246          int SL_tx_available(){
+    247            ASSERT(slot_tx_cnt <= SLOT_TX_ITEMS);  
+    248            return SLOT_TX_ITEMS - slot_tx_cnt;
+    249          };
+    250          
+    251          int SL_rx_available(){
+    252            ASSERT(slot_rx_cnt <= SLOT_RX_ITEMS);  
+    253            return SLOT_RX_ITEMS - slot_rx_cnt;
+    254          };
+    255          
+    256          int SL_zone_check(){
+    257            int index = 0;
+    258            for_each_type(struct slot, SLOT_POOL, slot){
+    259              if (!(slot->red_zone_1 == RED_ZONE_CODE &&
+    260                    slot->red_zone_2 == RED_ZONE_CODE))
+    261                return index;
+    262              index++;
+    263            }
+    264            return -1;
+    265          };
+    266          
 E:\Neocore\Hardware\STACK_CORE_SRC\mem_utils.c
       1          #include "mem_utils.h"
       2          #include "debug.h"
@@ -2606,7 +2758,7 @@ E:\Neocore\Hardware\STACK_CORE_SRC\model.c
      18              MODEL.PWR_SCAN.energy[i] = -127;
      19            
      20            MODEL.node_adr = 0;
-     21            MODEL.node_mac[0] = 0x11; // 11 - первый 12 - второй,13=85,14=86,15=87,16=88,17=89
+     21            MODEL.node_mac[0] = 0x16; // 11 - первый 12 - второй,13=85,14=86,15=87,16=88,17=89
      22            MODEL.node_mac[1] = 0x22;
      23            MODEL.node_mac[2] = 0x33;
      24            MODEL.node_mac[3] = 0x44;
@@ -2995,7 +3147,7 @@ E:\Neocore\Hardware\PRG Node\neigh.c
     367            LAST_UPDATE_TIME_COMM_NODE = now;
     368            MODEL.node_ETX = COMM_NODE_PTR->ETX + 1;  
     369            MODEL.NEIGH.comm_node_found = true;
-    370            LOG_ON("Find IDX=%d. PTR=%d, ADDR", idx, &NB_TABLE[idx], NB_TABLE[idx].ADDR);    
+    370            LOG_ON("Change. Find IDX=%d. PTR=%d, ADDR", idx, &NB_TABLE[idx], NB_TABLE[idx].ADDR);    
     371          };
     372          
     373          static bool is_free(){
@@ -3027,47 +3179,49 @@ E:\Neocore\Hardware\PRG Node\neigh.c
     399            
     400            LOG_ON("REQUEST NP CARD");
     401            
-    402            struct frame fr;
-    403            char cmd = NP_CMD_CARD_REQ;
-    404            FR_add_header(&fr, &cmd, sizeof(cmd));
-    405            
-    406            fr.meta.NDST = 0xffff;
-    407            fr.meta.NSRC = MODEL.node_adr;
-    408            fr.meta.PID = PID_NP;
-    409            eth_send(&fr);
-    410            LOG_ON("Card requested");
-    411          };
-    412          
-    413          void NP_TimeAlloc(){
-    414            // Если узел не синхронизирован выходим
-    415            if (!MODEL.SYNC.synced)
-    416              return;
-    417            
-    418            // Если мы прошли авторизацию и получили доступ
-    419            if (MODEL.AUTH.auth_ok && MODEL.AUTH.access_ok){
-    420              LOG_OFF("Auth passed access granted");
-    421              periodic_card_send();
-    422              analyse_table();
-    423              request_cards();
-    424              comm_node_choise();
-    425              return;
-    426            }
-    427            
-    428            // Если мы не прошли процедуру авторизации
-    429            if (!MODEL.AUTH.auth_ok){
-    430              LOG_OFF("Auth not passed");
-    431              analyse_table();
-    432              request_cards();
-    433              comm_node_choise();
-    434              return;
-    435            };
-    436            
-    437            // Если нам отказали в доступе
-    438            if (MODEL.AUTH.auth_ok && !MODEL.AUTH.access_ok){
-    439              LOG_ON("Auth passed. Access depricated");
-    440              return;
-    441            }
-    442          };
+    402            struct frame *fr = FR_create();
+    403            ASSERT(fr);
+    404            char cmd = NP_CMD_CARD_REQ;
+    405            bool res =FR_add_header(fr, &cmd, sizeof(cmd));
+    406            ASSERT(res);
+    407            
+    408            fr->meta.NDST = 0xffff;
+    409            fr->meta.NSRC = MODEL.node_adr;
+    410            fr->meta.PID = PID_NP;
+    411            eth_send(fr);
+    412            LOG_ON("Card requested");
+    413          };
+    414          
+    415          void NP_TimeAlloc(){
+    416            // Если узел не синхронизирован выходим
+    417            if (!MODEL.SYNC.synced)
+    418              return;
+    419            
+    420            // Если мы прошли авторизацию и получили доступ
+    421            if (MODEL.AUTH.auth_ok && MODEL.AUTH.access_ok){
+    422              LOG_OFF("Auth passed access granted");
+    423              periodic_card_send();
+    424              analyse_table();
+    425              request_cards();
+    426              comm_node_choise();
+    427              return;
+    428            }
+    429            
+    430            // Если мы не прошли процедуру авторизации
+    431            if (!MODEL.AUTH.auth_ok){
+    432              LOG_OFF("Auth not passed");
+    433              analyse_table();
+    434              request_cards();
+    435              comm_node_choise();
+    436              return;
+    437            };
+    438            
+    439            // Если нам отказали в доступе
+    440            if (MODEL.AUTH.auth_ok && !MODEL.AUTH.access_ok){
+    441              LOG_ON("Auth passed. Access depricated");
+    442              return;
+    443            }
+    444          };
 E:\Neocore\Hardware\STACK_CORE_SRC\radio.c
       1          #include "radio.h"
       2          #include "mem_utils.h"
@@ -3328,136 +3482,137 @@ E:\Neocore\Hardware\STACK_CORE_SRC\radio.c
     257            }
     258            
     259            // Проверим поле CRCOK
-    260            if (!(FCS2 && 1<<7)){
+    260            if (!(FCS2 & 1<<7)){
     261              MODEL.RADIO.CRCError++;
-    262              return NULL;
-    263            }
-    264            
-    265            // Проверим количество доступных пакетов для хранения принятых данных
-    266            int fr_av = FR_available();
-    267            if (fr_av == 0){
-    268              LOG_ON("NOT ENOUGH FREE FRAME");
-    269              return NULL;
-    270            };
-    271            
-    272            // Создаем буфер, последнии два байта FCS1,2 и поле LEN не копируем
-    273            struct frame *frame = FR_create();
-    274            ASSERT(frame);
-    275            bool add_h = FR_add_header(frame, &RXBUFF[1], frame_size - 3);
-    276            ASSERT(add_h);
-    277            
-    278            frame->meta.TIMESTAMP = sfd_stamp;
-    279            frame->meta.RSSI_SIG =  FCS1 + RSSI_OFFSET;
-    280            uint8_t corr = FCS2 & 0x7F;
-    281            frame->meta.LIQ = LIQ_CALC(corr);
-    282            frame->meta.CH = MODEL.RADIO.channel;
-    283            return frame;
-    284          }
-    285          
+    262              LOG_ON("CRC ERR");
+    263              return NULL;
+    264            }
+    265            
+    266            // Проверим количество доступных пакетов для хранения принятых данных
+    267          //  int fr_av = FR_available();
+    268          //  if (fr_av == 0){
+    269          //    LOG_ON("NOT ENOUGH FREE FRAME");
+    270          //    return NULL;
+    271          //  };
+    272            
+    273            // Создаем буфер, последнии два байта FCS1,2 и поле LEN не копируем
+    274            struct frame *frame = FR_create();
+    275            ASSERT(frame);
+    276            bool add_h = FR_add_header(frame, &RXBUFF[1], frame_size - 3);
+    277            ASSERT(add_h);
+    278            
+    279            frame->meta.TIMESTAMP = sfd_stamp;
+    280            frame->meta.RSSI_SIG =  FCS1 + RSSI_OFFSET;
+    281            uint8_t corr = FCS2 & 0x7F;
+    282            frame->meta.LIQ = LIQ_CALC(corr);
+    283            frame->meta.CH = MODEL.RADIO.channel;
+    284            return frame;
+    285          }
     286          
-    287          /**
-    288          @breif Подссчет количества бит в байте
-    289          @return Возвращает количество бит
-    290          */
-    291          static uint8_t bits_count(uint8_t value) {
-    292            int ret = 0;
-    293            for ( ; value; value = value >> 1 )
-    294              ret += value & 1;
-    295            return ret;
-    296          }
-    297          
-    298          /**
-    299          @brief Возращает 1 байт случайного числа
-    300          @details Радио выдает всего лишь дви бита, нам нужно 8 
-    301          */
-    302          static inline uint8_t getRNDByte(void)
-    303          {
-    304            uint8_t val = 0;
-    305            val |= RFRND << 0;
-    306            val |= RFRND << 2;
-    307            val |= RFRND << 4;
-    308            val |= RFRND << 6;
-    309            return val;
-    310          }
-    311          
-    312          /**
-    313          @brief Возвращает случайное число с числом включеных бит от 2 до 6 включительно
-    314          @details Случайные числа появляются в регистре с частотой 170нс. Функция 
-    315          возвращает гарантированно новое значение. 
-    316          @return возвращает случайное число.
-    317          */
-    318          static inline uint8_t readRandom(void)
-    319          {
-    320            uint8_t rnd_val = 0;
-    321            uint8_t bit_cnt = 0;
-    322            while ( bit_cnt <= 2 || bit_cnt >= 6 )
-    323            {
-    324              rnd_val = getRNDByte();
-    325              while (rnd_val == getRNDByte());
-    326              rnd_val = getRNDByte();
-    327              bit_cnt = bits_count(rnd_val);
-    328            }
-    329            return rnd_val;
-    330          }
-    331          
-    332          /*!
-    333          \brief Иницилизирует ядро генератора случайных чисел данными из эфира
-    334          */
-    335          static void random_core_init(void)  
-    336          {
-    337            unsigned int rnd_core = 0;;
-    338               
-    339            pre_config();
-    340            FREQCTRL = 0x00; // Выбираем не используемую частоту
-    341          
-    342            // TODO По какой то причине OP_EXE не выполняет команду.
-    343            // регистра RFST читается как 0xD0. это его состояние при reset
-    344            // Включаем демодулятор
-    345            ISRXON();
-    346            
-    347            // Ждем пока статус RSSI_VALID станет true
-    348            while(!RSSISTAT);
-    349            
-    350            // Ждем случайных чисел
-    351            while (RFRND == 0);
-    352            
-    353            // Настраиваем ядро случайного генератора
-    354            rnd_core = readRandom();
-    355            rnd_core |= (unsigned int)readRandom()<<8;
-    356            srand(rnd_core);
-    357            
-    358            // Выключаем демодулятор
-    359            ISRFOFF();
-    360            // Первая генерация случайного числа занимает много времени.
-    361            // Влияло на работу радио, так как использовались случайные посылки
-    362            rand(); 
-    363          }
-    364          
-    365          /**
-    366          @brief Измерение мощности сигнала
-    367          @details Частота = 2394+fch. fch = [0..113]. 2394MHz to 2507MHz.
-    368           Устройство поддерживает частоты до 2507 МГц
-    369          @param[in] fch номер ЧАСТОТНОГО канала
-    370          @param[in] timeout_ms время сканирования в мс
-    371          @param[out] Максимальная мощность сигнала за время сканирования
-    372          @return true если успешно
-    373          */
-    374          bool RI_Measure_POW(char fch, ustime_t timeout, 
-    375                              int8_t *RSSI_SIG){
-    376            if (fch > 113)
-    377              return false;
-    378            //(2394+FREQCTRL.FREQ[6:0])
-    379            FREQCTRL = fch; // Выбираем не используемую частоту
-    380            ISRXON();
-    381            while(!RSSISTAT);
-    382            FRMCTRL0 |= 1<<4; // включаем ENERGY_SCAN, детектор пикового сигнала
-    383            UST_delay(timeout);
-    384            int8_t rssi = RSSI + RSSI_OFFSET;
-    385            *RSSI_SIG = rssi;
-    386            ISRFOFF();
-    387            return true;
-    388          }
-    389          
+    287          
+    288          /**
+    289          @breif Подссчет количества бит в байте
+    290          @return Возвращает количество бит
+    291          */
+    292          static uint8_t bits_count(uint8_t value) {
+    293            int ret = 0;
+    294            for ( ; value; value = value >> 1 )
+    295              ret += value & 1;
+    296            return ret;
+    297          }
+    298          
+    299          /**
+    300          @brief Возращает 1 байт случайного числа
+    301          @details Радио выдает всего лишь дви бита, нам нужно 8 
+    302          */
+    303          static inline uint8_t getRNDByte(void)
+    304          {
+    305            uint8_t val = 0;
+    306            val |= RFRND << 0;
+    307            val |= RFRND << 2;
+    308            val |= RFRND << 4;
+    309            val |= RFRND << 6;
+    310            return val;
+    311          }
+    312          
+    313          /**
+    314          @brief Возвращает случайное число с числом включеных бит от 2 до 6 включительно
+    315          @details Случайные числа появляются в регистре с частотой 170нс. Функция 
+    316          возвращает гарантированно новое значение. 
+    317          @return возвращает случайное число.
+    318          */
+    319          static inline uint8_t readRandom(void)
+    320          {
+    321            uint8_t rnd_val = 0;
+    322            uint8_t bit_cnt = 0;
+    323            while ( bit_cnt <= 2 || bit_cnt >= 6 )
+    324            {
+    325              rnd_val = getRNDByte();
+    326              while (rnd_val == getRNDByte());
+    327              rnd_val = getRNDByte();
+    328              bit_cnt = bits_count(rnd_val);
+    329            }
+    330            return rnd_val;
+    331          }
+    332          
+    333          /*!
+    334          \brief Иницилизирует ядро генератора случайных чисел данными из эфира
+    335          */
+    336          static void random_core_init(void)  
+    337          {
+    338            unsigned int rnd_core = 0;;
+    339               
+    340            pre_config();
+    341            FREQCTRL = 0x00; // Выбираем не используемую частоту
+    342          
+    343            // TODO По какой то причине OP_EXE не выполняет команду.
+    344            // регистра RFST читается как 0xD0. это его состояние при reset
+    345            // Включаем демодулятор
+    346            ISRXON();
+    347            
+    348            // Ждем пока статус RSSI_VALID станет true
+    349            while(!RSSISTAT);
+    350            
+    351            // Ждем случайных чисел
+    352            while (RFRND == 0);
+    353            
+    354            // Настраиваем ядро случайного генератора
+    355            rnd_core = readRandom();
+    356            rnd_core |= (unsigned int)readRandom()<<8;
+    357            srand(rnd_core);
+    358            
+    359            // Выключаем демодулятор
+    360            ISRFOFF();
+    361            // Первая генерация случайного числа занимает много времени.
+    362            // Влияло на работу радио, так как использовались случайные посылки
+    363            rand(); 
+    364          }
+    365          
+    366          /**
+    367          @brief Измерение мощности сигнала
+    368          @details Частота = 2394+fch. fch = [0..113]. 2394MHz to 2507MHz.
+    369           Устройство поддерживает частоты до 2507 МГц
+    370          @param[in] fch номер ЧАСТОТНОГО канала
+    371          @param[in] timeout_ms время сканирования в мс
+    372          @param[out] Максимальная мощность сигнала за время сканирования
+    373          @return true если успешно
+    374          */
+    375          bool RI_Measure_POW(char fch, ustime_t timeout, 
+    376                              int8_t *RSSI_SIG){
+    377            if (fch > 113)
+    378              return false;
+    379            //(2394+FREQCTRL.FREQ[6:0])
+    380            FREQCTRL = fch; // Выбираем не используемую частоту
+    381            ISRXON();
+    382            while(!RSSISTAT);
+    383            FRMCTRL0 |= 1<<4; // включаем ENERGY_SCAN, детектор пикового сигнала
+    384            UST_delay(timeout);
+    385            int8_t rssi = RSSI + RSSI_OFFSET;
+    386            *RSSI_SIG = rssi;
+    387            ISRFOFF();
+    388            return true;
+    389          }
+    390          
 E:\Neocore\Hardware\PRG Node\route.c
       1          #include "model.h"
       2          #include "debug.h"
@@ -3598,145 +3753,159 @@ Warning[Pe1105]: #warning directive: update route tables
     133            LOG_ON("Sended to GW. frame_ptr=0x%x, NDST=%d, NSRC=%d, FDST=%d, FSRC=%d, TS=%d, CH=%d",
     134                   (char*)frame,frame->meta.NDST,frame->meta.NSRC,
     135                   frame->meta.FDST,frame->meta.FSRC,ts,ch);
-    136            eth_send(frame);
-    137            
-    138          };
-    139          
-    140          void RP_Send(struct frame *frame){
-    141            eth_send(frame);
-    142            LOG_ON("Sended raw");  
-    143          };
-    144          
-    145          /** brief Ищем номер записи по паре значений
-    146          */
-    147          static int route_find(unsigned int nsrc, unsigned int fsrc){
-    148            for (int i = 0; i < ROUTE_TABLE_ITEMS; i++)
-    149              if (ROUTE_TABLE[i].nsrc == nsrc && ROUTE_TABLE[i].fsrc == fsrc
-    150                  && ROUTE_TABLE[i].RA)
-    151                return i;
-    152            return -1;
-    153          };
-    154          
-    155          static int find_free(){
-    156            for (int i = 0; i < ROUTE_TABLE_ITEMS; i++)
-    157              if (!ROUTE_TABLE[i].RA)
-    158                return i;
-    159            return -1;  
-    160          };
-    161          
-    162          static bool route_update(unsigned int nsrc, unsigned int fsrc,
-    163                                   char nsrc_ts, char nsrc_ch){
-    164            // Ищем запись о маршруте
-    165            int idx = route_find(nsrc, fsrc);
-    166            
-    167            // Если такого маршрут небыло, ищем свободную ячейку
-    168            if (idx < 0)
-    169              idx = find_free();
-    170            
-    171            // Если таблица пуста выходим
-    172            if (idx < 0){
-    173              LOG_ON("Route table full!");
-    174              return false;
-    175            };
-    176            
-    177            ROUTE_TABLE[idx].nsrc = nsrc;
-    178            ROUTE_TABLE[idx].fsrc = fsrc;
-    179            ROUTE_TABLE[idx].live_time= ROUTE_LIVE_TIME;
-    180            ROUTE_TABLE[idx].NSRC_TS = nsrc_ts;
-    181            ROUTE_TABLE[idx].NSRC_CH = nsrc_ch;
-    182            ROUTE_TABLE[idx].RA = true;  
-    183            return true;
-    184          };
-    185          
-    186          /** Пересылка пакета к шлюзу с добавлением маршрута
-    187          */
-    188          void RP_SendRT_GW(struct frame *frame){
-    189            // Информация как был получен пакет и от кого
-    190            unsigned int nsrc = frame->meta.NSRC;
-    191            unsigned int fsrc = frame->meta.FSRC;
-    192            char nsrc_ts = frame->meta.NSRC_TS;
-    193            char nsrc_ch = frame->meta.NSRC_CH;   
-    194            
-    195            // Обновим таблицу маршрутов
-    196            bool res = route_update(nsrc, fsrc, nsrc_ts, nsrc_ch);
-    197            if (res){
-    198              LOG_ON("Route table updated. nsrc=%d, fsrc=%d, ts=%d, ch=%d",
-    199                     nsrc, fsrc, nsrc_ts, nsrc_ch);
-    200            } else
-    201              LOG_ON("Route table update faild. nsrc=%d, fsrc=%d, ts=%d, ch=%d",
-    202                   nsrc, fsrc, nsrc_ts, nsrc_ch);
-    203            
-    204            
-    205            // frame будет удален после выхода из eth_receive и пакет не будет 
-    206            // отправлен. Нужно его скопировать и только потом отправлять
-    207            struct frame *new_frame = FR_create();
-    208            ASSERT(new_frame);
-    209            
-    210            FR_add_header(new_frame, frame->payload, frame->len);
-    211            new_frame->meta.FSRC = fsrc;
-    212            new_frame->meta.PID = frame->meta.PID;
-    213            new_frame->meta.IPP = frame->meta.IPP;
-    214            
-    215            RP_Send_GW(new_frame);
-    216          };
-    217          
-    218          /** brief Ищем маршрут до fdst
-    219          */
-    220          static int route_find_by_fsrc(unsigned int fsrc){
-    221            for (int i = 0; i < ROUTE_TABLE_ITEMS; i++)
-    222              if (ROUTE_TABLE[i].fsrc == fsrc && ROUTE_TABLE[i].RA)
-    223                return i;
-    224            return -1;
-    225          };
-    226          
-    227          /** brief Передача от шлюза к какому то узлу
-    228          */
-    229          void RP_SendRT_RT(struct frame *frame){
-    230            unsigned int fsrc = frame->meta.FSRC;
-    231            unsigned int fdst = frame->meta.FDST;
-    232            
-    233            if (fsrc != 0){
-    234              LOG_ON("Frame must be sended GW. Drop. fsrc=%d", fsrc);
-    235              return;
-    236            };
-    237            
-    238            if (fdst == 0){
-    239              LOG_ON("Frame fdst is 0. Drop.");
-    240              return;
-    241            };
-    242            
-    243            if (fdst == 0xffff){
-    244              LOG_ON("Frame fdst is 0xffff. Drop.");
-    245              return;
-    246            };
-    247            
-    248            // Ищем через кого раньше был отправлен пакет
-    249            int idx = route_find_by_fsrc(fdst);
-    250            if (idx < 0){
-    251              LOG_ON("Route to node %d not found. Drop.", fdst);
-    252              return;
-    253            };
-    254            
-    255            // frame будет удален после выхода из eth_receive и пакет не будет 
-    256            // отправлен. Нужно его скопировать и только потом отправлять
-    257            struct frame *new_frame = FR_create();
-    258            ASSERT(new_frame);
-    259            
-    260            FR_add_header(new_frame, frame->payload, frame->len);
-    261          
-    262            new_frame->meta.PID = frame->meta.PID; 
-    263            new_frame->meta.TS = ROUTE_TABLE[idx].NSRC_TS;
-    264            new_frame->meta.CH = ROUTE_TABLE[idx].NSRC_CH;
-    265            new_frame->meta.NDST = ROUTE_TABLE[idx].nsrc;
-    266            new_frame->meta.NSRC = MODEL.node_adr;
-    267            
+    136           
+    137            // Тут все сложно. Иногда бывает, что узел отправляет пакет не впередед к шлюзу,
+    138            // а назад. Это происходит если произошла ошибка с определением ETX.
+    139            // У меня было так: шлюз передал NP card с ошибкой ETX. Там было etx=244.
+    140            // Узел принял эту карту, и решил что его сосед с ETX=2 лучше чем 244. 
+    141            // Переключился на работу с ним, и пакеты UDP отправлял ему. Второй узел
+    142            // Считал, что первый является путем к шлюзу и пакет переадресовывал ему.
+    143            // Вобщем получилась петля. 
+    144            if (frame->meta.FSRC == frame->meta.NDST){
+    145              LOG_ON("Frame loop found. FSRC=NDST=%d", frame->meta.NDST);
+    146              FR_delete(frame);
+    147              return;
+    148            };
+    149            
+    150            eth_send(frame);
+    151            
+    152          };
+    153          
+    154          void RP_Send(struct frame *frame){
+    155            eth_send(frame);
+    156            LOG_ON("Sended raw");  
+    157          };
+    158          
+    159          /** brief Ищем номер записи по паре значений
+    160          */
+    161          static int route_find(unsigned int nsrc, unsigned int fsrc){
+    162            for (int i = 0; i < ROUTE_TABLE_ITEMS; i++)
+    163              if (ROUTE_TABLE[i].nsrc == nsrc && ROUTE_TABLE[i].fsrc == fsrc
+    164                  && ROUTE_TABLE[i].RA)
+    165                return i;
+    166            return -1;
+    167          };
+    168          
+    169          static int find_free(){
+    170            for (int i = 0; i < ROUTE_TABLE_ITEMS; i++)
+    171              if (!ROUTE_TABLE[i].RA)
+    172                return i;
+    173            return -1;  
+    174          };
+    175          
+    176          static bool route_update(unsigned int nsrc, unsigned int fsrc,
+    177                                   char nsrc_ts, char nsrc_ch){
+    178            // Ищем запись о маршруте
+    179            int idx = route_find(nsrc, fsrc);
+    180            
+    181            // Если такого маршрут небыло, ищем свободную ячейку
+    182            if (idx < 0)
+    183              idx = find_free();
+    184            
+    185            // Если таблица пуста выходим
+    186            if (idx < 0){
+    187              LOG_ON("Route table full!");
+    188              return false;
+    189            };
+    190            
+    191            ROUTE_TABLE[idx].nsrc = nsrc;
+    192            ROUTE_TABLE[idx].fsrc = fsrc;
+    193            ROUTE_TABLE[idx].live_time= ROUTE_LIVE_TIME;
+    194            ROUTE_TABLE[idx].NSRC_TS = nsrc_ts;
+    195            ROUTE_TABLE[idx].NSRC_CH = nsrc_ch;
+    196            ROUTE_TABLE[idx].RA = true;  
+    197            return true;
+    198          };
+    199          
+    200          /** Пересылка пакета к шлюзу с добавлением маршрута
+    201          */
+    202          void RP_SendRT_GW(struct frame *frame){
+    203            // Информация как был получен пакет и от кого
+    204            unsigned int nsrc = frame->meta.NSRC;
+    205            unsigned int fsrc = frame->meta.FSRC;
+    206            char nsrc_ts = frame->meta.NSRC_TS;
+    207            char nsrc_ch = frame->meta.NSRC_CH;   
+    208            
+    209            // Обновим таблицу маршрутов
+    210            bool res = route_update(nsrc, fsrc, nsrc_ts, nsrc_ch);
+    211            if (res){
+    212              LOG_ON("Route table updated. nsrc=%d, fsrc=%d, ts=%d, ch=%d",
+    213                     nsrc, fsrc, nsrc_ts, nsrc_ch);
+    214            } else
+    215              LOG_ON("Route table update faild. nsrc=%d, fsrc=%d, ts=%d, ch=%d",
+    216                   nsrc, fsrc, nsrc_ts, nsrc_ch);
+    217            
+    218            
+    219            // frame будет удален после выхода из eth_receive и пакет не будет 
+    220            // отправлен. Нужно его скопировать и только потом отправлять
+    221            struct frame *new_frame = FR_create();
+    222            ASSERT(new_frame);
+    223            
+    224            FR_add_header(new_frame, frame->payload, frame->len);
+    225            new_frame->meta.FSRC = fsrc;
+    226            new_frame->meta.PID = frame->meta.PID;
+    227            new_frame->meta.IPP = frame->meta.IPP;
+    228            
+    229            RP_Send_GW(new_frame);
+    230          };
+    231          
+    232          /** brief Ищем маршрут до fdst
+    233          */
+    234          static int route_find_by_fsrc(unsigned int fsrc){
+    235            for (int i = 0; i < ROUTE_TABLE_ITEMS; i++)
+    236              if (ROUTE_TABLE[i].fsrc == fsrc && ROUTE_TABLE[i].RA)
+    237                return i;
+    238            return -1;
+    239          };
+    240          
+    241          /** brief Передача от шлюза к какому то узлу
+    242          */
+    243          void RP_SendRT_RT(struct frame *frame){
+    244            unsigned int fsrc = frame->meta.FSRC;
+    245            unsigned int fdst = frame->meta.FDST;
+    246            
+    247            if (fsrc != 0){
+    248              LOG_ON("Frame must be sended GW. Drop. fsrc=%d", fsrc);
+    249              return;
+    250            };
+    251            
+    252            if (fdst == 0){
+    253              LOG_ON("Frame fdst is 0. Drop.");
+    254              return;
+    255            };
+    256            
+    257            if (fdst == 0xffff){
+    258              LOG_ON("Frame fdst is 0xffff. Drop.");
+    259              return;
+    260            };
+    261            
+    262            // Ищем через кого раньше был отправлен пакет
+    263            int idx = route_find_by_fsrc(fdst);
+    264            if (idx < 0){
+    265              LOG_ON("Route to node %d not found. Drop.", fdst);
+    266              return;
+    267            };
     268            
-    269            LOG_ON("Route frame(fdst=%d, fsrc=%d) to NODE %d by route table. ", 
-    270              fdst, fsrc, ROUTE_TABLE[idx].nsrc); 
-    271              
-    272            eth_send(new_frame);
-    273          
-    274          };
+    269            // frame будет удален после выхода из eth_receive и пакет не будет 
+    270            // отправлен. Нужно его скопировать и только потом отправлять
+    271            struct frame *new_frame = FR_create();
+    272            ASSERT(new_frame);
+    273            
+    274            FR_add_header(new_frame, frame->payload, frame->len);
+    275          
+    276            new_frame->meta.PID = frame->meta.PID; 
+    277            new_frame->meta.TS = ROUTE_TABLE[idx].NSRC_TS;
+    278            new_frame->meta.CH = ROUTE_TABLE[idx].NSRC_CH;
+    279            new_frame->meta.NDST = ROUTE_TABLE[idx].nsrc;
+    280            new_frame->meta.NSRC = MODEL.node_adr;
+    281            
+    282            
+    283            LOG_ON("Route frame(fdst=%d, fsrc=%d) to NODE %d by route table. ", 
+    284              fdst, fsrc, ROUTE_TABLE[idx].nsrc); 
+    285              
+    286            eth_send(new_frame);
+    287          
+    288          };
 E:\Neocore\Hardware\Stack_core_src\rtc.c
       1          #include "action_manager.h"
       2          #include "model.h"
@@ -4510,10 +4679,10 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
         0     34   -> memcpy
         0     34   -> memset
       0      0   Cold_Start
+      0      0   Cold_Start
       2      0   Cold_Start
         2      0   -> scheduler_rx
         2      0   -> scheduler_tx
-      0      0   Cold_Start
       0      0   Cold_Start
       0      0   DBG_CORE_FAULT
       0     63   DBG_CORE_HALT
@@ -4521,10 +4690,10 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
         0     16   -> UST_delay
         0     16   -> UST_now
         0     20   -> _interval
-      1    184   FR_add_header
+      1     56   FR_add_header
         0     19   -> MEM_memcpy
         0     19   -> mem_move
-      2     22   FR_available
+      2     21   FR_available
         2      0   -> SL_available
       2      0   FR_busy
         2      0   -> SL_busy
@@ -4548,12 +4717,16 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
         2      0   -> SL_is_tx
       2     10   FR_restart
         2      0   -> SW_restart
-      2      0   FR_rx_frames
+      2      0   FR_rx_available
+        2      0   -> SL_rx_available
+      2     14   FR_rx_frames
         2      0   -> SL_rx_slots
-      2     12   FR_set_rx
+      2     14   FR_set_rx
         2      0   -> SL_set_rx
       2     10   FR_set_tx
         2      0   -> SL_set_tx
+      2     10   FR_tx_available
+        2      0   -> SL_tx_available
       2      0   FR_tx_frames
         2      0   -> SL_tx_slots
       0     12   HP_Init
@@ -4568,7 +4741,6 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
       2      0   HP_callback
         2      0   -> ethernet_process
       0      0   HW_Init
-      0      0   HW_Init
       3      1   HW_Init
       2      0   HW_Init
         2      0   -> DelayCalibrate
@@ -4579,6 +4751,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
         2     84   -> MEM_memcpy
       2      0   HW_Init
         2      0   -> uart_init
+      0      0   HW_Init
       0      0   Hot_Start
       2      0   Hot_Start
         2      0   -> receive
@@ -4612,13 +4785,15 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
         0     16   -> printf_P
         0     18   -> printf_P
       0     15   IRQEnable
+      2      4   IRQ_Init
+        2      4   -> MEM_memset
       2      0   IRQ_Init
-      0      0   IRQ_Init
       0     31   LLC_add_tx_frame
         0     10   -> AES_StreamCoder
         0     10   -> DBG_CORE_HALT
-        0     10   -> FR_available
+        0     10   -> FR_delete
         0     10   -> FR_set_tx
+        0     10   -> FR_tx_available
         0     10   -> printf_P
         0     12   -> printf_P
       0     12   LLC_close_slot
@@ -4633,20 +4808,24 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
       2     10   LLC_restart
         2      0   -> SW_Init
       2     61   LoadTXData
-      1     16   MAC_Receive
-        0     12   -> AES_StreamCoder
-        0     12   -> FR_set_rx
-        0     12   -> _recv_frame
-        0     12   -> _send_ack
-        0     12   -> printf_P
+      1     22   MAC_Receive
+        0     14   -> AES_StreamCoder
+        0     14   -> FR_delete
+        0     14   -> FR_rx_frames
+        0     14   -> FR_set_rx
+        0     14   -> _recv_frame
+        0     14   -> _send_ack
+        0     14   -> is_repeated_frame
         0     14   -> printf_P
         0     16   -> printf_P
-      0     26   MAC_Send
+        0     22   -> printf_P
+      0     32   MAC_Send
         0     10   -> FR_delete
         0     10   -> _recv_ack
         0     10   -> _send_frame
         0     10   -> printf_P
         0     12   -> printf_P
+        0     18   -> printf_P
       3     84   MEM_memcpy
       3     18   MEM_memset
       2     14   NP_Init
@@ -4679,7 +4858,6 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
       1     89   RI_Receive
         0     22   -> DBG_CORE_HALT
         0     22   -> FR_add_header
-        0     22   -> FR_available
         0     22   -> FR_create
         0     24   -> RecvData
         0     26   -> UST_interval
@@ -4774,15 +4952,25 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
       2      0   SL_find_rx
       2      0   SL_find_tx
       0      9   SL_free
+        0      9   -> SL_is_rx
+        0      9   -> SL_is_tx
         0      9   -> __cli
         0      9   -> _free
-      2      0   SL_is_rx
-      2      0   SL_is_tx
+      2      9   SL_is_rx
+      2      9   SL_is_tx
+      0     12   SL_rx_available
+        0     10   -> DBG_CORE_HALT
+        0     10   -> printf_P
+        0     12   -> printf_P
       2      0   SL_rx_slots
       0      9   SL_set_rx
         0      9   -> __cli
       0      9   SL_set_tx
         0      9   -> __cli
+      0     12   SL_tx_available
+        0     10   -> DBG_CORE_HALT
+        0     10   -> printf_P
+        0     12   -> printf_P
       2      0   SL_tx_slots
       2      0   SL_zone_check
       0      0   SW_Init
@@ -4862,13 +5050,13 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
         0     18   -> printf_P
         0     20   -> printf_P
         0     16   -> xor_calc
-      0     26   _recv_frame
+      0     28   _recv_frame
         0     12   -> DBG_CORE_HALT
         0     12   -> RI_Receive
         0     12   -> RI_SetChannel
         0     12   -> printf_P
         0     14   -> printf_P
-      1     33   _send_ack
+      1     35   _send_ack
         0     13   -> DBG_CORE_HALT
         0     13   -> FR_add_header
         0     13   -> FR_create
@@ -4914,7 +5102,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
         0     12   -> rand
       1     27   energy_scan
         0     15   -> RI_Measure_POW
-      1    186   eth_send
+      1     39   eth_send
         0     19   -> DBG_CORE_HALT
         0     19   -> FR_add_header
         0     19   -> LLC_add_tx_frame
@@ -4959,7 +5147,11 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
         2      0   -> _clr_all
         2      0   -> scheulder_next_alarm
       0     12   isIRQEnable
-      2    165   is_free
+      2     17   is_free
+      2     32   is_repeated_frame
+        0     16   -> printf_P
+        0     18   -> printf_P
+        0     16   -> xor_calc
       0     28   loadTimerCompare
       0     26   mac_cmp
       0      2   main
@@ -5044,12 +5236,14 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
         0     63   -> RI_SetChannel
         0     63   -> printf_P
         0     65   -> printf_P
-      2    177   request_cards
-        0    165   -> FR_add_header
-        0    165   -> eth_send
-        0    165   -> is_free
-        0    165   -> printf_P
-        0    167   -> printf_P
+      2     29   request_cards
+        0     17   -> DBG_CORE_HALT
+        0     17   -> FR_add_header
+        0     17   -> FR_create
+        0     17   -> eth_send
+        0     17   -> is_free
+        0     17   -> printf_P
+        0     19   -> printf_P
       0     23   route_find
       0     27   route_find_by_fsrc
       1     33   route_update
@@ -5105,6 +5299,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
         0     10   -> rand
       2      0   setUserTimeAllocation
       1     31   set_AUTH_NODE_RESP
+        0     17   -> DBG_CORE_HALT
         0     17   -> MEM_memcpy
         0     17   -> mac_cmp
         0     17   -> printf_P
@@ -5193,7 +5388,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
       45  ?<Constant "ACK=%d, frame_len=%d,...">
       23  ?<Constant "ACTIONSLOTS[0].rx == 0">
       64  ?<Constant "AUTH REQ from mac: 0x...">
-      42  ?<Constant "AUTH REQ from some no...">
+      37  ?<Constant "AUTH RESP from GW add...">
       18  ?<Constant "AUTH_ETH Response">
       25  ?<Constant "AUTH_ETH frame filltered">
       23  ?<Constant "AUTH_ETH receive frame">
@@ -5215,6 +5410,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
       12  ?<Constant "CCA/ACK err">
       32  ?<Constant "COLD_MOD[i]->Cold_Sta...">
       39  ?<Constant "COMM_NODE_PTR no acti...">
+       8  ?<Constant "CRC ERR">
       21  ?<Constant "Cant handel auth req">
       11  ?<Constant "Cant send.">
       37  ?<Constant "Card added! ADDR=%d, ...">
@@ -5223,6 +5419,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
       28  ?<Constant "Card found by free in...">
       15  ?<Constant "Card requested">
       12  ?<Constant "Card sended">
+      34  ?<Constant "Change. Find IDX=%d. ...">
       25  ?<Constant "Channel %d  [CH11..CH28]">
        6  ?<Constant "Error">
       17  ?<Constant "Extract response">
@@ -5230,13 +5427,13 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
       20  ?<Constant "Filtered NSRC_TS=%d">
       17  ?<Constant "Filtered by size">
       15  ?<Constant "Filtered panid">
-      26  ?<Constant "Find IDX=%d. PTR=%d, ...">
       39  ?<Constant "Find: idx=%d, addr=%d...">
       31  ?<Constant "Frame AUTH_ETH_RESP w...">
       23  ?<Constant "Frame ack not received">
       12  ?<Constant "Frame acked">
       23  ?<Constant "Frame fdst is 0. Drop.">
       28  ?<Constant "Frame fdst is 0xffff....">
+      31  ?<Constant "Frame loop found. FSR...">
       39  ?<Constant "Frame must be sended ...">
       40  ?<Constant "Frame not acked. fr_a...">
       30  ?<Constant "HOT_MOD[i]->Hot_Start...">
@@ -5251,15 +5448,15 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
       10  ?<Constant "Imposible">
       24  ?<Constant "Incorrect MODEL.TM.MODE">
       15  ?<Constant "Invalid NP_CMD">
+      17  ?<Constant "NO FREE TX FRAME">
       22  ?<Constant "NOT ENOUGH FREE FRAME">
-      22  ?<Constant "NOT ENOUGH FREE FRAME">_1
-      22  ?<Constant "NOT ENOUGH FREE FRAME">_2
       11  ?<Constant "NP Receive">
       21  ?<Constant "Neocore stack inited">
       26  ?<Constant "Network lost sync. Re...">
       15  ?<Constant "Network synced">
       37  ?<Constant "No free space in AUTH...">
       31  ?<Constant "No free space in AUTH...">_1
+      29  ?<Constant "No free space. Not re...">
       24  ?<Constant "Node auth ok! ipaddr=%d">
       29  ?<Constant "Node authorisation re...">
       25  ?<Constant "Node choose TS=%d, CH=%d">
@@ -5267,9 +5464,10 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
       14  ?<Constant "Periodic send">
       28  ?<Constant "Problem with comm_nod...">
       16  ?<Constant "REQUEST NP CARD">
-      23  ?<Constant "RX frame. TS=%d, CH=%d">
+      43  ?<Constant "RX frame. TS=%d, CH=%...">
       24  ?<Constant "Record NODE: %d deleted">
       39  ?<Constant "Record ROUTE: nsrc %d...">
+      36  ?<Constant "Repeated frame from N...">
       58  ?<Constant "Route frame(fdst=%d, ...">
       18  ?<Constant "Route table full!">
       57  ?<Constant "Route table update fa...">
@@ -5279,6 +5477,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
       27  ?<Constant "SW_MOD[i]->SW_Init !=...">
       15  ?<Constant "Send node card">
       13  ?<Constant "Send success">
+      45  ?<Constant "Send try: NDST=%d, NS...">
       11  ?<Constant "Sended raw">
       43  ?<Constant "Sended to COMM node. ...">
       79  ?<Constant "Sended to GW. frame_p...">
@@ -5325,9 +5524,12 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
       11  ?<Constant "fr != NULL">
        3  ?<Constant "fr">
        3  ?<Constant "fr">_1
+       3  ?<Constant "fr">_2
        6  ?<Constant "frame">
        6  ?<Constant "frame">_1
        6  ?<Constant "frame">_2
+       6  ?<Constant "frame">_3
+       6  ?<Constant "frame">_4
        5  ?<Constant "ip.c">
        6  ?<Constant "llc.c">
        6  ?<Constant "mac.c">
@@ -5346,6 +5548,8 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
       11  ?<Constant "set_ch_res">
       22  ?<Constant "slot < MAX_TIME_SLOTS">
       29  ?<Constant "slot_busy <= SLOT_POO...">
+      29  ?<Constant "slot_rx_cnt <= SLOT_R...">
+      29  ?<Constant "slot_tx_cnt <= SLOT_T...">
        7  ?<Constant "sync.c">
        6  ?<Constant "tcp.c">
       19  ?<Constant "time <= MAX_NWTIME">
@@ -5357,6 +5561,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
        4  ?<Constant {(char *)(&AUTH_NODE_REQ), 125, 0}>
        4  ?<Constant {(char *)(&AUTH_NODE_RESP), 140, 0}
        4  ?<Constant {(char *)(&NB_TABLE[0].LIVE_TIME),
+       4  ?<Constant {(char *)(&REPEATED), 70, 0}>
        4  ?<Constant {(char *)(&ROUTE_TABLE), 160, 0}>
        5  ?<Constant {(char *)0, (char *)0, 153}>
        5  ?<Constant {(char *)0, (char *)0, 24}>
@@ -5447,7 +5652,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
      140  AUTH_NODE_RESP
      387  AUTH_request
        6  AUTH_request::?relay
-     558  AUTH_resend_RESP_from_gw
+     618  AUTH_resend_RESP_from_gw
        6  AUTH_resend_RESP_from_gw::?relay
       20  BIND
        2  CALLBACK
@@ -5461,7 +5666,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
        6  COLD_MOD
        2  COMM_NODE_PTR
        4  COMPARE_TIME
-      45  CONFIG
+      41  CONFIG
       10  CPU_MODULE
      501  CTR_enc_decrypt
        6  CTR_enc_decrypt::?relay
@@ -5500,7 +5705,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
        6  FR_busy::?relay
       14  FR_copy
        6  FR_copy::?relay
-      81  FR_create
+      91  FR_create
        6  FR_create::?relay
      185  FR_del_header
        6  FR_del_header::?relay
@@ -5516,12 +5721,16 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
        6  FR_is_tx::?relay
       14  FR_restart
        6  FR_restart::?relay
+      14  FR_rx_available
+       6  FR_rx_available::?relay
       14  FR_rx_frames
        6  FR_rx_frames::?relay
       14  FR_set_rx
        6  FR_set_rx::?relay
       14  FR_set_tx
        6  FR_set_tx::?relay
+      14  FR_tx_available
+       6  FR_tx_available::?relay
       14  FR_tx_frames
        6  FR_tx_frames::?relay
       20  GW_VECTOR
@@ -5565,7 +5774,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
        6  IP_Send::?relay
       17  IRQEnable
        6  IRQEnable::?relay
-       3  IRQ_Init
+      40  IRQ_Init
       52  IRQ_Init
        6  IRQ_Init::?relay
        6  IRQ_Init::?relay
@@ -5573,7 +5782,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
        4  LAST_UPDATE_TIME_COMM_NODE
       10  LED_MODULE
       10  LLC_MODULE
-     181  LLC_add_tx_frame
+     186  LLC_add_tx_frame
        6  LLC_add_tx_frame::?relay
      113  LLC_close_slot
        6  LLC_close_slot::?relay
@@ -5584,9 +5793,9 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
       54  LoadTXData
        6  LoadTXData::?relay
       10  MAC_MODULE
-     202  MAC_Receive
+     348  MAC_Receive
        6  MAC_Receive::?relay
-     178  MAC_Send
+     297  MAC_Send
        6  MAC_Send::?relay
        4  MAC_TIMER_MAX
       10  MD_MODULE
@@ -5613,13 +5822,14 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
        1  PCON
        1  PERCFG
       10  RADIO_MODULE
+      70  REPEATED
        1  RFD
        1  RFIRQF0
        1  RFIRQF1
        1  RFST
       89  RI_Measure_POW
        6  RI_Measure_POW::?relay
-     626  RI_Receive
+     606  RI_Receive
        6  RI_Receive::?relay
      205  RI_Send
        6  RI_Send::?relay
@@ -5640,7 +5850,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
        6  RP_SendRT_RT::?relay
      422  RP_Send_COMM
        6  RP_Send_COMM::?relay
-     504  RP_Send_GW
+     632  RP_Send_GW
        6  RP_Send_GW::?relay
       14  RP_TimeAlloc
        6  RP_TimeAlloc::?relay
@@ -5665,18 +5875,22 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
        6  SL_find_rx::?relay
      133  SL_find_tx
        6  SL_find_tx::?relay
-      49  SL_free
+      93  SL_free
        6  SL_free::?relay
       24  SL_is_rx
        6  SL_is_rx::?relay
       24  SL_is_tx
        6  SL_is_tx::?relay
+      99  SL_rx_available
+       6  SL_rx_available::?relay
       56  SL_rx_slots
        6  SL_rx_slots::?relay
-      52  SL_set_rx
+      64  SL_set_rx
        6  SL_set_rx::?relay
-      52  SL_set_tx
+      64  SL_set_tx
        6  SL_set_tx::?relay
+      99  SL_tx_available
+       6  SL_tx_available::?relay
       56  SL_tx_slots
        6  SL_tx_slots::?relay
       72  SL_zone_check
@@ -5692,7 +5906,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
       52  SW_Init
       62  SW_Init
       83  SW_Init
-      87  SW_Init
+     107  SW_Init
      132  SW_Init
        6  SW_Init::?relay
        6  SW_Init::?relay
@@ -5765,6 +5979,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
        4  __Constant_3d
        4  __Constant_5
        4  __Constant_5dc
+       4  __Constant_6
        4  __Constant_78
        4  __Constant_7fff
        4  __Constant_8000
@@ -5796,7 +6011,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
        6  _recv_frame::?relay
      253  _send_ack
        6  _send_ack::?relay
-     108  _send_frame
+     130  _send_frame
        6  _send_frame::?relay
       52  _throw_dice
        6  _throw_dice::?relay
@@ -5823,7 +6038,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
       16  default_key
      148  energy_scan
        6  energy_scan::?relay
-     294  eth_send
+     352  eth_send
        6  eth_send::?relay
       76  ethernet_process
        6  ethernet_process::?relay
@@ -5855,6 +6070,8 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
        6  isIRQEnable::?relay
       78  is_free
        6  is_free::?relay
+     716  is_repeated_frame
+       6  is_repeated_frame::?relay
        4  last
        4  last_analyse_time
        4  last_analyse_time
@@ -5903,7 +6120,7 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
        6  receiveCMD_Response::?relay
      243  recv_sync
        6  recv_sync::?relay
-     270  request_cards
+     419  request_cards
        6  request_cards::?relay
        4  ret_val
        1  retransmite
@@ -5932,9 +6149,11 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
        6  setNodeCHTS::?relay
       19  setUserTimeAllocation
        6  setUserTimeAllocation::?relay
-     581  set_AUTH_NODE_RESP
+     639  set_AUTH_NODE_RESP
        6  set_AUTH_NODE_RESP::?relay
        2  slot_busy
+       2  slot_rx_cnt
+       2  slot_tx_cnt
       80  stack_init
        6  stack_init::?relay
       46  start_mode_1
@@ -5962,23 +6181,23 @@ E:\Neocore\Hardware\PRG Node\vtimer.c
        6  vtimer_start::?relay
       51  xor_calc
        6  xor_calc::?relay
-     969  -- Other
+    1019  -- Other
 
  
- 33 449 bytes in segment BANKED_CODE
-  1 344 bytes in segment BANK_RELAYS
-  4 508 bytes in segment CODE_C
+ 35 251 bytes in segment BANKED_CODE
+  1 374 bytes in segment BANK_RELAYS
+  4 784 bytes in segment CODE_C
       3 bytes in segment INTVEC
      47 bytes in segment NEAR_CODE
      35 bytes in segment SFR_AN
     231 bytes in segment XDATA_I
     231 bytes in segment XDATA_ID
-  4 438 bytes in segment XDATA_Z
+  4 508 bytes in segment XDATA_Z
  
-  6 046 bytes of CODE     memory (+ 87 bytes shared)
+  6 348 bytes of CODE     memory (+ 91 bytes shared)
       0 bytes of DATA     memory (+ 35 bytes shared)
- 33 449 bytes of HUGECODE memory
-  4 669 bytes of XDATA    memory
+ 35 251 bytes of HUGECODE memory
+  4 739 bytes of XDATA    memory
 
 Errors: none
 Warnings: 9

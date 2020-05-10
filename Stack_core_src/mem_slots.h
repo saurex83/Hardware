@@ -14,4 +14,6 @@ char* SL_find_rx(char* buff);
 char* SL_find_tx(char* buff);
 int SL_rx_slots();
 int SL_tx_slots();
+int SL_tx_available();
+int SL_rx_available();
 void SW_restart();

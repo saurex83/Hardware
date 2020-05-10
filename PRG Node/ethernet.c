@@ -140,6 +140,7 @@ void ethernet_process(void){
 };
 
 void eth_send(struct frame *frame){
+  ASSERT(frame);
   struct ETH_LAY eth_header;
   eth_header.ETH_T.bits.PID = frame->meta.PID ;
   eth_header.ETH_T.bits.ETH_VER =HEADER_ETH_VER;

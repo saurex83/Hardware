@@ -8,6 +8,17 @@ extern void DBG_CORE_HALT(void);
 extern void DBG_CORE_FAULT(void);
 
 #ifdef DEBUG
+  #define DATA_LOG_ON(ptr, len) {\
+    printf_P(__FILE__);\
+    printf_P(":%d:",__LINE__);\
+    printf_P(__FUNCTION__);\
+    printf_P("->");\
+    for (int i = 0; i < len; i++)\
+      printf_P("%d ", (ptr)[i]);\
+    printf_P("\r\n"); \
+    }
+
+
   #define LOG_ON(...) {\
     printf_P(__FILE__);\
     printf_P(":%d:",__LINE__);\
@@ -57,7 +68,7 @@ extern void DBG_CORE_FAULT(void);
   #define SIG_ON(action, pin) {}
 #endif
 
-
+#define DATA_LOG_OFF(ptr, len) {}
 #define LOG_OFF(...)
 #define SIG_OFF(action, pin)
 

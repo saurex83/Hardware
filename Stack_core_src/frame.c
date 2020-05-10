@@ -22,6 +22,8 @@ void FR_restart(){
 
 struct frame* FR_create(){
   struct frame *fr  = (struct frame*)SL_alloc();
+  if (!fr)
+    return NULL;
   MEMSET((char*)&fr->meta, 0, sizeof(struct meta));
   fr->len = 0;
   return fr;
@@ -106,4 +108,12 @@ struct frame* FR_find_rx(struct frame* frame){
 
 int FR_available(){
   return SL_available();
+};
+
+int FR_tx_available(){
+  return SL_tx_available();
+};
+
+int FR_rx_available(){
+  return SL_rx_available();
 };

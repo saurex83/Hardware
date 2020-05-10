@@ -2,13 +2,23 @@
 #include "stdint.h"
 #include "RADIO.h"
 //C compiler options->extra options add  --no_path_in_file_macros
-//#define GATEWAY
+#define GATEWAY
 #define NODE_VER 0
 #define NODE_TYPE 1
 
 #define HEADER_ETH_VER 1 // Версия протокола
 
 #define RARIO_STREAM_ENCRYPT  // Шифрование данных включенно 
+
+#ifdef GATEWAY
+  #define SLOT_POOL_ITEMS 30
+  #define SLOT_TX_ITEMS 5
+  #define SLOT_RX_ITEMS 21
+#else
+  #define SLOT_POOL_ITEMS 20
+  #define SLOT_TX_ITEMS 8
+  #define SLOT_RX_ITEMS 8
+#endif
 
 #define DEFAULT_KEY  {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}
 #define DEFAULT_IV   {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}
@@ -17,7 +27,7 @@
 #define DEFAULT_PANID 0x12 
 #define DEFAULT_TX_POWER  m22x0    //m0x5 
 
-#define MAX_OPEN_SLOTS 3 // Максимальное число временых слотов для приема
+#define MAX_OPEN_SLOTS 1 // Максимальное число временых слотов для приема
 #define NEIGHBOR_ALIVE_TIME 600 // Время жизни записи в табл. соседей в сек.
 #define NEIGHBOR_CARD_SEND_INTERVAL 180 // Интервал передачи инф. об узле в сек.
 #define NEIGHBOR_CARD_SEND_INTERVAL_DEV 20 // Случайное отклонение интервала 

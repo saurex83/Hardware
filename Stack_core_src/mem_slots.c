@@ -11,6 +11,18 @@
 #define SLOT_BUFFER_SIZE 150
 #define RED_ZONE_CODE 0x73
 
+#ifndef SLOT_POOL_ITEMS
+#define SLOT_POOL_ITEMS 20
+#endif
+
+#ifndef SLOT_TX_ITEMS   
+#define SLOT_TX_ITEMS 7
+#endif
+
+#ifndef SLOT_RX_ITEMS   
+#define SLOT_RX_ITEMS 7
+#endif
+
 typedef char red_zone_t;
 
 static void SW_Init(void);
@@ -33,9 +45,15 @@ struct slot{
 static struct slot SLOT_POOL[SLOT_POOL_ITEMS];
 //!< Количество занятых слотов
 static int slot_busy;
+//!< Количество пакетов помеченных на прием
+static int slot_rx_cnt;
+//!< Количество пакетов помеченных на передачу
+static int slot_tx_cnt;
 
 void SW_Init(void){
   slot_busy = 0;
+  slot_rx_cnt = 0;
+  slot_tx_cnt = 0;
   for_each_type(struct slot, SLOT_POOL, slot){
     slot->property.taken = false;
     slot->property.RX = false;
@@ -186,6 +204,7 @@ bool SL_is_rx(char *buff){
 
 void SL_set_tx(char *buff){
   ATOMIC_BLOCK_RESTORE{
+    slot_tx_cnt++;
     struct slot *slot = container_of(buff, struct slot, buffer);
     slot->property.TX = true;
   }
@@ -193,14 +212,21 @@ void SL_set_tx(char *buff){
 
 void SL_set_rx(char *buff){
   ATOMIC_BLOCK_RESTORE{
+    slot_rx_cnt++;
     struct slot *slot = container_of(buff, struct slot, buffer);
     slot->property.RX = true;
   }
 }
 
+
 bool SL_free(char *buff){
   bool res;
   ATOMIC_BLOCK_RESTORE{
+    if (SL_is_tx(buff))
+      slot_tx_cnt--;
+    else if (SL_is_rx(buff))
+      slot_rx_cnt--;
+    
     res = _free(buff);
   }
   return res;
@@ -215,6 +241,16 @@ int SL_busy(){
 int SL_available(){
   ASSERT(slot_busy <= SLOT_POOL_ITEMS);  
   return SLOT_POOL_ITEMS - slot_busy;
+};
+
+int SL_tx_available(){
+  ASSERT(slot_tx_cnt <= SLOT_TX_ITEMS);  
+  return SLOT_TX_ITEMS - slot_tx_cnt;
+};
+
+int SL_rx_available(){
+  ASSERT(slot_rx_cnt <= SLOT_RX_ITEMS);  
+  return SLOT_RX_ITEMS - slot_rx_cnt;
 };
 
 int SL_zone_check(){

@@ -213,7 +213,9 @@
             <file>$PROJ_DIR$\auth_ip.h</file>
             <file>$PROJ_DIR$\Debug\List\mem_slots.lst</file>
             <file>$PROJ_DIR$\Debug\List\frame.lst</file>
+            <file>$PROJ_DIR$\Debug\Obj\auth_ip.__cstat.et</file>
             <file>$PROJ_DIR$\Debug\List\mac.lst</file>
+            <file>$PROJ_DIR$\Debug\Obj\vtimer.__cstat.et</file>
             <file>$PROJ_DIR$\Debug\List\radio.lst</file>
         </outputs>
         <file>
@@ -660,6 +662,10 @@
                     <name>BICOMP</name>
                     <file> 181</file>
                 </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 210</file>
+                </tool>
             </outputs>
         </file>
         <file>
@@ -668,6 +674,10 @@
                 <tool>
                     <name>BICOMP</name>
                     <file> 178</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 208</file>
                 </tool>
             </outputs>
         </file>

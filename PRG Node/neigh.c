@@ -367,7 +367,7 @@ static void comm_node_choise(){
   LAST_UPDATE_TIME_COMM_NODE = now;
   MODEL.node_ETX = COMM_NODE_PTR->ETX + 1;  
   MODEL.NEIGH.comm_node_found = true;
-  LOG_ON("Find IDX=%d. PTR=%d, ADDR", idx, &NB_TABLE[idx], NB_TABLE[idx].ADDR);    
+  LOG_ON("Change. Find IDX=%d. PTR=%d, ADDR", idx, &NB_TABLE[idx], NB_TABLE[idx].ADDR);    
 };
 
 static bool is_free(){
@@ -399,14 +399,16 @@ static void request_cards(){
   
   LOG_ON("REQUEST NP CARD");
   
-  struct frame fr;
+  struct frame *fr = FR_create();
+  ASSERT(fr);
   char cmd = NP_CMD_CARD_REQ;
-  FR_add_header(&fr, &cmd, sizeof(cmd));
+  bool res =FR_add_header(fr, &cmd, sizeof(cmd));
+  ASSERT(res);
   
-  fr.meta.NDST = 0xffff;
-  fr.meta.NSRC = MODEL.node_adr;
-  fr.meta.PID = PID_NP;
-  eth_send(&fr);
+  fr->meta.NDST = 0xffff;
+  fr->meta.NSRC = MODEL.node_adr;
+  fr->meta.PID = PID_NP;
+  eth_send(fr);
   LOG_ON("Card requested");
 };
 
